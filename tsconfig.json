@@ -1,27 +1,15 @@
 {
     "compilerOptions": {
-        // we can turn this off if it is too invasive
-        "strict": true,
-        // https://www.tsmean.com/articles/learn-typescript/typescript-module-compiler-option/
-        "module": "commonjs",
-        // https://www.typescriptlang.org/docs/handbook/2/modules.html#es-module-syntax-with-commonjs-behavior
-        "esModuleInterop": true,
-        "target": "es6",
-        // https://www.typescriptlang.org/tsconfig#noImplicitAny
-        "noImplicitAny": true,
-        // https://www.typescriptlang.org/docs/handbook/2/modules.html#typescripts-module-resolution-options
-        "moduleResolution": "node",
-        // https://firefox-source-docs.mozilla.org/devtools-user/debugger/how_to/use_a_source_map/index.html
-        "sourceMap": true,
-        // outputs the compiles js source into dist/ dir (main js file is dist/index.js)
+        "rootDirs": ["src"],
         "outDir": "dist",
-        // https://www.typescriptlang.org/tsconfig#baseUrl
-        "baseUrl": ".",
-        // https://www.typescriptlang.org/tsconfig#paths
-        "paths": {
-            "*": ["node_modules/*"]
-        }
-
+        "lib": ["ES2020"],
+        "target": "ES2020",
+        "module": "ESNext",
+        "moduleResolution": "node",
+        "esModuleInterop": true,
+        "types": ["node"],
+        "strict": true,
+        "sourceMap": true,
     },
     "include": ["src/**/*"]
 }

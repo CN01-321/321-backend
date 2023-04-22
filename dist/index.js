@@ -1,13 +1,19 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-const express_1 = __importDefault(require("express"));
-const app = (0, express_1.default)();
+import express from 'express';
+import { initMongoClient, getMongoClient, closeMongoClient } from './db.js';
+import { initGraphQL } from './graphql.js';
+const app = express();
 const port = 5000;
+await initGraphQL(app);
+await initMongoClient();
 app.get('/', (_, res) => {
-    res.status(200).send();
+    res.status(200).send('Hello world');
 });
 app.listen(port, () => console.log(`Running on port ${port}`));
+async function testMongo() {
+    let client = await getMongoClient();
+    await client.db('admin').command({ ping: 1 });
+    console.log("MongoDB successfully pinged");
+    await closeMongoClient();
+}
+await testMongo();
 //# sourceMappingURL=index.js.map
