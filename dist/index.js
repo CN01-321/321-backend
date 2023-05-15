@@ -1,9 +1,9 @@
 import express from 'express';
 import { initMongoClient, getMongoClient, closeMongoClient } from './db.js';
-import { initGraphQL } from './graphql.js';
+import { initGraphQL } from './graphql/graphql.js';
 const app = express();
 const port = 5000;
-await initGraphQL(app);
+await initGraphQL();
 await initMongoClient();
 app.get('/', (_, res) => {
     res.status(200).send('Hello world');

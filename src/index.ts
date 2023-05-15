@@ -8,12 +8,12 @@ import {
     closeMongoClient 
 } from './db.js';
 
-import { initGraphQL } from './graphql.js';
+import { initGraphQL } from './graphql/graphql.js';
 
 const app = express();
 const port = 5000;
 
-await initGraphQL(app);
+await initGraphQL();
 await initMongoClient();
 
 
