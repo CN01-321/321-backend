@@ -4,9 +4,9 @@ import { startStandaloneServer } from "@apollo/server/standalone";
 import { readFileSync } from "fs";
 
 import bodyParser from 'body-parser';
-import { Owner } from "../generated/graphql";
+import { Owner } from "./generated/graphql";
 import { profile } from "console";
-import { Query } from "../generated/graphql";
+import { Query } from "./generated/graphql";
 const { json } = bodyParser;
 
 const typeDefs = readFileSync('schema.graphql', { encoding: 'utf-8' });
@@ -62,7 +62,7 @@ interface OwnerQuery {
 
 const resolvers = {
     Query: {
-        owner(parent: Query, args: OwnerQuery) {
+        owner(_parent: Query, args: OwnerQuery) {
             return owners.find((owner) => {
                 console.log(owner.id, args.id);
                 return owner.id === args.id

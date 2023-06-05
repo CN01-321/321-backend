@@ -50,7 +50,7 @@ const owners = [
 ];
 const resolvers = {
     Query: {
-        owner(parent, args) {
+        owner(_parent, args) {
             return owners.find((owner) => {
                 console.log(owner.id, args.id);
                 return owner.id === args.id;
