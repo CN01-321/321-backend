@@ -4,14 +4,12 @@ import {
     getMongoClient, 
     closeMongoClient 
 } from './db.js';
-import { initGraphQL } from './graphql.js';
 import bodyParser from 'body-parser';
 import authRouter from './auth.js';
 
 const app = express();
 const port = 5000;
 
-await initGraphQL();
 await initMongoClient();
 
 app.use(bodyParser.json())
