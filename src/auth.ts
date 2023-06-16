@@ -3,28 +3,15 @@ import { Strategy as LocalStrategy } from 'passport-local';
 import { Strategy as JwtStrategy, ExtractJwt } from 'passport-jwt';
 import { Router } from 'express';
 import jwt from 'jsonwebtoken';
+import { IUser, User } from './models.js';
 
+import dotenv from 'dotenv';
+dotenv.config();
 
-const jwtSecret = 'secret';
+const jwtSecret = process.env.JWT_SECRET ?? "";
 
 const authRouter = Router();
 export default authRouter;
-
-
-type UserType = 'owner' | 'carer';
-
-type TokenUser  = {
-    id: number,
-    email: string
-    password: string
-    type: UserType
-}
-
-const users: Array<TokenUser> = [
-    { id: 1, email: '1@email.com', password: '1', type: 'owner' },
-    { id: 2, email: '2@email.com', password: '2', type: 'carer' },
-    { id: 3, email: '3@email.com', password: '3', type: 'owner' },
-];
 
 const signUpOptions = {
     usernameField: 'email', 
@@ -37,7 +24,9 @@ const authOptions = { session: false };
 // return the user to the next function ('/login') or fail (returning 401 to the caller) 
 passport.use('login', new LocalStrategy(signUpOptions, (email, password, callback) => {
     console.log("login");
-    let user = users.find(u => u.email === email && u.password === password)
+
+    const user = User.findOne({ 'email': email, 'password': password})
+
     if (!user) return callback(null, false);
     return callback(null, user);
 }));
@@ -47,12 +36,14 @@ authRouter.post(
     '/login', 
     passport.authenticate('login', authOptions),
     async (req, res) => {
-        const user = req.user as TokenUser;
-        const body = { email: user.email, type: user.type };
+        const user = req.user as IUser;
+        const body = { email: user.email, type: user.userType };
+
         const token = jwt.sign({user: body}, jwtSecret, {
             issuer: 'pet-carer.com',
             noTimestamp: true
         });
+
         console.log(token);
         res.json({ token });
     }
@@ -61,14 +52,18 @@ authRouter.post(
 // set up signup middleware, does most of the heavy lifting by creating a new user
 // and saving it to the database, on success it returns the new user to the next
 // function ('/signup')
-passport.use('signup', new LocalStrategy(signUpOptions, (email, password, done) => {
-    let user = {
-        id: users.length + 1,
+passport.use('signup', new LocalStrategy(signUpOptions, async (email, password, done) => {
+    const randomUserType = () => (Math.random() < 0.5) ? 'owner' : 'carer';
+
+    const user = new User({
         email,
         password,
-        type: 'owner' as UserType
-    };
-    users.push(user);
+        userType: randomUserType()
+    });
+    await user.save()
+
+    console.log('created new user: ', user);
+
     return done(null, user);
 }));
 
@@ -90,7 +85,7 @@ const jwtOpts = {
 passport.use(
     'jwt',
     new JwtStrategy(jwtOpts, (token, done) => {
-        const user = users.find(u => u.email === token.user.email);
+        const user = User.findOne({'email': token.user.email})
         if (!user) return done(null, false);
         return done(null, user);
     }

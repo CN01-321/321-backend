@@ -1,16 +1,19 @@
 import express from 'express';
-import { 
-    initMongoClient, 
-    getMongoClient, 
-    closeMongoClient 
-} from './db.js';
 import bodyParser from 'body-parser';
 import authRouter from './auth.js';
+import mongoose from 'mongoose';
+import dotenv from 'dotenv'
+
+dotenv.config()
 
 const app = express();
-const port = 5000;
+const mongo_url = process.env.MONGODB_URL ?? "";
+const mongo_db = process.env.MONGODB_DB ?? "";
+const port = process.env.SERVER_PORT;
 
-await initMongoClient();
+await mongoose.connect(mongo_url, {
+    dbName: mongo_db
+})
 
 app.use(bodyParser.json())
 
@@ -21,12 +24,3 @@ app.get('/', (_, res) => {
 app.listen(port, () => console.log(`Running on port ${port}`));
 
 app.use(authRouter);
-
-async function testMongo() {
-    let client = await getMongoClient();
-    await client.db('admin').command({ping: 1});
-    console.log("MongoDB successfully pinged");
-    await closeMongoClient();
-}
-
-await testMongo();
