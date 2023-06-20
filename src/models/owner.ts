@@ -1,10 +1,14 @@
-import { Ref, prop } from "@typegoose/typegoose";
-import User from "./user";
+import { prop, Ref } from "@typegoose/typegoose";
+import { Base } from "@typegoose/typegoose/lib/defaultClasses";
+import UserDetails from "./user";
 import Pet from "./pet";
 import { Feedback } from "./feedback";
 import Offer from "./offer";
 
-export default class Owner extends User {
+class Owner {
+    @prop({ ref: () => UserDetails})
+    userDetails?: Ref<UserDetails>;
+    
     @prop({ ref: () => Pet })
     pets?: Ref<Pet>[];
 
@@ -14,3 +18,7 @@ export default class Owner extends User {
     @prop({ ref: () => Feedback })
     feedback?: Ref<Feedback>[];
 }
+
+interface Owner extends Base {}
+
+export default Owner;

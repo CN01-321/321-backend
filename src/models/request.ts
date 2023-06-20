@@ -1,15 +1,18 @@
-import { prop } from "@typegoose/typegoose";
-import { Types } from "mongoose";
+import { prop, Ref } from "@typegoose/typegoose";
+import { Base } from "@typegoose/typegoose/lib/defaultClasses";
+import Owner from "./owner";
+import Carer from "./carer";
+import Pet from "./pet";
 
-export default class Request {
-    @prop()
-    ownerId?: Types.ObjectId;
+class Request {
+    @prop({ ref: () => Owner })
+    ownerId?: Ref<Owner>;
 
-    @prop()
-    carerId?: Types.ObjectId;
+    @prop({ ref: () => Carer })
+    carerId?: Ref<Carer>;
 
-    @prop()
-    requestedPets?: Types.ObjectId[];
+    @prop({ ref: () => Pet })
+    requestedPets?: Ref<Pet>[];
 
     @prop()
     startDate?: Date;
@@ -20,3 +23,7 @@ export default class Request {
     @prop()
     status?: string;
 }
+
+interface Request extends Base {}
+
+export default Request;

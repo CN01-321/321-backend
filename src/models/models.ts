@@ -1,4 +1,5 @@
 import { getModelForClass } from "@typegoose/typegoose";
+import UserDetails from "./user";
 import Carer from "./carer";
 import Owner from "./owner";
 import Pet from "./pet";
@@ -6,6 +7,7 @@ import Offer from "./offer";
 import Request from "./request";
 import { Feedback, Comment } from "./feedback";
 
+export const UserDetailsModel = getModelForClass(UserDetails)
 export const CarerModel = getModelForClass(Carer);
 export const OwnerModel = getModelForClass(Owner);
 export const PetModel = getModelForClass(Pet);

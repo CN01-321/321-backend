@@ -1,8 +1,9 @@
-import { Ref, prop } from "@typegoose/typegoose"
+import { prop, Ref } from "@typegoose/typegoose"
+import { Base } from "@typegoose/typegoose/lib/defaultClasses";
+import Owner from "./owner";
 import { Feedback } from "./feedback";
-import { Types } from "mongoose";
 
-export default class Pet {
+class Pet {
     @prop()
     name?: string;
 
@@ -24,9 +25,13 @@ export default class Pet {
     @prop()
     profilePicture?: string;
 
-    @prop()
-    ownerId?: Types.ObjectId;
+    @prop({ ref: () => Owner })
+    owner?: Ref<Owner>;
 
     @prop({ ref: () => Feedback })
     feedback?: Ref<Feedback>[];
 }
+
+interface Pet extends Base {}
+
+export default Pet;

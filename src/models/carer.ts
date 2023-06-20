@@ -1,8 +1,12 @@
-import { Ref, prop } from "@typegoose/typegoose";
-import User from "./user"
+import { prop, Ref } from "@typegoose/typegoose";
+import { Base } from "@typegoose/typegoose/lib/defaultClasses";
+import UserDetails from "./user"
 import { Feedback } from "./feedback";
 
-export default class Carer extends User {
+class Carer {
+    @prop({ ref: () => UserDetails})
+    userDetails?: Ref<UserDetails>;
+
     @prop()
     skills?: string;
     
@@ -28,6 +32,8 @@ export default class Carer extends User {
     feedback?: Ref<Feedback>[];
 }
 
+interface Carer extends Base {}
+
 class Unavailability {
     @prop()
     startDate?: Date;
@@ -51,3 +57,5 @@ class Licence {
     @prop()
     licenceNumber?: string;
 }
+
+export default Carer;

@@ -1,14 +1,15 @@
 import { prop } from "@typegoose/typegoose";
+import { Base } from "@typegoose/typegoose/lib/defaultClasses";
 
-export default class User {
+class UserDetails {
     @prop()
     name?: string;
 
-    @prop()
-    email?: string;
+    @prop({ required: true, unique: true })
+    email!: string;
 
-    @prop()
-    password?: string;
+    @prop({ required: true, select: false })
+    password!: string;
 
     @prop()
     address?: string;
@@ -28,3 +29,7 @@ export default class User {
     @prop()
     profilePicture?: string;
 }
+
+interface UserDetails extends Base {}
+
+export default UserDetails;
