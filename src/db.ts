@@ -1,32 +1,24 @@
-import { MongoClient, ServerApiVersion } from 'mongodb';
+import dotenv from 'dotenv';
+import mongoose from 'mongoose';
 
-import * as dotenv from 'dotenv';
 dotenv.config();
 
-let mongoClient: MongoClient;
+const mongooseInstance = mongoose;
 
-export async function initMongoClient() {
-    mongoClient = new MongoClient(process.env.MONGODB_URL as string, {
-            serverApi: {
-                version: ServerApiVersion.v1,
-                strict: true,
-                deprecationErrors: true,
-            }
-        }
-    );
-
-    await mongoClient.connect();
+export async function initMongooseInstance() {
+    await mongooseInstance.connect(process.env.MONGODB_URL as string, {
+        dbName: process.env.MONGODB_DB
+    })
+        .catch(error => console.error(error));
 }
 
-
-export function getMongoClient(): MongoClient {
-    if (!mongoClient) {
-        throw Error("No mongodb connection created");
-    }
-
-    return mongoClient;
+export async function getMongooseInstance() {
+    if (mongooseInstance.connection.readyState === 0 ||
+        mongooseInstance.connection.readyState === 3) throw Error("No MongoDB Connection Exists");
+    
+    return mongooseInstance;
 }
 
-export async function closeMongoClient() {
-    await mongoClient.close();
+export async function closeMongooseInstance() {
+    await mongooseInstance.disconnect();
 }
