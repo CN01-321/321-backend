@@ -1,15 +1,15 @@
-import { getModelForClass } from "@typegoose/typegoose";
-import UserDetails from "./user";
-import Carer from "./carer";
-import Owner from "./owner";
-import Pet from "./pet";
-import Offer from "./offer";
-import Request from "./request";
-import { Feedback, Comment } from "./feedback";
+import { getDiscriminatorModelForClass, getModelForClass } from "@typegoose/typegoose";
+import User, { UserType } from "./user.js";
+import Carer from "./carer.js";
+import Owner from "./owner.js";
+import Pet from "./pet.js";
+import Offer from "./offer.js";
+import Request from "./request.js";
+import { Feedback, Comment } from "./feedback.js";
 
-export const UserDetailsModel = getModelForClass(UserDetails)
-export const CarerModel = getModelForClass(Carer);
-export const OwnerModel = getModelForClass(Owner);
+export const UserModel = getModelForClass(User)
+export const CarerModel = getDiscriminatorModelForClass(UserModel, Carer, UserType.CARER);
+export const OwnerModel = getDiscriminatorModelForClass(UserModel, Owner, UserType.OWNER);
 export const PetModel = getModelForClass(Pet);
 export const OfferModel = getModelForClass(Offer);
 export const RequestModel = getModelForClass(Request);

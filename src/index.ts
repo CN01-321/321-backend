@@ -2,14 +2,17 @@ import express from 'express';
 import bodyParser from 'body-parser';
 import authRouter from './auth.js';
 import dotenv from 'dotenv'
-import { initMongooseInstance } from "./db.js";
+import { mongoose } from '@typegoose/typegoose';
 
 dotenv.config()
 
-const app = express();
-const port = process.env.SERVER_PORT;
+const mongo_url = process.env.MONGODB_URL ?? "";
+const mongo_db = process.env.MONGODB_DB ?? "";
 
-await initMongooseInstance();
+await mongoose.connect(mongo_url, { dbName: mongo_db })
+
+const port = process.env.SERVER_PORT;
+const app = express();
 
 app.use(bodyParser.json())
 

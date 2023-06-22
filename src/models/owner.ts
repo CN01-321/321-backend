@@ -1,14 +1,11 @@
 import { prop, Ref } from "@typegoose/typegoose";
 import { Base } from "@typegoose/typegoose/lib/defaultClasses";
-import UserDetails from "./user";
-import Pet from "./pet";
-import { Feedback } from "./feedback";
-import Offer from "./offer";
+import User from "./user.js";
+import Pet from "./pet.js";
+import { Feedback } from "./feedback.js";
+import Offer from "./offer.js";
 
-class Owner {
-    @prop({ ref: () => UserDetails})
-    userDetails?: Ref<UserDetails>;
-    
+class Owner extends User {
     @prop({ ref: () => Pet })
     pets?: Ref<Pet>[];
 

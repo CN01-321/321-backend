@@ -1,7 +1,13 @@
-import { prop } from "@typegoose/typegoose";
+import { modelOptions, prop } from "@typegoose/typegoose";
 import { Base } from "@typegoose/typegoose/lib/defaultClasses";
 
-class UserDetails {
+export enum UserType {
+    OWNER = "owner",
+    CARER = "carer"
+}
+
+@modelOptions({schemaOptions: {discriminatorKey: "userType"}})
+class User {
     @prop()
     name?: string;
 
@@ -28,8 +34,11 @@ class UserDetails {
 
     @prop()
     profilePicture?: string;
+
+    @prop({required: true})
+    userType!: string;
 }
 
-interface UserDetails extends Base {}
+interface User extends Base {}
 
-export default UserDetails;
+export default User;

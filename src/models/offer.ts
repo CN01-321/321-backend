@@ -1,8 +1,8 @@
 import { prop, Ref } from "@typegoose/typegoose";
 import { Base } from "@typegoose/typegoose/lib/defaultClasses";
-import Owner from "./owner";
-import Carer from "./carer";
-import Pet from "./pet";
+import Owner from "./owner.js";
+import Carer from "./carer.js";
+import Pet from "./pet.js";
 
 class Offer {
     @prop({ ref: () => Owner })

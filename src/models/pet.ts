@@ -1,7 +1,7 @@
 import { prop, Ref } from "@typegoose/typegoose"
 import { Base } from "@typegoose/typegoose/lib/defaultClasses";
-import Owner from "./owner";
-import { Feedback } from "./feedback";
+import Owner from "./owner.js";
+import { Feedback } from "./feedback.js";
 
 class Pet {
     @prop()

@@ -1,10 +1,10 @@
 import { prop, Ref } from "@typegoose/typegoose";
 import { Base } from "@typegoose/typegoose/lib/defaultClasses";
-import UserDetails from "./user";
+import User from "./user.js";
 
 class Feedback {
-    @prop({ ref: () => UserDetails })
-    user?: Ref<UserDetails>;
+    @prop({ ref: () => User })
+    user?: Ref<User>;
 
     @prop()
     rating?: number;
@@ -22,8 +22,8 @@ class Feedback {
 interface Feedback extends Base {}
 
 class Comment {
-    @prop({ ref: () => UserDetails })
-    user?: Ref<UserDetails>;
+    @prop({ ref: () => User })
+    user?: Ref<User>;
 
     @prop()
     text?: string
