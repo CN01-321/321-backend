@@ -6,6 +6,14 @@ export enum UserType {
     CARER = "carer"
 }
 
+class Notification {
+    @prop()
+    userName?: string;
+
+    @prop()
+    description?: string;
+}
+
 @modelOptions({schemaOptions: {discriminatorKey: "userType"}})
 class User {
     @prop()
@@ -37,6 +45,9 @@ class User {
 
     @prop({required: true})
     userType!: string;
+
+    @prop({ _id: false, type: Notification})
+    notifications!: Notification[];
 }
 
 interface User extends Base {}

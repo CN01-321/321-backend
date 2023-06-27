@@ -6,7 +6,7 @@ class Feedback {
     @prop({ ref: () => User })
     user?: Ref<User>;
 
-    @prop()
+    @prop({ min: 1, max: 10 })
     rating?: number;
 
     @prop()
