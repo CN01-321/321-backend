@@ -10,6 +10,8 @@
         "types": ["node"],
         "strict": true,
         "sourceMap": true,
+        "experimentalDecorators": true,
+        "emitDecoratorMetadata": true,
     },
     "include": ["src/**/*"]
 }
