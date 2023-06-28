@@ -1,12 +1,18 @@
 import passport, { AuthenticateOptions } from 'passport'
-import { Strategy as LocalStrategy } from 'passport-local';
+import { IStrategyOptions, Strategy as LocalStrategy } from 'passport-local';
 import { Strategy as JwtStrategy, ExtractJwt } from 'passport-jwt';
 import { Router } from 'express';
 import jwt from 'jsonwebtoken';
 
 import dotenv from 'dotenv';
-import { CarerModel, OwnerModel, UserModel } from './models/models.js';
-import User, { UserType } from './models/user.js';
+// import { CarerModel, OwnerModel, PetModel, UserModel } from './models/models.js';
+// import User, { UserType } from './models/user.js';
+// import { Document } from 'mongoose';
+// import Owner from './models/owner.js';
+// import Pet from './models/pet.js';
+
+import mongo from './mongo.js';
+import { Carer, Owner, Pet, User } from './models/interfaces.js';
 
 dotenv.config();
 
@@ -15,9 +21,9 @@ const jwtSecret = process.env.JWT_SECRET ?? "";
 const authRouter = Router();
 export default authRouter;
 
-const signUpOptions = {
+const signUpOptions: IStrategyOptions = {
     usernameField: 'email', 
-    passwordField: 'password' 
+    passwordField: 'password',
 }
 
 const authOptions: AuthenticateOptions = { 
@@ -29,7 +35,8 @@ const authOptions: AuthenticateOptions = {
 passport.use('login', new LocalStrategy(signUpOptions, async (email, password, callback) => {
     console.log("login", email, password);
 
-    const user = await UserModel.findOne({email: email, password: password})
+    const db = await mongo.database();
+    const user = await db.findOne({email, password});
 
     if (!user) return callback(null, false);
     return callback(null, user);
@@ -66,13 +73,27 @@ async function valdateSignUpRequest(email: string | undefined, password: string 
         throw "No password present";
     }
 
-    if (await UserModel.exists({email})) {
+    const db = await mongo.database();
+    if (await db.findOne({email})) {
         throw "Email is already in use.";
     }
     
 }
 
 authRouter.post("/owners", async (req, res) => {
+    const newOwner: (email: string, passowrd: string) => Owner = (email: string, password: string) => {
+        return {
+            email, 
+            password, 
+            userType: "owner", 
+            notifications: [], 
+            recievedFeedback: [],
+            pets: [],
+            broadRequests: [],
+            directRequests: []
+        }
+    }
+
     const email = req.body.email;
     const password = req.body.password;
 
@@ -84,14 +105,28 @@ authRouter.post("/owners", async (req, res) => {
         return; 
     }
 
-    const owner = new OwnerModel({ email, password });
-    await owner.save();
+    // const owner = new OwnerModel({ email, password });
+    const db = await mongo.database();
+    const owner = await db.insertOne(newOwner(email, password));
 
     console.log("Created new Owner", owner);
     res.sendStatus(200);
 })
 
 authRouter.post("/carers", async (req, res) => {
+    const newCarer: (email: string, passowrd: string) => Carer = (email: string, password: string) => {
+        return {
+            email, 
+            password, 
+            userType: "owner", 
+            notifications: [], 
+            recievedFeedback: [],
+            offers: [],
+            unavailabilities: [],
+            preferredPets: [],
+            licences: []
+        }
+    }
     const email = req.body.email;
     const password = req.body.password;
 
@@ -103,49 +138,12 @@ authRouter.post("/carers", async (req, res) => {
         return;
     }
 
-    const carer = new CarerModel({ email, password });
-    await carer.save();
+    const db = await mongo.database();
+    const carer = db.insertOne(newCarer(email, password));
 
     console.log("Created new Carer", carer);
     res.sendStatus(200);
 })
-
-
-
-// set up signup middleware, does most of the heavy lifting by creating a new user
-// and saving it to the database, on success it returns the new user to the next
-// function ('/signup')
-passport.use('signup', new LocalStrategy(signUpOptions, async (email, password, done) => {
-    const randomUserType = () => (Math.random() < 0.5) ? UserType.OWNER : UserType.CARER;
-
-    if (await UserModel.exists({email})) {
-        return done(null, false, { message: `Email: ${email} is already in use.`})
-    }
-
-    let user;
-    if (randomUserType() === UserType.OWNER) {
-        user = new OwnerModel({email, password})
-    } else {
-        user = new CarerModel({email, password})
-    }
-
-    try {
-        await user.save()
-    } catch (e) {
-        return done(e, false);
-    }
-
-    console.log('created new user: ', user);
-
-    return done(null, user);
-}));
-
-
-authRouter.post('/signup', passport.authenticate('signup', authOptions), (req, res) => {
-    console.log("signed user up", req.user)
-    res.json(req.user);
-});
-
 
 const jwtOpts = {
     secretOrKey: jwtSecret,
@@ -156,15 +154,75 @@ const jwtOpts = {
 // decodes the given token and if valid it tries to find the user associated with the email
 // passes that user to the next function, or otherwilse returns a 401 to the caller
 passport.use(
-    'jwt',
-    new JwtStrategy(jwtOpts, (token, done) => {
-        const user = UserModel.findOne({'email': token.user.email})
+    'user-jwt',
+    new JwtStrategy(jwtOpts, async (token, done) => {
+        const db = await mongo.database();
+        const user = await db.findOne({email: token.user.email})
+        console.log("found carer", user);
         if (!user) return done(null, false);
         return done(null, user);
     }
 ));
 
-authRouter.get('/needs-token', passport.authenticate('jwt', authOptions), (req, res) => {
-    res.send('got message');
+passport.use(
+    'owner-jwt',
+    new JwtStrategy(jwtOpts, async (token, done) => {
+        const db = await mongo.database();
+        const user = await db.findOne({email: token.user.email, userType: "owner"})
+
+        if (!user) return done(null, false);
+        return done(null, user);
+    }
+));
+
+passport.use(
+    'carer-jwt',
+    new JwtStrategy(jwtOpts, async (token, done) => {
+        const db = await mongo.database();
+        const user = await db.findOne({email: token.user.email, userType: "carer"})
+
+        if (!user) return done(null, false);
+        return done(null, user);
+    }
+));
+
+
+
+authRouter.get('/needs-user-token', passport.authenticate('user-jwt', authOptions), (req, res) => {
+    res.send('got user message');
 })
 
+authRouter.get('/needs-owner-token', passport.authenticate('owner-jwt', authOptions), (req, res) => {
+    res.send('got owner message');
+})
+
+authRouter.get('/needs-carer-token', passport.authenticate('carer-jwt', authOptions), (req, res) => {
+    res.send('got carer message');
+})
+
+
+authRouter.post(
+    '/owner/pet', 
+    passport.authenticate('owner-jwt', authOptions), 
+    async (req, res) => {
+        const newPet: () => Pet = () => {
+            return {
+                name: "test pet",
+                petType: "dog",
+                petSize: "large",
+                vaccinated: true,
+                friendly: false,
+                neutered: true,
+                feedback: []
+            }
+        };
+
+        const owner = req.user as Owner;
+        const pet = newPet();
+
+        const db = await mongo.database();
+        await db.updateOne({email: owner.email}, { "$push": {pets: pet}})
+
+        res.sendStatus(200);
+    }
+);
