@@ -1,9 +1,9 @@
-import { Request, Response, NextFunction } from "express";
+import Express from "express";
 import { WithId } from "mongodb";
 import mongo from "../mongo.js";
 import { Carer } from "../models/interfaces.js";
 
-async function getCarerBySession(req: Request, res: Response, next: NextFunction) {
+async function getCarerBySession(req: Express.Request, res: Express.Response, next: Express.NextFunction) {
     try {
         res.json(req.user);
     } catch (err) {

@@ -6,6 +6,8 @@ type PetType = "dog" | "cat" | "bird" | "rabbit";
 
 type PetSize = "small" | "medium" | "large";
 
+type RequestType = "broad" | "direct";
+
 export interface User {
     name?: string
     email: string
@@ -23,8 +25,7 @@ export interface User {
 
 export interface Owner extends User {
     pets: Array<Pet>
-    broadRequests: Array<Request>
-    directRequests: Array<Request>
+    requests: Array<Request>
 }
 
 export interface Carer extends User {
@@ -69,8 +70,10 @@ export interface Pet {
 }
 
 export interface Request {
-    carer?: ObjectId
-    complete: boolean
+    _id: ObjectId
+    requestType: RequestType
+    carer: ObjectId | null
+    isCompleted: boolean
     pets: Array<ObjectId>
     requestedOn: Date
     dateRange: DateRange

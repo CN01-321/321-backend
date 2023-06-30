@@ -89,8 +89,7 @@ authRouter.post("/owners", async (req, res) => {
             notifications: [], 
             receivedFeedback: [],
             pets: [],
-            broadRequests: [],
-            directRequests: []
+            requests: []
         }
     }
 
@@ -199,30 +198,3 @@ authRouter.get('/needs-owner-token', passport.authenticate('owner-jwt', authOpti
 authRouter.get('/needs-carer-token', passport.authenticate('carer-jwt', authOptions), (req, res) => {
     res.send('got carer message');
 })
-
-
-// authRouter.post(
-//     '/owner/pet', 
-//     passport.authenticate('owner-jwt', authOptions), 
-//     async (req, res) => {
-//         const newPet: () => Pet = () => {
-//             return {
-//                 name: "test pet",
-//                 petType: "dog",
-//                 petSize: "large",
-//                 vaccinated: true,
-//                 friendly: false,
-//                 neutered: true,
-//                 feedback: []
-//             }
-//         };
-
-//         const owner = req.user as Owner;
-//         const pet = newPet();
-
-//         const db = await mongo.database();
-//         await db.updateOne({email: owner.email}, { "$push": {pets: pet}})
-
-//         res.sendStatus(200);
-//     }
-// );
