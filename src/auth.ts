@@ -87,7 +87,7 @@ authRouter.post("/owners", async (req, res) => {
             password, 
             userType: "owner", 
             notifications: [], 
-            recievedFeedback: [],
+            receivedFeedback: [],
             pets: [],
             broadRequests: [],
             directRequests: []
@@ -118,9 +118,9 @@ authRouter.post("/carers", async (req, res) => {
         return {
             email, 
             password, 
-            userType: "owner", 
+            userType: "carer", 
             notifications: [], 
-            recievedFeedback: [],
+            receivedFeedback: [],
             offers: [],
             unavailabilities: [],
             preferredPets: [],
@@ -158,7 +158,7 @@ passport.use(
     new JwtStrategy(jwtOpts, async (token, done) => {
         const db = await mongo.database();
         const user = await db.findOne({email: token.user.email})
-        console.log("found carer", user);
+
         if (!user) return done(null, false);
         return done(null, user);
     }
@@ -201,28 +201,28 @@ authRouter.get('/needs-carer-token', passport.authenticate('carer-jwt', authOpti
 })
 
 
-authRouter.post(
-    '/owner/pet', 
-    passport.authenticate('owner-jwt', authOptions), 
-    async (req, res) => {
-        const newPet: () => Pet = () => {
-            return {
-                name: "test pet",
-                petType: "dog",
-                petSize: "large",
-                vaccinated: true,
-                friendly: false,
-                neutered: true,
-                feedback: []
-            }
-        };
+// authRouter.post(
+//     '/owner/pet', 
+//     passport.authenticate('owner-jwt', authOptions), 
+//     async (req, res) => {
+//         const newPet: () => Pet = () => {
+//             return {
+//                 name: "test pet",
+//                 petType: "dog",
+//                 petSize: "large",
+//                 vaccinated: true,
+//                 friendly: false,
+//                 neutered: true,
+//                 feedback: []
+//             }
+//         };
 
-        const owner = req.user as Owner;
-        const pet = newPet();
+//         const owner = req.user as Owner;
+//         const pet = newPet();
 
-        const db = await mongo.database();
-        await db.updateOne({email: owner.email}, { "$push": {pets: pet}})
+//         const db = await mongo.database();
+//         await db.updateOne({email: owner.email}, { "$push": {pets: pet}})
 
-        res.sendStatus(200);
-    }
-);
+//         res.sendStatus(200);
+//     }
+// );
