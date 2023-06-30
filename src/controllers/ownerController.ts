@@ -1,44 +1,76 @@
 import { Request, Response, NextFunction } from "express";
-import ownerService from "../services/ownerService.js";
-import Pet from "../models/pet.js";
-import User from "../models/user.js";
+import { ObjectId, WithId } from "mongodb";
+import mongo from "../mongo.js";
+import { Owner, Pet } from "../models/interfaces.js";
+
+async function getOwnerBySession(req: Request, res: Response, next: NextFunction) {
+    try {
+        res.json(req.user as WithId<Owner>);
+    } catch (err) {
+        console.error("The following error occured while getting an owner by session: " + err);
+        next(err);
+    }
+}
 
 async function addPet(req: Request, res: Response, next: NextFunction) {
     try {
-        const pet = await ownerService.addPet(req.user as User, req.body.name, req.body.petType);
-        if (Object.is(pet, Pet)) {
-            res.json(pet);
-        } else {
-            res.status(400).send("Could not add pet");
+        const owner = req.user as WithId<Owner>;
+
+        const newPet: Pet = {
+            _id: new ObjectId(),
+            name: req.body.pet.name,
+            petType: req.body.pet.petType,
+            petSize: req.body.pet.petSize,
+            isVaccinated: req.body.pet.isVaccinated,
+            isFriendly: req.body.pet.isFriendly,
+            isNeutered: req.body.pet.isNeutered,
+            profilePicture: "",
+            feedback: [],
         }
+
+        const db = await mongo.database();
+        const updatedOwner = await db.updateOne({ _id: owner._id }, { $push: { pets: newPet }});
+
+        res.json(updatedOwner);
     } catch (err) {
         console.error("The following error occured while adding a pet: " + err);
         next(err);
     }
 }
 
-async function getPets(req: Request, res: Response, next: NextFunction) {
+async function updatePet(req: Request, res: Response, next: Function) {
     try {
-        const pets: Pet | Pet[] | null = await ownerService.addPet(req.user as User, req.body.name, req.body.petType);
-        if (Object.is(pets, null)) {
-            res.status(404).send("Could not find pets");
-        } else {
-            res.json(pets);
+        const owner = req.user as WithId<Owner>;
+
+        const updatedPet: Pet = {
+            _id: new ObjectId(req.params.id),
+            name: req.body.pet.name,
+            petType: req.body.pet.petType,
+            petSize: req.body.pet.petSize,
+            isVaccinated: req.body.pet.isVaccinated,
+            isFriendly: req.body.pet.isFriendly,
+            isNeutered: req.body.pet.isNeutered,
+            profilePicture: "",
+            feedback: [],
         }
+
+        const db = await mongo.database();
+        const updatedOwner = await db.updateOne({ _id: owner._id, "pets._id": updatedPet._id }, { $set : { "pets.$": updatedPet }});
+
+        res.json(updatedOwner);
     } catch (err) {
-        console.error("The following error occured while adding a pet: " + err);
+        console.error("The following error occured while updating a pet: " + err);
         next(err);
     }
 }
 
 async function deletePet(req: Request, res: Response, next: NextFunction) {
     try {
-        const isDeleted = await ownerService.deletePet(req.user as User, req.params.id);
-        if (isDeleted) {
-            res.status(200);
-        } else {
-            res.status(400);
-        }
+        const owner = req.user as WithId<Owner>;
+        const db = await mongo.database();
+        const modifiedOwner = await db.updateOne({ _id: owner._id }, { $pull : { pets: { _id: new ObjectId(req.params.id) } } });
+
+        res.json(modifiedOwner);
     } catch (err) {
         console.error("The following error occured while deleting a pet: " + err);
         next(err);
@@ -46,8 +78,9 @@ async function deletePet(req: Request, res: Response, next: NextFunction) {
 }
 
 const ownerController = {
+    getOwnerBySession,
     addPet,
-    getPets,
+    updatePet,
     deletePet,
 }
 

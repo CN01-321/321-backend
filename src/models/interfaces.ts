@@ -18,7 +18,7 @@ export interface User {
     pfp?: string
     userType: UserType
     notifications: Array<Notification>
-    recievedFeedback: Array<Feedback>
+    receivedFeedback: Array<Feedback>
 }
 
 export interface Owner extends User {
@@ -57,14 +57,15 @@ export interface Comment {
 }
 
 export interface Pet {
+    _id: ObjectId
     name: string
     petType: PetType
     petSize: PetSize
-    vaccinated: boolean
-    friendly: boolean
-    neutered: boolean
-    pfp?: string
-    feedback: Array<Feedback>
+    isVaccinated: boolean
+    isFriendly: boolean
+    isNeutered: boolean
+    profilePicture?: string
+    feedback?: Array<Feedback>
 }
 
 export interface Request {

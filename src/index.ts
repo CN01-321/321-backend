@@ -3,6 +3,7 @@ import bodyParser from 'body-parser';
 import authRouter from './auth.js';
 import userRouter from './routes/userRoute.js';
 import ownerRouter from './routes/ownerRoute.js';
+import carerRouter from './routes/carerRoute.js';
 import dotenv from 'dotenv'
 
 dotenv.config()
@@ -26,3 +27,4 @@ app.listen(port, () => console.log(`Running on port ${port}`));
 app.use("/api", authRouter);
 app.use("/api", userRouter);
 app.use("/api", ownerRouter);
+app.use("/api", carerRouter);

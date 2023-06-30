@@ -4,8 +4,9 @@ import ownerController from "../controllers/ownerController.js";
 
 const ownerRouter = Router();
 
-ownerRouter.get("/owner/pets", passport.authenticate('jwt', { session: false }), ownerController.getPets);
-ownerRouter.post("/owner/pets", passport.authenticate('jwt', { session: false }), ownerController.addPet);
-ownerRouter.delete("/owner/pet/:id", passport.authenticate('jwt', { session: false }), ownerController.deletePet);
+ownerRouter.get("/owner", passport.authenticate('owner-jwt', { session: false }), ownerController.getOwnerBySession);
+ownerRouter.post("/owner/pets", passport.authenticate('owner-jwt', { session: false }), ownerController.addPet);
+ownerRouter.put("/owner/pets/:id", passport.authenticate('owner-jwt', { session: false }), ownerController.updatePet);
+ownerRouter.delete("/owner/pets/:id", passport.authenticate('owner-jwt', { session: false }), ownerController.deletePet);
 
 export default ownerRouter;
