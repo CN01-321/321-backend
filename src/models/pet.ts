@@ -21,10 +21,10 @@ export interface Pet {
   feedback?: Array<Feedback>;
 }
 
-export async function getPet(petId: ObjectId): Promise<Pet | null> {
+export async function getPetWithId(petId: ObjectId): Promise<Pet | null> {
   const ownerCollection = await getCollection<Owner>();
   const res = await ownerCollection.aggregate([
-    { $unwind: "pets" },
+    { $unwind: "$pets" },
     { $match: { "pets._id": petId } },
   ]);
   const pet = await res.next();
@@ -49,6 +49,7 @@ export async function createNewPet(owner: WithId<Owner>, pet: Pet) {
   pet._id = new ObjectId();
   const ownerCollection = await getCollection<Owner>();
   await ownerCollection.updateOne({ _id: owner._id }, { $push: { pets: pet } });
+  return pet;
 }
 
 export async function updateExisitingPet(owner: WithId<Owner>, pet: Pet) {

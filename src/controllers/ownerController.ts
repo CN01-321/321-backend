@@ -10,6 +10,7 @@ import {
   petTypes,
   checkOwnerPetExists,
   deleteExisitingPet,
+  getPetWithId,
 } from "../models/pet.js";
 import { Request, createNewRequest } from "../models/request.js";
 import { handleControllerError } from "../util.js";
@@ -30,6 +31,13 @@ async function getOwnerBySession(
   }
 }
 
+async function getPet(req: Express.Request, res: Express.Response) {
+  const pet = await getPetWithId(new ObjectId(req.params.petId));
+  console.log(pet);
+
+  res.json(pet);
+}
+
 function validatePet(pet: any): Pet {
   // TODO more validation
   console.log(pet);
@@ -46,6 +54,7 @@ function validatePet(pet: any): Pet {
 }
 
 async function addPet(req: Express.Request, res: Express.Response) {
+  console.log(req.body);
   const owner = req.user as WithId<Owner>;
   const petData = {
     name: req.body.name,
@@ -59,7 +68,7 @@ async function addPet(req: Express.Request, res: Express.Response) {
 
   try {
     const pet = validatePet(petData);
-    await createNewPet(owner, pet);
+    res.json({ pet: await createNewPet(owner, pet) });
   } catch (err) {
     handleControllerError(res, err, 400);
   }
@@ -213,6 +222,7 @@ async function deleteRequest(
 
 const ownerController = {
   getOwnerBySession,
+  getPet,
   addPet,
   updatePet,
   deletePet,

@@ -9,6 +9,11 @@ ownerRouter.get(
   passport.authenticate("owner-jwt", { session: false }),
   ownerController.getOwnerBySession
 );
+ownerRouter.get(
+  "/owner/pets/:petId",
+  passport.authenticate("user-jwt", { session: false }),
+  ownerController.getPet
+);
 ownerRouter.post(
   "/owner/pets",
   passport.authenticate("owner-jwt", { session: false }),

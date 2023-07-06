@@ -7,11 +7,6 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-const mongo_url = process.env.MONGODB_URL ?? "";
-const mongo_db = process.env.MONGODB_DB ?? "";
-
-// await mongoose.connect(mongo_url, { dbName: mongo_db })
-
 const port = process.env.SERVER_PORT;
 const app = express();
 
