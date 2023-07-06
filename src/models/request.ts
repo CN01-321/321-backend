@@ -1,29 +1,43 @@
-import { prop, Ref } from "@typegoose/typegoose";
-import { Base } from "@typegoose/typegoose/lib/defaultClasses";
-import Owner from "./owner.js";
-import Carer from "./carer.js";
-import Pet from "./pet.js";
+import { ObjectId, WithId } from "mongodb";
+import { Carer, DateRange } from "./carer.js";
+import { Owner } from "./owner.js";
+import { getCollection } from "../mongo.js";
 
-class Request {
-    @prop({ ref: () => Owner })
-    ownerId?: Ref<Owner>;
-
-    @prop({ ref: () => Carer })
-    carerId?: Ref<Carer>;
-
-    @prop({ ref: () => Pet })
-    requestedPets?: Ref<Pet>[];
-
-    @prop()
-    startDate?: Date;
-
-    @prop()
-    endDate?: Date;
-
-    @prop()
-    status?: string;
+export interface Request {
+  _id?: ObjectId;
+  carer?: ObjectId;
+  isCompleted: boolean;
+  pets: Array<ObjectId>;
+  requestedOn: Date;
+  dateRange: DateRange;
 }
 
-interface Request extends Base {}
+async function addRequestToCarer(requestId: ObjectId, carerId: ObjectId) {
+  const carerCollection = await getCollection<Carer>();
+  await carerCollection.updateOne(
+    { _id: carerId },
+    { $push: { offers: requestId } }
+  );
+}
 
-export default Request;
+async function addRequestToNearby(owner: WithId<Owner>, request: Request) {
+  // TODO search for nearby carers (haversine?) and push the request to them
+}
+
+export async function createNewRequest(owner: WithId<Owner>, request: Request) {
+  request._id = new ObjectId();
+
+  const ownerCollection = await getCollection<Owner>();
+  await ownerCollection.updateOne(
+    { _id: owner._id },
+    { $push: { requests: request } }
+  );
+
+  request.carer
+    ? await addRequestToCarer(request._id, request.carer)
+    : await addRequestToNearby(owner, request);
+
+  return request;
+}
+
+// TODO request removal?

@@ -1,55 +1,44 @@
-import { modelOptions, prop } from "@typegoose/typegoose";
-import { Base } from "@typegoose/typegoose/lib/defaultClasses";
+import { ObjectId } from "mongodb";
+import { getCollection } from "../mongo.js";
+import { Feedback } from "./feedback.js";
 
-export enum UserType {
-    OWNER = "owner",
-    CARER = "carer"
+export type UserType = "owner" | "carer";
+
+export interface User {
+  _id?: ObjectId;
+  name?: string;
+  email: string;
+  password: string;
+  address?: string;
+  phone?: string;
+  bio?: string;
+  locationLat?: number;
+  locationLng?: number;
+  pfp?: string;
+  userType: UserType;
+  notifications: Array<Notification>;
+  receivedFeedback: Array<Feedback>;
 }
 
-class Notification {
-    @prop()
-    userName?: string;
-
-    @prop()
-    description?: string;
+export interface Notification {
+  name: string;
+  desc: string;
 }
 
-@modelOptions({schemaOptions: {discriminatorKey: "userType"}})
-class User {
-    @prop()
-    name?: string;
-
-    @prop({ required: true, unique: true })
-    email!: string;
-
-    @prop({ required: true, select: false })
-    password!: string;
-
-    @prop()
-    address?: string;
-
-    @prop()
-    phone?: string;
-
-    @prop()
-    bio?: string;
-
-    @prop()
-    locationLat?: number;
-
-    @prop()
-    locationLng?: number;
-
-    @prop()
-    profilePicture?: string;
-
-    @prop({required: true})
-    userType!: string;
-
-    @prop({ _id: false, type: Notification})
-    notifications!: Notification[];
+export async function getUserByEmail(email: string) {
+  const userCollection = await getCollection<User>();
+  return await userCollection.findOne({ email });
 }
 
-interface User extends Base {}
+export async function getUserByEmailAndPassword(
+  email: string,
+  password: string
+) {
+  const userCollection = await getCollection<User>();
+  return await userCollection.findOne({ email, password });
+}
 
-export default User;
+export async function checkEmailExists(email: string) {
+  const userCollection = await getCollection<User>();
+  return await userCollection.findOne({ email });
+}

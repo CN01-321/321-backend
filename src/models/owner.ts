@@ -1,21 +1,27 @@
-import { prop, Ref } from "@typegoose/typegoose";
-import { Base } from "@typegoose/typegoose/lib/defaultClasses";
-import User from "./user.js";
-import Pet from "./pet.js";
-import { Feedback } from "./feedback.js";
-import Offer from "./offer.js";
+import { getCollection } from "../mongo.js";
+import { Pet } from "./pet.js";
+import { Request } from "./request.js";
+import { User } from "./user.js";
 
-class Owner extends User {
-    @prop({ ref: () => Pet })
-    pets?: Ref<Pet>[];
-
-    @prop({ ref: () => Offer })
-    offers?: Ref<Offer>[];
-
-    @prop({ ref: () => Feedback })
-    feedback?: Ref<Feedback>[];
+export interface Owner extends User {
+  pets: Array<Pet>;
+  requests: Array<Request>;
 }
 
-interface Owner extends Base {}
+export async function newOwner(email: string, password: string) {
+  const ownerCollection = await getCollection<Owner>();
+  return ownerCollection.insertOne({
+    email,
+    password,
+    userType: "owner",
+    notifications: [],
+    receivedFeedback: [],
+    pets: [],
+    requests: [],
+  });
+}
 
-export default Owner;
+export async function getOwnerByEmail(email: string) {
+  const ownerCollection = await getCollection<Owner>();
+  return await ownerCollection.findOne({ email, userType: "owner" });
+}
