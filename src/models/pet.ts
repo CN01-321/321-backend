@@ -54,10 +54,16 @@ export async function createNewPet(owner: WithId<Owner>, pet: Pet) {
 
 export async function updateExisitingPet(owner: WithId<Owner>, pet: Pet) {
   const ownerCollection = await getCollection<Owner>();
+
+
   await ownerCollection.updateOne(
     { _id: owner._id, "pets._id": pet._id },
     { $set: { "pets.$": pet } }
   );
+
+  console.log(pet._id, await ownerCollection.findOne({"pets._id": pet._id! }))
+
+  return await getPetWithId(pet._id!)!;
 }
 
 export async function deleteExisitingPet(

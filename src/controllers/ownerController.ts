@@ -1,5 +1,5 @@
 import Express from "express";
-import { MongoError, ObjectId, WithId } from "mongodb";
+import { ObjectId, WithId } from "mongodb";
 import { getCollection } from "../mongo.js";
 import { Owner } from "../models/owner.js";
 import {
@@ -40,7 +40,7 @@ async function getPet(req: Express.Request, res: Express.Response) {
 
 function validatePet(pet: any): Pet {
   // TODO more validation
-  console.log(pet);
+  console.log("validated: ", pet);
 
   if (!pet.name) throw new Error("Name is empty");
 
@@ -68,7 +68,7 @@ async function addPet(req: Express.Request, res: Express.Response) {
 
   try {
     const pet = validatePet(petData);
-    res.json({ pet: await createNewPet(owner, pet) });
+    res.json(await createNewPet(owner, pet));
   } catch (err) {
     handleControllerError(res, err, 400);
   }
@@ -76,7 +76,9 @@ async function addPet(req: Express.Request, res: Express.Response) {
 
 async function updatePet(req: Express.Request, res: Express.Response) {
   const owner = req.user as WithId<Owner>;
-  const petId = new ObjectId(req.params.id);
+  const petId = new ObjectId(req.params.petId);
+
+  // TODO validate petId and catch potential throw from new ObjectId()
 
   if (!checkOwnerPetExists(owner, petId)) {
     res.status(404).send("Pet not found for owner");
@@ -95,8 +97,7 @@ async function updatePet(req: Express.Request, res: Express.Response) {
 
   try {
     const pet = validatePet(petData);
-    await updateExisitingPet(owner, pet);
-    res.json(pet);
+    res.json(await updateExisitingPet(owner, pet));
   } catch (err) {
     handleControllerError(res, err, 400);
   }
@@ -104,7 +105,7 @@ async function updatePet(req: Express.Request, res: Express.Response) {
 
 async function deletePet(req: Express.Request, res: Express.Response) {
   const owner = req.user as WithId<Owner>;
-  const petId = new ObjectId(req.params.id ?? "");
+  const petId = new ObjectId(req.params.petId);
 
   if (!checkOwnerPetExists(owner, petId)) {
     res.status(404).send("Pet not found for owner");

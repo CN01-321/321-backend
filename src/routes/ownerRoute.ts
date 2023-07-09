@@ -5,42 +5,42 @@ import ownerController from "../controllers/ownerController.js";
 const ownerRouter = Router();
 
 ownerRouter.get(
-  "/owner",
+  "/owners",
   passport.authenticate("owner-jwt", { session: false }),
   ownerController.getOwnerBySession
 );
 ownerRouter.get(
-  "/owner/pets/:petId",
+  "/owners/pets/:petId",
   passport.authenticate("user-jwt", { session: false }),
   ownerController.getPet
 );
 ownerRouter.post(
-  "/owner/pets",
+  "/owners/pets",
   passport.authenticate("owner-jwt", { session: false }),
   ownerController.addPet
 );
 ownerRouter.put(
-  "/owner/pets/:petId",
+  "/owners/pets/:petId",
   passport.authenticate("owner-jwt", { session: false }),
   ownerController.updatePet
 );
 ownerRouter.delete(
-  "/owner/pets/:petId",
+  "/owners/pets/:petId",
   passport.authenticate("owner-jwt", { session: false }),
   ownerController.deletePet
 );
 ownerRouter.post(
-  "/owner/requests",
+  "/owners/requests",
   passport.authenticate("owner-jwt", { session: false }),
   ownerController.createRequest
 );
 ownerRouter.put(
-  "/owner/requests/:requestId",
+  "/owners/requests/:requestId",
   passport.authenticate("owner-jwt", { session: false }),
   ownerController.editRequest
 );
 ownerRouter.delete(
-  "/owner/requests/:requestId",
+  "/owners/requests/:requestId",
   passport.authenticate("owner-jwt", { session: false }),
   ownerController.deleteRequest
 );
