@@ -1,5 +1,5 @@
 import { ObjectId } from "mongodb";
-import { getCollection } from "../mongo.js";
+import { userCollection } from "../mongo.js";
 import { Feedback } from "./feedback.js";
 
 export type UserType = "owner" | "carer";
@@ -26,7 +26,6 @@ export interface Notification {
 }
 
 export async function getUserByEmail(email: string) {
-  const userCollection = await getCollection<User>();
   return await userCollection.findOne({ email });
 }
 
@@ -34,11 +33,9 @@ export async function getUserByEmailAndPassword(
   email: string,
   password: string
 ) {
-  const userCollection = await getCollection<User>();
   return await userCollection.findOne({ email, password });
 }
 
 export async function checkEmailExists(email: string) {
-  const userCollection = await getCollection<User>();
   return await userCollection.findOne({ email });
 }

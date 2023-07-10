@@ -1,6 +1,8 @@
 import { MongoClient } from "mongodb";
 import { User } from "./models/user.js";
 import dotenv from "dotenv";
+import { Owner } from "./models/owner.js";
+import { Carer } from "./models/carer.js";
 
 dotenv.config();
 
@@ -15,6 +17,10 @@ async function getDatabase() {
   return client.db(mongo_db);
 }
 
-export async function getCollection<T extends User>() {
+async function getUsersCollection<T extends User>() {
   return (await getDatabase()).collection<T>("users");
 }
+
+export const userCollection = await getUsersCollection<User>();
+export const ownerCollection = await getUsersCollection<Owner>();
+export const carerCollection = await getUsersCollection<Carer>();
