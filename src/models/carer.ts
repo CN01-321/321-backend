@@ -15,7 +15,7 @@ export interface Carer extends User {
 
 export interface DateRange {
   startDate: Date;
-  duration: number;
+  endDate: Date;
 }
 
 export interface PreferredPet {

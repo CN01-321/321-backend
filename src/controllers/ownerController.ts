@@ -11,7 +11,13 @@ import {
   deleteExisitingPet,
   getPetWithId,
 } from "../models/pet.js";
-import { Request, createNewRequest, updateRequest } from "../models/request.js";
+import {
+  Request,
+  createNewRequest,
+  getOwnerRequests,
+  getRequestWithId,
+  updateRequest,
+} from "../models/request.js";
 import { handleControllerError } from "../util.js";
 import { getCarerById } from "../models/carer.js";
 
@@ -131,7 +137,6 @@ async function deletePet(req: Express.Request, res: Express.Response) {
 
 function validateDateRange(dateRange: any) {
   // if the start date is undefined or in the past then throw error
-  console.log(new Date(dateRange.startDate), new Date());
   if (
     dateRange.startDate === undefined ||
     new Date(dateRange.startDate) < new Date()
@@ -139,8 +144,11 @@ function validateDateRange(dateRange: any) {
     throw new Error("Start date is invalid");
   }
 
-  if (dateRange.duration === undefined || dateRange.duration < 1) {
-    throw new Error("Duration is invalid");
+  if (
+    dateRange.endDate === undefined ||
+    new Date(dateRange.endDate) < new Date(dateRange.startDate)
+  ) {
+    throw new Error("End date is invalid");
   }
 }
 
@@ -165,9 +173,19 @@ async function validateRequest(request: any): Promise<Request> {
   return request as Request;
 }
 
+async function getRequest(req: Express.Request, res: Express.Response) {
+  res.json(await getRequestWithId(new ObjectId(req.params.requestId)));
+}
+
+async function getRequests(req: Express.Request, res: Express.Response) {
+  const owner = req.user as WithId<Owner>;
+  res.json(await getOwnerRequests(owner));
+}
+
 async function createRequest(req: Express.Request, res: Express.Response) {
   const owner = req.user as WithId<Owner>;
   const requestData = {
+    carer: req.body.carer ?? null,
     isCompleted: false,
     pets: req.body.pets,
     requestedOn: new Date(),
@@ -232,6 +250,8 @@ const ownerController = {
   addPet,
   updatePet,
   deletePet,
+  getRequest,
+  getRequests,
   createRequest,
   editRequest,
   deleteRequest,

@@ -5,7 +5,7 @@ import { carerCollection, ownerCollection } from "../mongo.js";
 
 export interface Request {
   _id?: ObjectId;
-  carer?: ObjectId;
+  carer: ObjectId | null;
   isCompleted: boolean;
   pets: Array<ObjectId>;
   requestedOn: Date;
@@ -19,6 +19,37 @@ export async function getRequestWithId(requestId: ObjectId) {
   ]);
   const request = await res.next();
   return request?.requests as Request;
+}
+
+export async function getOwnerRequests(owner: WithId<Owner>) {
+  const res = await ownerCollection.aggregate([
+    { $match: { _id: owner._id } },
+    { $unwind: "$requests" },
+    { $replaceWith: "$requests" },
+    // add some of the carers info onto the request by joining their information
+    // if the carer id is present in the request
+    {
+      $lookup: {
+        from: "users",
+        let: { carer: "$carer" },
+        pipeline: [
+          {
+            $match: {
+              $expr: { $eq: ["$_id", { $toObjectId: "$$carer" }] },
+            },
+          },
+          { $project: { _id: 0, carerName: "name" } },
+        ],
+        as: "carerInfo",
+      },
+    },
+    // flatten the carerInfo field so that their info is with the rest of the request
+    { $unwind: { path: "$carerInfo", preserveNullAndEmptyArrays: true } },
+    { $addFields: { carerName: "$carerInfo.carerName" } },
+    { $project: { carerInfo: 0 } },
+  ]);
+
+  return res.toArray();
 }
 
 async function addRequestToCarer(requestId: ObjectId, carerId: ObjectId) {

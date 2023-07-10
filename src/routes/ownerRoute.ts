@@ -29,6 +29,16 @@ ownerRouter.delete(
   passport.authenticate("owner-jwt", { session: false }),
   ownerController.deletePet
 );
+ownerRouter.get(
+  "/owners/requests/:requestId",
+  passport.authenticate("owner-jwt", { session: false }),
+  ownerController.getRequest
+);
+ownerRouter.get(
+  "/owners/requests",
+  passport.authenticate("owner-jwt", { session: false }),
+  ownerController.getRequests
+);
 ownerRouter.post(
   "/owners/requests",
   passport.authenticate("owner-jwt", { session: false }),
