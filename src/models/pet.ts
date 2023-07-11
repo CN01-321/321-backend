@@ -30,6 +30,17 @@ export async function getPetWithId(petId: ObjectId): Promise<Pet | null> {
   return pet?.pets as Pet;
 }
 
+export async function getOwnerPets(owner: WithId<Owner>) {
+  const res = await ownerCollection.aggregate([
+    { $match: { _id: owner._id } },
+    { $unwind: "$pets" },
+    { $replaceWith: "$pets" },
+    { $project: { feedback: 0 } },
+  ]);
+
+  return await res.toArray();
+}
+
 export async function checkOwnerPetExists(
   owner: WithId<Owner>,
   petId: ObjectId

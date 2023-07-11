@@ -43,13 +43,13 @@ export async function getOwnerRequests(owner: WithId<Owner>) {
         as: "carerInfo",
       },
     },
-    // flatten the carerInfo field so that their info is with the rest of the request
+    // flatten the carerInfo array into field
     { $unwind: { path: "$carerInfo", preserveNullAndEmptyArrays: true } },
     { $addFields: { carerName: "$carerInfo.carerName" } },
     { $project: { carerInfo: 0 } },
   ]);
 
-  return res.toArray();
+  return await res.toArray();
 }
 
 async function addRequestToCarer(requestId: ObjectId, carerId: ObjectId) {

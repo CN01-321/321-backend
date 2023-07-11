@@ -9,15 +9,22 @@ export interface User {
   name?: string;
   email: string;
   password: string;
+  location?: UserLocation;
   address?: string;
   phone?: string;
   bio?: string;
-  locationLat?: number;
-  locationLng?: number;
   pfp?: string;
   userType: UserType;
   notifications: Array<Notification>;
   receivedFeedback: Array<Feedback>;
+}
+
+export interface UserLocation {
+  state: string;
+  city: string;
+  street: string;
+  lat: number;
+  lng: number;
 }
 
 export interface Notification {

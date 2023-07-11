@@ -10,6 +10,7 @@ import {
   checkOwnerPetExists,
   deleteExisitingPet,
   getPetWithId,
+  getOwnerPets,
 } from "../models/pet.js";
 import {
   Request,
@@ -34,6 +35,11 @@ async function getOwnerBySession(
     );
     next(err);
   }
+}
+
+async function getPets(req: Express.Request, res: Express.Response) {
+  const owner = req.user as WithId<Owner>;
+  res.json(await getOwnerPets(owner));
 }
 
 async function getPet(req: Express.Request, res: Express.Response) {
@@ -247,6 +253,7 @@ async function deleteRequest(
 const ownerController = {
   getOwnerBySession,
   getPet,
+  getPets,
   addPet,
   updatePet,
   deletePet,
