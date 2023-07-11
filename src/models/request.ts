@@ -38,14 +38,13 @@ export async function getOwnerRequests(owner: WithId<Owner>) {
               $expr: { $eq: ["$_id", { $toObjectId: "$$carer" }] },
             },
           },
-          { $project: { _id: 0, carerName: "name" } },
+          { $project: { _id: 1, name: 1 } },
         ],
-        as: "carerInfo",
+        as: "carer",
       },
     },
     // flatten the carerInfo array into field
-    { $unwind: { path: "$carerInfo", preserveNullAndEmptyArrays: true } },
-    { $addFields: { carerName: "$carerInfo.carerName" } },
+    { $unwind: { path: "$carer", preserveNullAndEmptyArrays: true } },
     { $project: { carerInfo: 0 } },
   ]);
 
