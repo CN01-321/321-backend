@@ -145,7 +145,7 @@ function validateDateRange(dateRange: any) {
   // if the start date is undefined or in the past then throw error
   if (
     dateRange.startDate === undefined ||
-    new Date(dateRange.startDate) < new Date()
+    new Date(dateRange.startDate) < new Date(Date.now() - 60 * 60 * 5)
   ) {
     throw new Error("Start date is invalid");
   }
@@ -194,9 +194,11 @@ async function createRequest(req: Express.Request, res: Express.Response) {
     carer: req.body.carer ?? null,
     isCompleted: false,
     pets: req.body.pets,
-    requestedOn: new Date(),
+    message: req.body.message,
     dateRange: req.body.dateRange,
   };
+
+  console.log(owner, req.body, requestData);
 
   try {
     const request = await validateRequest(requestData);
