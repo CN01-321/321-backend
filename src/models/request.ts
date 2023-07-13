@@ -8,6 +8,7 @@ export interface Request {
   carer: ObjectId | null;
   isCompleted: boolean;
   pets: Array<ObjectId>;
+  respondents: Array<ObjectId>;
   requestedOn: Date;
   dateRange: DateRange;
 }
@@ -85,4 +86,21 @@ export async function updateRequest(owner: WithId<Owner>, request: Request) {
   return await getRequestWithId(request._id!);
 }
 
-// TODO request removal?
+export async function getRequestRespondents(
+  owner: WithId<Owner>,
+  requestId: ObjectId
+) {
+  const res = await ownerCollection.aggregate([
+    { $match: { _id: owner._id, "requests._id": requestId } },
+    { $unwind: "requests.respondents" },
+    { $replaceWith: "requests" },
+    {
+      $lookup: {
+        from: "users",
+        localField: "respondents",
+        foreignField: "_id",
+        as: "respondents",
+      },
+    },
+  ]);
+}

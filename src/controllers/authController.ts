@@ -1,6 +1,5 @@
 import dotenv from "dotenv";
 import jwt from "jsonwebtoken";
-import { getUsersCollection } from "../mongo.js";
 import passport from "passport";
 import { Strategy as LocalStrategy, IStrategyOptions } from "passport-local";
 import {

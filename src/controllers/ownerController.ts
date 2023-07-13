@@ -196,6 +196,7 @@ async function createRequest(req: Express.Request, res: Express.Response) {
     pets: req.body.pets,
     message: req.body.message,
     dateRange: req.body.dateRange,
+    respondents: [],
   };
 
   console.log(owner, req.body, requestData);
@@ -250,6 +251,15 @@ async function deleteRequest(
   //   );
   //   next(err);
   // }
+}
+
+async function getRequestRespondents(
+  req: Express.Request,
+  res: Express.Response
+) {
+  if (!ObjectId.isValid(req.params.requestId)) {
+    res.status(400).send("Invalid request id");
+  }
 }
 
 const ownerController = {
