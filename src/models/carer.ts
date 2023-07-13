@@ -1,59 +1,51 @@
-import { prop, Ref } from "@typegoose/typegoose";
-import { Base } from "@typegoose/typegoose/lib/defaultClasses";
-import User from "./user.js"
-import { Feedback } from "./feedback.js";
+import { ObjectId } from "mongodb";
+import { PetSize, PetType } from "./pet.js";
+import { User } from "./user.js";
+import { carerCollection } from "../mongo.js";
 
-class Unavailability {
-    @prop()
-    startDate?: Date;
-
-    @prop()
-    endDate?: Date;
+export interface Carer extends User {
+  skillsAndExp?: string;
+  preferredTravelDistance?: number;
+  hourlyRate?: number;
+  offers: Array<ObjectId>;
+  unavailabilities: Array<DateRange>;
+  preferredPets: Array<PreferredPet>;
+  licences: Array<Licence>;
 }
 
-class PreferredPet {
-    @prop()
-    petType?: string;
-
-    @prop()
-    petSize?: string;
+export interface DateRange {
+  startDate: Date;
+  endDate: Date;
 }
 
-class Licence {
-    @prop()
-    licenceName?: string;
-
-    @prop()
-    licenceNumber?: string;
+export interface PreferredPet {
+  petType: PetType;
+  petSize: PetSize;
 }
 
-class Carer extends User {
-    @prop()
-    skills?: string;
-    
-    @prop()
-    experience?: string;
-
-    @prop()
-    preferredTravelDistance?: number;
-
-    @prop()
-    hourlyRate?: number;
-
-    @prop({ _id: false, type: Unavailability })
-    unavailabilities?: Unavailability[];
-
-    @prop({ _id: false, type: PreferredPet})
-    preferredPets?: PreferredPet[];
-
-    @prop({ _id: false, type: Licence })
-    licences?: Licence[];
-
-    @prop({ ref: () => Feedback })
-    feedback?: Ref<Feedback>[];
+export interface Licence {
+  name: string;
+  number: string;
 }
 
-interface Carer extends Base {}
+export async function newCarer(email: string, password: string) {
+  return carerCollection.insertOne({
+    email,
+    password,
+    userType: "carer",
+    notifications: [],
+    receivedFeedback: [],
+    offers: [],
+    unavailabilities: [],
+    preferredPets: [],
+    licences: [],
+  });
+}
 
+export async function getCarerById(carerId: ObjectId) {
+  return carerCollection.findOne({ _id: carerId });
+}
 
-export default Carer;
+export async function getCarerByEmail(email: string) {
+  return carerCollection.findOne({ email, userType: "carer" });
+}
