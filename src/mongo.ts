@@ -5,6 +5,7 @@ import { Owner } from "./models/owner.js";
 import { Carer } from "./models/carer.js";
 import { Pet, petSizes, petTypes } from "./models/pet.js";
 import { Request } from "./models/request.js";
+import { emitWarning } from "process";
 
 dotenv.config();
 
@@ -27,14 +28,53 @@ export const userCollection = await getUsersCollection<User>();
 export const ownerCollection = await getUsersCollection<Owner>();
 export const carerCollection = await getUsersCollection<Carer>();
 
-function populateDB() {
-  const owners = genOwners();
-  console.log(owners);
+if (process.env.POPULATE_DB === "true") {
+  console.log("populating users");
+  populateDB();
 }
 
-populateDB();
+async function populateDB() {
+  // drops everything
+  await userCollection.deleteMany({});
 
-function genOwners() {
+  const carers = genCarers();
+  const owners = genOwners(carers);
+
+  await carerCollection.insertMany(carers);
+  await ownerCollection.insertMany(owners);
+
+  console.log(owners, carers);
+}
+
+function genCarers() {
+  const newCarer: (num: number) => Carer = (num) => {
+    return {
+      _id: new ObjectId(),
+      email: `owner${num}@email.com`,
+      password: "password",
+      name: `Owner ${num}`,
+      userType: "carer",
+      location: genLocation(),
+      notifications: [],
+      receivedFeedback: [],
+      skillsAndExp: "Skills and Experience",
+      preferredTravelDistance: 50,
+      hourlyRate: 50,
+      offers: [],
+      unavailabilities: [],
+      preferredPets: [],
+      licences: [],
+    };
+  };
+
+  const carers: Array<Carer> = [];
+  for (let i = 1; i <= 20; i++) {
+    carers.push(newCarer(i));
+  }
+  return carers;
+}
+
+function genOwners(carers: Array<Carer>) {
   const newOwner: (num: number) => Owner = (num) => {
     return {
       _id: new ObjectId(),
@@ -51,8 +91,11 @@ function genOwners() {
   };
 
   const owners: Array<Owner> = [];
-  for (let i = 1; i < 10; i++) {
-    owners.push(newOwner(i));
+  for (let i = 1; i <= 10; i++) {
+    const owner = newOwner(i);
+    genBroadRequests(owner, carers);
+    genDirectRequests(owner, carers);
+    owners.push(owner);
   }
 
   return owners;
@@ -100,8 +143,8 @@ function genPets(): Array<Pet> {
   return pets;
 }
 
-function genBroadRequests(owner: Owner): Array<Request> {
-  const newRequest: (owner: Owner) => Request = (o) => {
+function genBroadRequests(owner: Owner, carers: Array<Carer>) {
+  const newBroadRequest: (owner: Owner) => Request = (o) => {
     return {
       _id: new ObjectId(),
       carer: null,
@@ -116,11 +159,59 @@ function genBroadRequests(owner: Owner): Array<Request> {
     };
   };
 
-  const requests: Array<Request> = [];
-  const numRequests = Math.floor(Math.random() * 3);
-  for (let i = 0; i < numRequests; i++) {
-    requests.push(newRequest(owner));
+  const genRespondents: (request: Request) => void = (request) => {
+    const respondents: Map<ObjectId, boolean> = new Map();
+
+    const numResp = Math.floor(Math.random() * 4);
+    while (respondents.size < numResp) {
+      const carer = carers[Math.floor(Math.random() * carers.length)];
+      respondents.set(carer._id!, true);
+    }
+
+    [...respondents.keys()].forEach((r) => {
+      request.respondents.push(r);
+      carers.find((c) => c._id === r)?.offers.push(request._id!);
+    });
+
+    request.respondents = [...respondents.keys()];
+  };
+
+  const broad: Array<Request> = [];
+  const numBroad = Math.floor(Math.random() * 4);
+  for (let i = 0; i < numBroad; i++) {
+    const b = newBroadRequest(owner);
+    genRespondents(b);
+
+    broad.push(b);
   }
 
-  return requests;
+  owner.requests.push(...broad);
+}
+
+function genDirectRequests(owner: Owner, carers: Array<Carer>) {
+  const newDirectRequest: (owner: Owner, carer: Carer) => Request = (o, c) => {
+    return {
+      _id: new ObjectId(),
+      carer: c._id!,
+      isCompleted: false,
+      respondents: [],
+      requestedOn: new Date(),
+      pets: owner.pets.filter((_) => Math.random() > 0.5).map((p) => p._id!),
+      dateRange: {
+        startDate: new Date(Date() + 60 * 60 * 60 * 24),
+        endDate: new Date(Date() + 60 * 60 * 60 * 24 * 3),
+      },
+    };
+  };
+
+  const direct: Array<Request> = [];
+  const numDirect = Math.floor(Math.random() * 3);
+  for (let i = 0; i < numDirect; i++) {
+    const carer = carers[Math.floor(Math.random() * carers.length)];
+    const d = newDirectRequest(owner, carer);
+    carer.offers.push(d._id!);
+    direct.push(d);
+  }
+
+  owner.requests.push(...direct);
 }
