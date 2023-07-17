@@ -8,6 +8,7 @@ export interface Carer extends User {
   preferredTravelDistance?: number;
   hourlyRate?: number;
   offers: Array<ObjectId>;
+  jobs: Array<ObjectId>;
   unavailabilities: Array<DateRange>;
   preferredPets: Array<PreferredPet>;
   licences: Array<Licence>;
@@ -36,6 +37,7 @@ export async function newCarer(email: string, password: string) {
     notifications: [],
     receivedFeedback: [],
     offers: [],
+    jobs: [],
     unavailabilities: [],
     preferredPets: [],
     licences: [],

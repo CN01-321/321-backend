@@ -3,10 +3,12 @@ import { DateRange } from "./carer.js";
 import { Owner } from "./owner.js";
 import { carerCollection, ownerCollection } from "../mongo.js";
 
+type RequestStatus = "pending" | "accepted" | "rejected" | "completed";
+
 export interface Request {
   _id?: ObjectId;
   carer: ObjectId | null;
-  isCompleted: boolean;
+  status: RequestStatus;
   pets: Array<ObjectId>;
   respondents: Array<ObjectId>;
   requestedOn: Date;
@@ -86,14 +88,16 @@ export async function updateRequest(owner: WithId<Owner>, request: Request) {
   return await getRequestWithId(request._id!);
 }
 
-export async function getRequestRespondents(
+export async function getRespondents(
   owner: WithId<Owner>,
   requestId: ObjectId
 ) {
   const res = await ownerCollection.aggregate([
-    { $match: { _id: owner._id, "requests._id": requestId } },
-    { $unwind: "requests.respondents" },
-    { $replaceWith: "requests" },
+    { $match: { _id: owner._id } },
+    { $unwind: "$requests" },
+    { $match: { "requests._id": requestId } },
+    { $replaceWith: "$requests" },
+    // todo, include avg of carer ratings in the result
     {
       $lookup: {
         from: "users",
@@ -102,5 +106,30 @@ export async function getRequestRespondents(
         as: "respondents",
       },
     },
+    { $unwind: "$respondents" },
+    { $replaceWith: "$respondents" },
+    { $project: { _id: 1, name: 1, bio: 1 } },
   ]);
+
+  return res.toArray();
+}
+
+export async function acceptRequestRespondent(
+  owner: WithId<Owner>,
+  requestId: ObjectId,
+  respondentId: ObjectId
+) {
+  return await ownerCollection.updateOne(
+    {
+      _id: owner._id,
+      "requests._id": requestId,
+      "requests.respondents": respondentId,
+    },
+    {
+      $set: {
+        "requests.$.carer": respondentId,
+        "requests.$.status": "accepted",
+      },
+    }
+  );
 }

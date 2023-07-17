@@ -40,6 +40,11 @@ ownerRouter.get(
   ownerController.getRequest
 );
 ownerRouter.get(
+  "/owners/requests/:requestId/respondents",
+  passport.authenticate("owner-jwt", { session: false }),
+  ownerController.getRequestRespondents
+);
+ownerRouter.get(
   "/owners/requests",
   passport.authenticate("owner-jwt", { session: false }),
   ownerController.getRequests
@@ -54,10 +59,10 @@ ownerRouter.put(
   passport.authenticate("owner-jwt", { session: false }),
   ownerController.editRequest
 );
-ownerRouter.delete(
-  "/owners/requests/:requestId",
+ownerRouter.post(
+  "/owners/requests/:requestId/respondents/:respondentId",
   passport.authenticate("owner-jwt", { session: false }),
-  ownerController.deleteRequest
+  ownerController.acceptRespondent
 );
 
 export default ownerRouter;
