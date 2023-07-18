@@ -265,10 +265,10 @@ async function acceptRespondent(req: Express.Request, res: Express.Response) {
 
   const respondentId = new ObjectId(req.params.respondentId);
 
-  // check that the respondentId is in the request's respondents array
-  console.log(owner.requests, requestId, respondentId);
+  // check that the respondentId is in the request's respondents array,
+  // we can get this from the owner which has been recently fetched from the db
+  console.log("reqid, resid", requestId, respondentId);
   const request = owner.requests.find((r) => requestId.equals(r._id!));
-  console.log(request);
   if (
     !owner.requests
       .find((r) => requestId.equals(r._id!))

@@ -122,8 +122,12 @@ export async function acceptRequestRespondent(
   return await ownerCollection.updateOne(
     {
       _id: owner._id,
-      "requests._id": requestId,
-      "requests.respondents": respondentId,
+      requests: {
+        $elemMatch: {
+          _id: requestId,
+          respondents: respondentId,
+        },
+      },
     },
     {
       $set: {
