@@ -31,7 +31,8 @@
     "mongodb": "^5.3.0",
     "passport": "^0.6.0",
     "passport-jwt": "^4.0.1",
-    "passport-local": "^1.0.0"
+    "passport-local": "^1.0.0",
+    "pure-rand": "^6.0.2"
   },
   "devDependencies": {
     "@types/cors": "^2.8.13",

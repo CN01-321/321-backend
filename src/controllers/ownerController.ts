@@ -14,9 +14,11 @@ import {
 } from "../models/pet.js";
 import {
   Request,
+  acceptRequestRespondent,
   createNewRequest,
   getOwnerRequests,
   getRequestWithId,
+  getRespondents,
   updateRequest,
 } from "../models/request.js";
 import { handleControllerError } from "../util.js";
@@ -232,34 +234,51 @@ async function editRequest(req: Express.Request, res: Express.Response) {
   }
 }
 
-// TODO discuss if delete should be more like "withdraw"
-async function deleteRequest(
-  req: Express.Request,
-  res: Express.Response,
-  next: Express.NextFunction
-) {
-  // try {
-  //   const owner = req.user as WithId<Owner>;
-  //   const updateResult = await ownerCollection.updateOne(
-  //     { _id: owner._id },
-  //     { $pull: { requests: { _id: new ObjectId(req.params.id) } } }
-  //   );
-  //   res.json(updateResult);
-  // } catch (err) {
-  //   console.error(
-  //     "The following error occured while deleting a request: " + err
-  //   );
-  //   next(err);
-  // }
-}
-
 async function getRequestRespondents(
   req: Express.Request,
   res: Express.Response
 ) {
   if (!ObjectId.isValid(req.params.requestId)) {
     res.status(400).send("Invalid request id");
+    return;
   }
+
+  const owner = req.user as WithId<Owner>;
+
+  res.json(await getRespondents(owner, new ObjectId(req.params.requestId)));
+}
+
+async function acceptRespondent(req: Express.Request, res: Express.Response) {
+  const owner = req.user as WithId<Owner>;
+
+  if (!ObjectId.isValid(req.params.requestId)) {
+    res.status(400).send("Invalid request id");
+    return;
+  }
+
+  const requestId = new ObjectId(req.params.requestId);
+
+  if (!ObjectId.isValid(req.params.respondentId)) {
+    res.status(400).send("Invalid respondent id");
+    return;
+  }
+
+  const respondentId = new ObjectId(req.params.respondentId);
+
+  // check that the respondentId is in the request's respondents array,
+  // we can get this from the owner which has been recently fetched from the db
+  console.log("reqid, resid", requestId, respondentId);
+  const request = owner.requests.find((r) => requestId.equals(r._id!));
+  if (
+    !owner.requests
+      .find((r) => requestId.equals(r._id!))
+      ?.respondents.find((r) => respondentId.equals(r))
+  ) {
+    res.status(404).send(`Could not find respondent with id ${respondentId}`);
+    return;
+  }
+
+  res.json(await acceptRequestRespondent(owner, requestId, respondentId));
 }
 
 const ownerController = {
@@ -270,10 +289,11 @@ const ownerController = {
   updatePet,
   deletePet,
   getRequest,
+  getRequestRespondents,
+  acceptRespondent,
   getRequests,
   createRequest,
   editRequest,
-  deleteRequest,
 };
 
 export default ownerController;
