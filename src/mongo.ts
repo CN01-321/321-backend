@@ -30,7 +30,8 @@ export const ownerCollection = await getUsersCollection<Owner>();
 export const carerCollection = await getUsersCollection<Carer>();
 
 // set up prng for seeded randomness in data generation
-const seed = 1;
+// seed == 3 because it is first seed where carer1@email.com has a direct request
+const seed = 3;
 let rng = prand.mersenne(seed);
 
 function getRandNum(min: number, max: number): number {
@@ -141,8 +142,8 @@ function genLocation(): UserLocation {
 
 function genPets(): Array<Pet> {
   const newPet: (num: number) => Pet = (num) => {
-    const petType = petTypes[getRandNum(0, 4)];
-    const petSize = petSizes[getRandNum(0, 4)];
+    const petType = petTypes[getRandNum(0, 3)];
+    const petSize = petSizes[getRandNum(0, 3)];
 
     return {
       _id: new ObjectId(),

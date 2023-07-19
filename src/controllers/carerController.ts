@@ -1,4 +1,6 @@
 import Express from "express";
+import { WithId } from "mongodb";
+import { Carer, getCarerJobs } from "../models/carer.js";
 
 async function getCarerBySession(
   req: Express.Request,
@@ -15,8 +17,29 @@ async function getCarerBySession(
   }
 }
 
+async function getBroadOffers(req: Express.Request, res: Express.Response) {
+  const carer = req.user as WithId<Carer>;
+
+  res.json(await getCarerJobs(carer, "broad"));
+}
+
+async function getDirectOffers(req: Express.Request, res: Express.Response) {
+  const carer = req.user as WithId<Carer>;
+
+  res.json(await getCarerJobs(carer, "direct"));
+}
+
+async function getJobs(req: Express.Request, res: Express.Response) {
+  const carer = req.user as WithId<Carer>;
+
+  res.json(await getCarerJobs(carer, "job"));
+}
+
 const carerController = {
   getCarerBySession,
+  getBroadOffers,
+  getDirectOffers,
+  getJobs,
 };
 
 export default carerController;
