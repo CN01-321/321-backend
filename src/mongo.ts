@@ -5,7 +5,6 @@ import { Owner } from "./models/owner.js";
 import { Carer } from "./models/carer.js";
 import { Pet, petSizes, petTypes } from "./models/pet.js";
 import { Request } from "./models/request.js";
-import { emitWarning } from "process";
 import prand from "pure-rand";
 
 dotenv.config();

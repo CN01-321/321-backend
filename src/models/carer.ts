@@ -2,6 +2,7 @@ import { ObjectId, WithId } from "mongodb";
 import { PetSize, PetType } from "./pet.js";
 import { User } from "./user.js";
 import { carerCollection, ownerCollection } from "../mongo.js";
+import { off } from "process";
 
 export interface Carer extends User {
   skillsAndExp?: string;
@@ -137,12 +138,8 @@ export async function acceptBroadOffer(
   offerId: ObjectId
 ) {
   return await ownerCollection.updateOne(
-    {
-      "requests._id": offerId,
-    },
-    {
-      $push: { "requests.$.respondents": carer._id },
-    }
+    { "requests._id": offerId },
+    { $push: { "requests.$.respondents": carer._id } }
   );
 }
 
@@ -151,6 +148,39 @@ export async function acceptBroadOffer(
 export async function acceptDirectOffer(
   carer: WithId<Carer>,
   offerId: ObjectId
-) {}
+) {
+  await ownerCollection.updateOne(
+    { "requests._id": offerId },
+    { $set: { "requests.$.carer": carer._id, "requests.$.status": "accepted" } }
+  );
 
-export async function rejectOffer(carer: WithId<Carer>, offerId: ObjectId) {}
+  return await carerCollection.updateOne(
+    { _id: carer._id },
+    { $push: { jobs: offerId }, $pull: { offers: offerId } }
+  );
+}
+
+export async function rejectBroadOffer(
+  carer: WithId<Carer>,
+  offerId: ObjectId
+) {
+  return await carerCollection.updateOne(
+    { _id: carer._id },
+    { $pull: { offers: offerId } }
+  );
+}
+
+export async function rejectDirectOffer(
+  carer: WithId<Carer>,
+  offerId: ObjectId
+) {
+  await ownerCollection.updateOne(
+    { "requests._id": offerId },
+    { $set: { "requests.$.status": "rejected" } }
+  );
+
+  return await carerCollection.updateOne(
+    { _id: carer._id },
+    { $pull: { offers: offerId } }
+  );
+}
