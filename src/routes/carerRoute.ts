@@ -24,5 +24,15 @@ carerRouter.get(
   passport.authenticate("carer-jwt", { session: false }),
   carerController.getJobs
 );
+carerRouter.post(
+  "/carers/:offerType/:offerId/accept",
+  passport.authenticate("carer-jwt", { session: false }),
+  carerController.acceptOffer
+);
+carerRouter.post(
+  "/carers/:offerType/:offerId/reject",
+  passport.authenticate("carer-jwt", { session: false }),
+  carerController.rejectOffer
+);
 
 export default carerRouter;

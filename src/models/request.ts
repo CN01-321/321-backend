@@ -46,7 +46,7 @@ export async function getOwnerRequests(owner: WithId<Owner>) {
         as: "carer",
       },
     },
-    // flatten the carerInfo array into field
+    // flatten the carer array if it is present
     { $unwind: { path: "$carer", preserveNullAndEmptyArrays: true } },
     { $project: { carerInfo: 0 } },
   ]);

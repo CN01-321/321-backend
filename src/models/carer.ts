@@ -1,7 +1,7 @@
 import { ObjectId, WithId } from "mongodb";
 import { PetSize, PetType } from "./pet.js";
 import { User } from "./user.js";
-import { carerCollection } from "../mongo.js";
+import { carerCollection, ownerCollection } from "../mongo.js";
 
 export interface Carer extends User {
   skillsAndExp?: string;
@@ -129,3 +129,28 @@ export async function getCarerJobs(carer: WithId<Carer>, jobType: JobType) {
 
   return await res.toArray();
 }
+
+// accept broad offer places the carer's id onto the respondents array in the
+// owners request
+export async function acceptBroadOffer(
+  carer: WithId<Carer>,
+  offerId: ObjectId
+) {
+  return await ownerCollection.updateOne(
+    {
+      "requests._id": offerId,
+    },
+    {
+      $push: { "requests.$.respondents": carer._id },
+    }
+  );
+}
+
+// accept direct offer moves the request to the carer's jobs array, and updates
+// the request accordingly
+export async function acceptDirectOffer(
+  carer: WithId<Carer>,
+  offerId: ObjectId
+) {}
+
+export async function rejectOffer(carer: WithId<Carer>, offerId: ObjectId) {}
