@@ -195,6 +195,7 @@ async function createRequest(req: Express.Request, res: Express.Response) {
   const requestData = {
     carer: req.body.carer ?? null,
     isCompleted: false,
+    requestedOn: new Date(),
     pets: req.body.pets,
     message: req.body.message,
     dateRange: req.body.dateRange,

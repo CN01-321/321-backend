@@ -28,6 +28,9 @@ export const userCollection = await getUsersCollection<User>();
 export const ownerCollection = await getUsersCollection<Owner>();
 export const carerCollection = await getUsersCollection<Carer>();
 
+// set up an index for the location of a user
+await userCollection.createIndex({ location: "2dsphere" });
+
 // set up prng for seeded randomness in data generation
 // seed == 3 because it is first seed where carer1@email.com has a direct request
 const seed = 3;
@@ -78,7 +81,7 @@ function genCarers() {
       notifications: [],
       receivedFeedback: [],
       skillsAndExp: "Skills and Experience",
-      preferredTravelDistance: 50,
+      preferredTravelDistance: 50000,
       hourlyRate: 50,
       offers: [],
       jobs: [],
@@ -131,11 +134,11 @@ function genLocation(): UserLocation {
   const coords = city ? sydneyCoords : wollongongCoords;
 
   return {
+    type: "Point",
+    coordinates: [coords.lng, coords.lat],
     state: "NSW",
     city: city ? "Sydney" : "Wollongong",
     street: city ? "Sydney St" : "Wollongong Way",
-    lat: coords.lat,
-    lng: coords.lng,
   };
 }
 

@@ -20,11 +20,11 @@ export interface User {
 }
 
 export interface UserLocation {
+  type: "Point"; // the GeoJSON type is always "Point"
+  coordinates: [number, number]; // longitude, latitude
   state: string;
   city: string;
   street: string;
-  lat: number;
-  lng: number;
 }
 
 export interface Notification {

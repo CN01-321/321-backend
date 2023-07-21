@@ -62,6 +62,50 @@ async function addRequestToCarer(requestId: ObjectId, carerId: ObjectId) {
 }
 
 async function addRequestToNearby(owner: WithId<Owner>, request: Request) {
+  console.log("owner location is", owner.location);
+
+  // query all the nearby carers and get a list of their object id's
+  const res = await ownerCollection.aggregate([
+    { $unwind: "$requests" },
+    { $match: { "requests._id": request._id } },
+    {
+      $lookup: {
+        from: "users",
+        let: { pt: "$location" },
+        pipeline: [
+          {
+            $geoNear: {
+              near: "$$pt",
+              distanceField: "distance",
+              maxDistance: 100 * 1000, // keep the query within 100km as a hard maximum
+              spherical: true,
+            },
+          },
+          {
+            $match: {
+              userType: "carer",
+              $expr: { $lt: ["$distance", "$preferredTravelDistance"] },
+            },
+          },
+        ],
+        as: "nearby",
+      },
+    },
+    { $unwind: "$nearby" },
+    { $replaceWith: "$nearby" },
+    { $project: { _id: 1 } },
+  ]);
+
+  const nearby = (await res.toArray()).map((n) => n._id) as Array<ObjectId>;
+  console.log("nearby", nearby);
+
+  // add the request to all the nearby carers
+  console.log(
+    await carerCollection.updateMany(
+      { _id: { $in: nearby } },
+      { $push: { offers: request._id } }
+    )
+  );
   // TODO search for nearby carers (haversine?) and push the request to them
 }
 

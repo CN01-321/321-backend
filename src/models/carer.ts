@@ -6,7 +6,7 @@ import { off } from "process";
 
 export interface Carer extends User {
   skillsAndExp?: string;
-  preferredTravelDistance?: number;
+  preferredTravelDistance: number; // distance is in metres
   hourlyRate?: number;
   offers: Array<ObjectId>;
   jobs: Array<ObjectId>;
@@ -36,6 +36,7 @@ export async function newCarer(email: string, password: string) {
     password,
     userType: "carer",
     notifications: [],
+    preferredTravelDistance: 50000,
     receivedFeedback: [],
     offers: [],
     jobs: [],
