@@ -5,6 +5,7 @@ import {
   acceptBroadOffer,
   acceptDirectOffer,
   getCarerJobs,
+  getCarerOffers,
   rejectBroadOffer,
   rejectDirectOffer,
 } from "../models/carer.js";
@@ -26,20 +27,17 @@ async function getCarerBySession(
 
 async function getBroadOffers(req: Express.Request, res: Express.Response) {
   const carer = req.user as WithId<Carer>;
-
-  res.json(await getCarerJobs(carer, "broad"));
+  res.json(await getCarerOffers(carer, "broad"));
 }
 
 async function getDirectOffers(req: Express.Request, res: Express.Response) {
   const carer = req.user as WithId<Carer>;
-
-  res.json(await getCarerJobs(carer, "direct"));
+  res.json(await getCarerOffers(carer, "direct"));
 }
 
 async function getJobs(req: Express.Request, res: Express.Response) {
   const carer = req.user as WithId<Carer>;
-
-  res.json(await getCarerJobs(carer, "job"));
+  res.json(await getCarerJobs(carer));
 }
 
 async function acceptOffer(req: Express.Request, res: Express.Response) {
