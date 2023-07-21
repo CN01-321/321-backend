@@ -3,7 +3,7 @@ import { User, UserLocation } from "./models/user.js";
 import dotenv from "dotenv";
 import { Owner } from "./models/owner.js";
 import { Carer } from "./models/carer.js";
-import { Pet, petSizes, petTypes } from "./models/pet.js";
+import { Pet, PetSize, PetType, petSizes, petTypes } from "./models/pet.js";
 import { Request } from "./models/request.js";
 import prand from "pure-rand";
 
@@ -69,6 +69,18 @@ async function populateDB() {
 }
 
 function genCarers() {
+  // return either a random selection of pet types or all pet types
+  // (no carer should prefer nothing)
+  const genPreferredPetTypes = () => {
+    const genPetTypes = petTypes.filter(getRandBool);
+    return genPetTypes.length === 0 ? petTypes : genPetTypes;
+  };
+
+  const genPreferredPetSizes = () => {
+    const genPetSizes = petSizes.filter(getRandBool);
+    return genPetSizes.length === 0 ? petSizes : genPetSizes;
+  };
+
   const newCarer: (num: number) => Carer = (num) => {
     return {
       _id: new ObjectId(),
@@ -86,7 +98,8 @@ function genCarers() {
       offers: [],
       jobs: [],
       unavailabilities: [],
-      preferredPets: [],
+      preferredPetTypes: genPreferredPetTypes(),
+      preferredPetSizes: genPreferredPetSizes(),
       licences: [],
     };
   };

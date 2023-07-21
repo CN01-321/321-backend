@@ -2,6 +2,7 @@ import { ObjectId, WithId } from "mongodb";
 import { DateRange } from "./carer.js";
 import { Owner } from "./owner.js";
 import { carerCollection, ownerCollection } from "../mongo.js";
+import { PetSize, PetType } from "./pet.js";
 
 type RequestStatus = "pending" | "accepted" | "rejected" | "completed";
 
@@ -187,4 +188,54 @@ export async function acceptRequestRespondent(
       },
     }
   );
+}
+
+// TODO add carer rating and availability date range
+export interface SearchQuery {
+  price?: number;
+  petTypes?: Array<PetType>;
+  petSizes?: Array<PetSize>;
+}
+
+export async function searchForNearby(
+  owner: WithId<Owner>,
+  query: SearchQuery
+) {
+  // add the optional query filters for the optional
+  const optional: any = {};
+  if (query.price) {
+    optional.hourlyRate = { $lt: query.price };
+  }
+
+  if (query.petTypes) {
+    optional.preferredPetTypes = { $all: query.petTypes };
+  }
+
+  if (query.petSizes) {
+    optional.preferredPetSizes = { $all: query.petSizes };
+  }
+
+  console.log(optional);
+
+  // query all the nearby carers and get a list of their object id's
+  const res = await carerCollection.aggregate([
+    // filter the carers that are nearby
+    {
+      $geoNear: {
+        near: owner.location,
+        distanceField: "distance",
+        maxDistance: 100 * 1000, // keep the query within 100km as a hard maximum
+        query: {
+          userType: "carer",
+          ...optional, // spread out any optional queries to add to the match stage
+        },
+        herical: true,
+      },
+    },
+    // filter only carers within their preferredTravelDistance
+    { $match: { $expr: { $lt: ["$distance", "$preferredTravelDistance"] } } },
+    { $project: { _id: 1, name: 1, bio: 1 } },
+  ]);
+
+  return await res.toArray();
 }

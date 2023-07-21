@@ -1,28 +1,30 @@
 import { ObjectId, WithId } from "mongodb";
-import { PetSize, PetType } from "./pet.js";
+import { PetSize, PetType, petSizes, petTypes } from "./pet.js";
 import { User } from "./user.js";
 import { carerCollection, ownerCollection } from "../mongo.js";
 import { off } from "process";
 
+const DEFAULT_TRAVEL_DISTANCE_METRES = 50000;
+const DEFAULT_HOURLY_RATE = 20;
+
 export interface Carer extends User {
   skillsAndExp?: string;
   preferredTravelDistance: number; // distance is in metres
-  hourlyRate?: number;
+  hourlyRate: number;
+
+  // TODO add some "accepted" field so that unaccepted and accepted broad
+  // requests can be differentiated
   offers: Array<ObjectId>;
   jobs: Array<ObjectId>;
   unavailabilities: Array<DateRange>;
-  preferredPets: Array<PreferredPet>;
+  preferredPetTypes: Array<PetType>;
+  preferredPetSizes: Array<PetSize>;
   licences: Array<Licence>;
 }
 
 export interface DateRange {
   startDate: Date;
   endDate: Date;
-}
-
-export interface PreferredPet {
-  petType: PetType;
-  petSize: PetSize;
 }
 
 export interface Licence {
@@ -36,12 +38,14 @@ export async function newCarer(email: string, password: string) {
     password,
     userType: "carer",
     notifications: [],
-    preferredTravelDistance: 50000,
+    preferredTravelDistance: DEFAULT_TRAVEL_DISTANCE_METRES,
+    hourlyRate: DEFAULT_HOURLY_RATE,
     receivedFeedback: [],
     offers: [],
     jobs: [],
     unavailabilities: [],
-    preferredPets: [],
+    preferredPetTypes: petTypes, // preferr all pet types and sizes by default
+    preferredPetSizes: petSizes,
     licences: [],
   });
 }
