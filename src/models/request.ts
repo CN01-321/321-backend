@@ -119,6 +119,13 @@ export async function acceptRequestRespondent(
   requestId: ObjectId,
   respondentId: ObjectId
 ) {
+  // move the request from offers to the jobs list of the carer
+  await carerCollection.updateOne(
+    { _id: respondentId },
+    { $push: { jobs: requestId }, $pull: { offers: requestId } }
+  );
+
+  // update the requests carer to the selected respondent and status to accepted
   return await ownerCollection.updateOne(
     {
       _id: owner._id,
