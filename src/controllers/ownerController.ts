@@ -11,14 +11,18 @@ import {
   deleteExisitingPet,
   getPetWithId,
   getOwnerPets,
+  PetType,
+  PetSize,
 } from "../models/pet.js";
 import {
   Request,
+  SearchQuery,
   acceptRequestRespondent,
   createNewRequest,
   getOwnerRequests,
   getRequestWithId,
   getRespondents,
+  searchForNearby,
   updateRequest,
 } from "../models/request.js";
 import { handleControllerError } from "../util.js";
@@ -195,6 +199,7 @@ async function createRequest(req: Express.Request, res: Express.Response) {
   const requestData = {
     carer: req.body.carer ?? null,
     isCompleted: false,
+    requestedOn: new Date(),
     pets: req.body.pets,
     message: req.body.message,
     dateRange: req.body.dateRange,
@@ -267,8 +272,6 @@ async function acceptRespondent(req: Express.Request, res: Express.Response) {
 
   // check that the respondentId is in the request's respondents array,
   // we can get this from the owner which has been recently fetched from the db
-  console.log("reqid, resid", requestId, respondentId);
-  const request = owner.requests.find((r) => requestId.equals(r._id!));
   if (
     !owner.requests
       .find((r) => requestId.equals(r._id!))
@@ -279,6 +282,64 @@ async function acceptRespondent(req: Express.Request, res: Express.Response) {
   }
 
   res.json(await acceptRequestRespondent(owner, requestId, respondentId));
+}
+
+function validateQuery(query: any): SearchQuery {
+  const searchQuery: SearchQuery = {};
+
+  // validate price is a positive number if exists and add to seach query if exists
+  if (query.price) {
+    const price = Number(query.price);
+    if (Number.isNaN(price) || query.price < 0) {
+      throw new Error("Price must be a positive number");
+    }
+
+    searchQuery.price = price;
+  }
+
+  // validate petTypes is an array of petTypes and add it to query if exists
+  if (query.petTypes) {
+    // verify petTypes is an array and that each type is a valid pet type
+    if (
+      !Array.isArray(query.petTypes) ||
+      !query.petTypes.every((t: PetType) => petTypes.includes(t))
+    ) {
+      throw new Error("PetTypes must be an array of PetTypes");
+    }
+
+    searchQuery.petTypes = query.petTypes;
+  }
+
+  // validate petSizes the same way as petTypes
+  if (query.petSizes) {
+    if (
+      !Array.isArray(query.petSizes) ||
+      !query.petSizes.every((s: PetSize) => petSizes.includes(s))
+    ) {
+      throw new Error("PetSizes must be an array of PetSizes");
+    }
+
+    searchQuery.petSizes = query.petSizes;
+  }
+
+  return searchQuery;
+}
+
+// query searches can include arrays by using the ?a[]=1&a[]=2 syntax
+// see https://www.npmjs.com/package/qs # Parsing arrays
+async function searchRequests(req: Express.Request, res: Express.Response) {
+  const owner = req.user as WithId<Owner>;
+
+  console.log(req.query);
+
+  try {
+    // get search query params
+    const query = validateQuery(req.query);
+
+    res.json(await searchForNearby(owner, query));
+  } catch (e) {
+    handleControllerError(res, e, 400);
+  }
 }
 
 const ownerController = {
@@ -294,6 +355,7 @@ const ownerController = {
   getRequests,
   createRequest,
   editRequest,
+  searchRequests,
 };
 
 export default ownerController;

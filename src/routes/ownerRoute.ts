@@ -34,6 +34,12 @@ ownerRouter.delete(
   passport.authenticate("owner-jwt", { session: false }),
   ownerController.deletePet
 );
+// search must be above :requestId so that "nearby" is not matched as an id
+ownerRouter.get(
+  "/owners/requests/nearby",
+  passport.authenticate("owner-jwt", { session: false }),
+  ownerController.searchRequests
+);
 ownerRouter.get(
   "/owners/requests/:requestId",
   passport.authenticate("owner-jwt", { session: false }),
