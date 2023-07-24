@@ -181,6 +181,16 @@ function genPets(): Array<Pet> {
   return pets;
 }
 
+// generate random pets ensuring that at lease one pet has been added
+function genRandomPetsForRequests(pets: Array<Pet>) {
+  const reqPets: Set<ObjectId> = new Set();
+  while (reqPets.size === 0) {
+    pets.filter(getRandBool).forEach((p) => reqPets.add(p._id!));
+  }
+
+  return Array.from(reqPets);
+}
+
 function genBroadRequests(owner: Owner, carers: Array<Carer>) {
   const newBroadRequest: (owner: Owner) => Request = (o) => {
     return {
@@ -189,11 +199,12 @@ function genBroadRequests(owner: Owner, carers: Array<Carer>) {
       status: "pending",
       respondents: [],
       requestedOn: new Date(),
-      pets: owner.pets.filter(getRandBool).map((p) => p._id!),
+      pets: genRandomPetsForRequests(owner.pets),
       dateRange: {
         startDate: new Date(Date() + 60 * 60 * 60 * 24),
         endDate: new Date(Date() + 60 * 60 * 60 * 24 * 3),
       },
+      additionalInfo: "Hi, please look after my pets.",
     };
   };
 
@@ -234,11 +245,12 @@ function genDirectRequests(owner: Owner, carers: Array<Carer>) {
       status: "pending",
       respondents: [],
       requestedOn: new Date(),
-      pets: owner.pets.filter(getRandBool).map((p) => p._id!),
+      pets: genRandomPetsForRequests(owner.pets),
       dateRange: {
         startDate: new Date(Date() + 60 * 60 * 60 * 24),
         endDate: new Date(Date() + 60 * 60 * 60 * 24 * 3),
       },
+      additionalInfo: `Hi ${c.name}, please look after my pets.`,
     };
   };
 
