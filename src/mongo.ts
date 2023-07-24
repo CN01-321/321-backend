@@ -6,6 +6,7 @@ import { Carer } from "./models/carer.js";
 import { Pet, PetSize, PetType, petSizes, petTypes } from "./models/pet.js";
 import { Request } from "./models/request.js";
 import prand from "pure-rand";
+import { Feedback } from "./models/feedback.js";
 
 dotenv.config();
 
@@ -61,6 +62,7 @@ async function populateDB() {
 
   const carers = genCarers();
   const owners = genOwners(carers);
+  genFeedback(carers, owners);
 
   await carerCollection.insertMany(carers);
   await ownerCollection.insertMany(owners);
@@ -91,7 +93,7 @@ function genCarers() {
       bio: `My name is Carer ${num}, I would like to care for your pet`,
       location: genLocation(),
       notifications: [],
-      receivedFeedback: [],
+      feedback: [],
       skillsAndExp: "Skills and Experience",
       preferredTravelDistance: 50000,
       hourlyRate: 50,
@@ -122,7 +124,7 @@ function genOwners(carers: Array<Carer>) {
       userType: "owner",
       location: genLocation(),
       notifications: [],
-      receivedFeedback: [],
+      feedback: [],
       pets: genPets(),
       requests: [],
     };
@@ -266,4 +268,45 @@ function genDirectRequests(owner: Owner, carers: Array<Carer>) {
   owner.requests.push(...direct);
 }
 
-function genFeedback(carers: Array<Carer>, owners: Array<Owner>) {}
+function genFeedback(carers: Array<Carer>, owners: Array<Owner>) {
+  const newFeedback: (author: User) => Feedback = (author) => {
+    const feedback: Feedback = {
+      _id: new ObjectId(),
+      authorId: author._id!,
+      authorName: author.name!,
+      postedOn: new Date(),
+      message: `My name is ${author.name} and I am leaving some feedback`,
+      likes: 0,
+      comments: [],
+    };
+
+    // create a 1/4 chance of no rating
+    if (getRandNum(0, 3) !== 3) {
+      feedback.rating = getRandNum(0, 5);
+    }
+
+    return feedback;
+  };
+
+  // add some carer reviews to owners and pets
+  carers.forEach((c) =>
+    owners
+      .filter(() => getRandNum(0, 4) === 4)
+      .forEach((o) => {
+        o.feedback.push(newFeedback(c));
+        // give a small chance for the carer to also review a pet
+        o.pets
+          .filter(() => getRandNum(0, 5) === 5)
+          .forEach((p) => p.feedback.push(newFeedback(c)));
+      })
+  );
+
+  // add some owner reviews to carers
+  owners.forEach((o) =>
+    carers
+      .filter(() => getRandNum(0, 2) === 2)
+      .forEach((c) => {
+        c.feedback.push(newFeedback(o));
+      })
+  );
+}

@@ -16,7 +16,7 @@ export interface User {
   pfp?: string;
   userType: UserType;
   notifications: Array<Notification>;
-  receivedFeedback: Array<Feedback>;
+  feedback: Array<Feedback>;
 }
 
 export interface UserLocation {

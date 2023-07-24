@@ -18,7 +18,7 @@ export interface Pet {
   isFriendly: boolean;
   isNeutered: boolean;
   profilePicture?: string;
-  feedback?: Array<Feedback>;
+  feedback: Array<Feedback>;
 }
 
 export async function getPetWithId(petId: ObjectId): Promise<Pet | null> {

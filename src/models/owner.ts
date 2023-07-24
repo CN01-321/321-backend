@@ -14,7 +14,7 @@ export async function newOwner(email: string, password: string) {
     password,
     userType: "owner",
     notifications: [],
-    receivedFeedback: [],
+    feedback: [],
     pets: [],
     requests: [],
   });

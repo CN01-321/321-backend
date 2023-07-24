@@ -39,7 +39,7 @@ export async function newCarer(email: string, password: string) {
     notifications: [],
     preferredTravelDistance: DEFAULT_TRAVEL_DISTANCE_METRES,
     hourlyRate: DEFAULT_HOURLY_RATE,
-    receivedFeedback: [],
+    feedback: [],
     offers: [],
     jobs: [],
     unavailabilities: [],
