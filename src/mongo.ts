@@ -265,3 +265,5 @@ function genDirectRequests(owner: Owner, carers: Array<Carer>) {
 
   owner.requests.push(...direct);
 }
+
+function genFeedback(carers: Array<Carer>, owners: Array<Owner>) {}

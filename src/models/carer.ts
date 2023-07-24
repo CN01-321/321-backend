@@ -2,7 +2,6 @@ import { ObjectId, WithId } from "mongodb";
 import { PetSize, PetType, petSizes, petTypes } from "./pet.js";
 import { User } from "./user.js";
 import { carerCollection, ownerCollection } from "../mongo.js";
-import { off } from "process";
 
 const DEFAULT_TRAVEL_DISTANCE_METRES = 50000;
 const DEFAULT_HOURLY_RATE = 20;
@@ -165,6 +164,7 @@ export async function getCarerJobs(carer: WithId<Carer>) {
               dateRange: 1,
               location: 1,
               requestedOn: 1,
+              additionalInfo: 1,
             },
           },
         ],
