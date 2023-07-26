@@ -50,7 +50,21 @@ export async function newCarer(email: string, password: string) {
 }
 
 export async function getCarerById(carerId: ObjectId) {
-  return carerCollection.findOne({ _id: carerId });
+  return carerCollection.findOne(
+    { _id: carerId },
+    {
+      projection: {
+        _id: 1,
+        email: 1,
+        userType: 1,
+        preferredTravelDistance: 1,
+        hourlyRate: 1,
+        unavailabilities: 1,
+        preferredPetTypes: 1,
+        preferredPetSizes: 1,
+      },
+    }
+  );
 }
 
 export async function getCarerByEmail(email: string) {

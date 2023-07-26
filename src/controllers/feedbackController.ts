@@ -21,6 +21,7 @@ async function getFeedbackForUser(req: Express.Request, res: Express.Response) {
 
 function validateFeedback(feedback: any): Feedback {
   if (!feedback.message || typeof feedback.message !== "string") {
+    console.log("feedback is ", feedback, typeof feedback.message);
     throw new Error("Feedback must contain a message");
   }
 
@@ -43,6 +44,8 @@ async function newFeedbackForUser(req: Express.Request, res: Express.Response) {
     res.status(400).send("userId is invalid");
     return;
   }
+
+  console.log("req message is", req.body.message);
 
   const feedbackData: any = {
     _id: new ObjectId(),

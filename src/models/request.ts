@@ -181,7 +181,14 @@ export async function getRespondents(
     },
     { $unwind: "$respondents" },
     { $replaceWith: "$respondents" },
-    { $project: { _id: 1, name: 1, bio: 1 } },
+    {
+      $project: {
+        _id: 1,
+        name: 1,
+        bio: 1,
+        rating: { $avg: "$feedback.rating" },
+      },
+    },
   ]);
 
   return res.toArray();
@@ -221,6 +228,7 @@ export async function acceptRequestRespondent(
 // TODO add carer rating and availability date range
 export interface SearchQuery {
   price?: number;
+  rating?: number;
   petTypes?: Array<PetType>;
   petSizes?: Array<PetSize>;
 }
@@ -243,6 +251,10 @@ export async function searchForNearby(
     optional.preferredPetSizes = { $all: query.petSizes };
   }
 
+  if (query.rating) {
+    optional.rating;
+  }
+
   console.log(optional);
 
   // query all the nearby carers and get a list of their object id's
@@ -262,7 +274,14 @@ export async function searchForNearby(
     },
     // filter only carers within their preferredTravelDistance
     { $match: { $expr: { $lt: ["$distance", "$preferredTravelDistance"] } } },
-    { $project: { _id: 1, name: 1, bio: 1 } },
+    {
+      $project: {
+        _id: 1,
+        name: 1,
+        bio: 1,
+        rating: { $avg: "$feedback.rating" },
+      },
+    },
   ]);
 
   return await res.toArray();
