@@ -19,7 +19,8 @@ export interface Comment {
   authorId: ObjectId;
   authorName: string;
   authorIcon?: string;
-  text: string;
+  postedOn: Date;
+  message: string;
 }
 
 export async function getFeedback(userId: ObjectId) {

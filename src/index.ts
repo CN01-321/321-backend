@@ -4,6 +4,7 @@ import authRouter from "./routes/authRoute.js";
 import ownerRouter from "./routes/ownerRoute.js";
 import carerRouter from "./routes/carerRoute.js";
 import dotenv from "dotenv";
+import feedbackRouter from "./routes/feedbackRoute.js";
 
 dotenv.config();
 
@@ -21,3 +22,4 @@ app.listen(port, () => console.log(`Running on port ${port}`));
 app.use("/api", authRouter);
 app.use("/api", ownerRouter);
 app.use("/api", carerRouter);
+app.use("/api", feedbackRouter);

@@ -1,7 +1,7 @@
 import { Router } from "express";
 import passport from "passport";
 import ownerController from "../controllers/ownerController.js";
-import feebackController from "../controllers/feedbackController.js";
+import feedbackController from "../controllers/feedbackController.js";
 
 const ownerRouter = Router();
 
@@ -70,26 +70,6 @@ ownerRouter.post(
   "/owners/requests/:requestId/respondents/:respondentId",
   passport.authenticate("owner-jwt", { session: false }),
   ownerController.acceptRespondent
-);
-ownerRouter.get(
-  "/owners/:userId/feedback",
-  passport.authenticate("user-jwt", { session: false }),
-  feebackController.getFeedbackForUser
-);
-ownerRouter.post(
-  "/owners/:userId/feedback", // :userId is used to be compatible with equivalent carer route
-  passport.authenticate("user-jwt", { session: false }),
-  feebackController.newFeedbackForUser
-);
-ownerRouter.get(
-  "/pets/:petId/feedback",
-  passport.authenticate("user-jwt", { session: false }),
-  feebackController.getFeedbackForPet
-);
-ownerRouter.post(
-  "/pets/:petId/feedback",
-  passport.authenticate("user-jwt", { session: false }),
-  feebackController.newFeedbackForPet
 );
 
 export default ownerRouter;

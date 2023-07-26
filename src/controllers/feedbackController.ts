@@ -109,11 +109,11 @@ async function newFeedbackForPet(req: Express.Request, res: Express.Response) {
   }
 }
 
-const feebackController = {
+const feedbackController = {
   getFeedbackForUser,
   newFeedbackForUser,
   getFeedbackForPet,
   newFeedbackForPet,
 };
 
-export default feebackController;
+export default feedbackController;
