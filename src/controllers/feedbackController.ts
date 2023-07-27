@@ -2,10 +2,15 @@ import Express from "express";
 import { ObjectId, WithId } from "mongodb";
 import { User } from "../models/user.js";
 import {
+  Comment,
   Feedback,
   getFeedback,
   getPetFeedback,
+  likePetReview,
+  likeReview,
+  newComment,
   newFeedback,
+  newPetComment,
   newPetFeedback,
 } from "../models/feedback.js";
 import { handleControllerError } from "../util.js";
@@ -71,6 +76,66 @@ async function newFeedbackForUser(req: Express.Request, res: Express.Response) {
   }
 }
 
+async function addCommentToFeedback(
+  req: Express.Request,
+  res: Express.Response
+) {
+  const author = req.user as WithId<User>;
+
+  if (!ObjectId.isValid(req.params.userId)) {
+    res.status(400).send("userId is invalid");
+    return;
+  }
+
+  if (!ObjectId.isValid(req.params.feedbackId)) {
+    res.status(400).send("feedbackId is invalid");
+    return;
+  }
+
+  if (!req.body.message) {
+    res.status(400).send("message cannot be empty");
+    return;
+  }
+
+  const comment: Comment = {
+    authorId: author._id,
+    authorName: author.name!,
+    authorIcon: author.pfp,
+    postedOn: new Date(),
+    message: req.body.message,
+  };
+
+  res.json(
+    await newComment(
+      comment,
+      new ObjectId(req.params.userId),
+      new ObjectId(req.params.feedbackId)
+    )
+  );
+}
+
+async function addLikeToReview(req: Express.Request, res: Express.Response) {
+  const user = req.user as WithId<User>;
+
+  if (!ObjectId.isValid(req.params.userId)) {
+    res.status(400).send("userId is invalid");
+    return;
+  }
+
+  if (!ObjectId.isValid(req.params.feedbackId)) {
+    res.status(400).send("feedbackId is invalid");
+    return;
+  }
+
+  res.json(
+    await likeReview(
+      user._id,
+      new ObjectId(req.params.userId),
+      new ObjectId(req.params.feedbackId)
+    )
+  );
+}
+
 async function getFeedbackForPet(req: Express.Request, res: Express.Response) {
   if (!ObjectId.isValid(req.params.petId)) {
     res.status(400).send("petId is invalid");
@@ -112,11 +177,75 @@ async function newFeedbackForPet(req: Express.Request, res: Express.Response) {
   }
 }
 
+async function addCommentToPetFeedback(
+  req: Express.Request,
+  res: Express.Response
+) {
+  const author = req.user as WithId<User>;
+
+  if (!ObjectId.isValid(req.params.petId)) {
+    res.status(400).send("petId is invalid");
+    return;
+  }
+
+  if (!ObjectId.isValid(req.params.feedbackId)) {
+    res.status(400).send("feedbackId is invalid");
+    return;
+  }
+
+  if (!req.body.message) {
+    res.status(400).send("message cannot be empty");
+    return;
+  }
+
+  const comment: Comment = {
+    authorId: author._id,
+    authorName: author.name!,
+    authorIcon: author.pfp,
+    postedOn: new Date(),
+    message: req.body.message,
+  };
+
+  res.json(
+    await newPetComment(
+      comment,
+      new ObjectId(req.params.petId),
+      new ObjectId(req.params.feedbackId)
+    )
+  );
+}
+
+async function addLikeToPetReview(req: Express.Request, res: Express.Response) {
+  const user = req.user as WithId<User>;
+
+  if (!ObjectId.isValid(req.params.petId)) {
+    res.status(400).send("petId is invalid");
+    return;
+  }
+
+  if (!ObjectId.isValid(req.params.feedbackId)) {
+    res.status(400).send("feedbackId is invalid");
+    return;
+  }
+
+  res.json(
+    await likePetReview(
+      user._id,
+      new ObjectId(req.params.petId),
+      new ObjectId(req.params.feedbackId)
+    )
+  );
+}
+
 const feedbackController = {
   getFeedbackForUser,
   newFeedbackForUser,
+  addCommentToFeedback,
+  addLikeToReview,
   getFeedbackForPet,
   newFeedbackForPet,
+  addCommentToPetFeedback,
+  addLikeToPetReview,
 };
 
 export default feedbackController;

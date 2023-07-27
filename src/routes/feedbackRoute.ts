@@ -14,6 +14,16 @@ feedbackRouter.post(
   passport.authenticate("user-jwt", { session: false }),
   feedbackController.newFeedbackForUser
 );
+feedbackRouter.post(
+  "/users/:userId/feedback/:feedbackId/comments",
+  passport.authenticate("user-jwt", { session: false }),
+  feedbackController.addCommentToFeedback
+);
+feedbackRouter.post(
+  "/users/:userId/feedback/:feedbackId/likes",
+  passport.authenticate("user-jwt", { session: false }),
+  feedbackController.addLikeToReview
+);
 feedbackRouter.get(
   "/pets/:petId/feedback",
   passport.authenticate("user-jwt", { session: false }),
@@ -23,6 +33,16 @@ feedbackRouter.post(
   "/pets/:petId/feedback",
   passport.authenticate("user-jwt", { session: false }),
   feedbackController.newFeedbackForPet
+);
+feedbackRouter.post(
+  "/pets/:petId/feedback/:feedbackId/comments",
+  passport.authenticate("user-jwt", { session: false }),
+  feedbackController.addCommentToPetFeedback
+);
+feedbackRouter.post(
+  "/pets/:petId/feedback/:feedbackId/likes",
+  passport.authenticate("user-jwt", { session: false }),
+  feedbackController.addLikeToPetReview
 );
 
 export default feedbackRouter;

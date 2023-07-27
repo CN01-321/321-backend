@@ -278,7 +278,7 @@ function genFeedback(carers: Array<Carer>, owners: Array<Owner>) {
       authorName: author.name!,
       postedOn: new Date(),
       message: `My name is ${author.name} and I am leaving some feedback`,
-      likes: 0,
+      likes: [],
       comments: [],
     };
 
