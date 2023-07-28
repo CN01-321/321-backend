@@ -6,7 +6,7 @@ import { Carer } from "./models/carer.js";
 import { Pet, PetSize, PetType, petSizes, petTypes } from "./models/pet.js";
 import { Request } from "./models/request.js";
 import prand from "pure-rand";
-import { Feedback } from "./models/feedback.js";
+import { Comment, Feedback } from "./models/feedback.js";
 
 dotenv.config();
 
@@ -29,8 +29,15 @@ export const userCollection = await getUsersCollection<User>();
 export const ownerCollection = await getUsersCollection<Owner>();
 export const carerCollection = await getUsersCollection<Carer>();
 
-// set up an index for the location of a user
+// set up an index for the location of a user (required by the $geoNear operation)
 await userCollection.createIndex({ location: "2dsphere" });
+
+// set an index for emails to ensure uniquness and speed
+await userCollection.createIndex({ email: 1 }, { unique: true });
+
+// set indexes of fields frequently used in queries
+await userCollection.createIndex({ "pets._id": 1 });
+await userCollection.createIndex({ "requests._id": 1 });
 
 // set up prng for seeded randomness in data generation
 // seed == 3 because it is first seed where carer1@email.com has a direct request
@@ -63,6 +70,7 @@ async function populateDB() {
   const carers = genCarers();
   const owners = genOwners(carers);
   genFeedback(carers, owners);
+  genCommentsAndLikes(carers, owners);
 
   await carerCollection.insertMany(carers);
   await ownerCollection.insertMany(owners);
@@ -310,5 +318,55 @@ function genFeedback(carers: Array<Carer>, owners: Array<Owner>) {
       .forEach((c) => {
         c.feedback.push(newFeedback(o));
       })
+  );
+}
+
+function genCommentsAndLikes(carers: Array<Carer>, owners: Array<Owner>) {
+  const users = [...carers, ...owners];
+  const randUser = () => users[getRandNum(0, users.length - 1)];
+
+  const genLikes = () => {
+    const likes = [];
+    const numLikes = getRandNum(0, 10);
+    for (let i = 0; i < numLikes; i++) {
+      likes.push(randUser()._id!);
+    }
+
+    return likes;
+  };
+
+  const newComment = (user: User): Comment => {
+    return {
+      authorId: user._id!,
+      authorName: user.name!,
+      postedOn: new Date(),
+      message: "Nice review!",
+    };
+  };
+
+  const genComments = () => {
+    const comments = [];
+    const numComents = getRandNum(0, 5);
+    for (let i = 0; i < numComents; i++) {
+      comments.push(newComment(randUser()));
+    }
+
+    return comments;
+  };
+
+  // generate likes for each carer review
+  carers.forEach((c) =>
+    c.feedback.forEach((feedback) => {
+      feedback.likes = genLikes();
+      feedback.comments = genComments();
+    })
+  );
+
+  // generate likes for each owner review
+  owners.forEach((o) =>
+    o.feedback.forEach((feedback) => {
+      feedback.likes = genLikes();
+      feedback.comments = genComments();
+    })
   );
 }
