@@ -71,4 +71,10 @@ ownerRouter.post(
   ownerController.acceptRespondent
 );
 
+ownerRouter.get(
+  "/owners/requests/:requestId/pets",
+  passport.authenticate("owner-jwt", { session: false }),
+  ownerController.getPetsFromRequest
+)
+
 export default ownerRouter;
