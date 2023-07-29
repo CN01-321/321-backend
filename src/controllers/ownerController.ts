@@ -20,6 +20,7 @@ import {
   acceptRequestRespondent,
   createNewRequest,
   getOwnerRequests,
+  getRequestPets,
   getRequestWithId,
   getRespondents,
   searchForNearby,
@@ -342,6 +343,18 @@ async function searchRequests(req: Express.Request, res: Express.Response) {
   }
 }
 
+async function getPetsFromRequest(req: Express.Request, res: Express.Response) {
+  if (!ObjectId.isValid(req.params.requestId)) {
+    res.status(400).send("Invalid requestId");
+    return;
+  }
+  try {
+    res.json(await getRequestPets(new ObjectId(req.params.requestId)));
+  } catch (e) {
+    handleControllerError(res, e, 400);
+  }
+}
+
 const ownerController = {
   getOwnerBySession,
   getPet,
@@ -356,6 +369,7 @@ const ownerController = {
   createRequest,
   editRequest,
   searchRequests,
+  getPetsFromRequest
 };
 
 export default ownerController;

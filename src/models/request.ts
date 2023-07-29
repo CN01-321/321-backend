@@ -2,7 +2,7 @@ import { ObjectId, WithId } from "mongodb";
 import { DateRange } from "./carer.js";
 import { Owner } from "./owner.js";
 import { carerCollection, ownerCollection } from "../mongo.js";
-import { PetSize, PetType } from "./pet.js";
+import { Pet, PetSize, PetType, getPetWithId } from "./pet.js";
 
 type RequestStatus = "pending" | "accepted" | "rejected" | "completed";
 
@@ -266,4 +266,14 @@ export async function searchForNearby(
   ]);
 
   return await res.toArray();
+}
+
+export async function getRequestPets(requestId: ObjectId) {
+  const request = await getRequestWithId(new ObjectId(requestId));
+  
+  return await Promise.all(
+    request.pets.map(async (petId) => {
+        return await getPetWithId(new ObjectId(petId));
+    })
+  );
 }
