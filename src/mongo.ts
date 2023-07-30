@@ -231,7 +231,13 @@ function genBroadRequests(owner: Owner, carers: Array<Carer>) {
 
     [...respondents.keys()].forEach((r) => {
       request.respondents.push(r);
-      carers.find((c) => c._id === r)?.offers.push(request._id!);
+      carers
+        .find((c) => c._id === r)
+        ?.offers.push({
+          requestId: request._id!,
+          offerType: "broad",
+          status: "pending",
+        });
     });
 
     request.respondents = [...respondents.keys()];
@@ -271,7 +277,11 @@ function genDirectRequests(owner: Owner, carers: Array<Carer>) {
   for (let i = 0; i < numDirect; i++) {
     const carer = carers[getRandNum(0, carers.length - 1)];
     const d = newDirectRequest(owner, carer);
-    carer.offers.push(d._id!);
+    carer.offers.push({
+      requestId: d._id!,
+      offerType: "direct",
+      status: "pending",
+    });
     direct.push(d);
   }
 

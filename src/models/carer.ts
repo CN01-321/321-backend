@@ -10,15 +10,17 @@ export interface Carer extends User {
   skillsAndExp?: string;
   preferredTravelDistance: number; // distance is in metres
   hourlyRate: number;
+  offers: Offer[];
+  preferredPetTypes: PetType[];
+  preferredPetSizes: PetSize[];
+}
 
-  // TODO add some "accepted" field so that unaccepted and accepted broad
-  // requests can be differentiated
-  offers: Array<ObjectId>;
-  jobs: Array<ObjectId>;
-  unavailabilities: Array<DateRange>;
-  preferredPetTypes: Array<PetType>;
-  preferredPetSizes: Array<PetSize>;
-  licences: Array<Licence>;
+type OfferType = "broad" | "direct";
+
+interface Offer {
+  requestId: ObjectId;
+  offerType: OfferType;
+  status: "pending" | "applied" | "accepted";
 }
 
 export interface DateRange {
@@ -41,11 +43,8 @@ export async function newCarer(email: string, password: string) {
     hourlyRate: DEFAULT_HOURLY_RATE,
     feedback: [],
     offers: [],
-    jobs: [],
-    unavailabilities: [],
     preferredPetTypes: petTypes, // preferr all pet types and sizes by default
     preferredPetSizes: petSizes,
-    licences: [],
   });
 }
 
@@ -71,7 +70,6 @@ export async function getCarerByEmail(email: string) {
   return carerCollection.findOne({ email, userType: "carer" });
 }
 
-type OfferType = "broad" | "direct";
 export async function getCarerOffers(
   carer: WithId<Carer>,
   offerType: OfferType
@@ -82,18 +80,20 @@ export async function getCarerOffers(
 
   const res = await carerCollection.aggregate([
     { $match: { _id: carer._id } },
+    { $unwind: "$offers" },
+    { $replaceWith: "$offers" },
+    { $match: { offerType } },
     {
       $lookup: {
         from: "users",
-        let: { offers: "$offers" },
+        let: { offer: "$requestId", status: "$status" },
         pipeline: [
           { $unwind: "$requests" },
           {
             $match: {
               $expr: {
-                $in: ["$requests._id", "$$offers"],
+                $eq: ["$requests._id", "$$offer"],
               },
-              "requests.carer": carerFilter,
             },
           },
           {
@@ -113,6 +113,7 @@ export async function getCarerOffers(
               dateRange: 1,
               location: 1,
               requestedOn: 1,
+              status: "$$status",
             },
           },
         ],
@@ -148,16 +149,19 @@ export async function getCarerOffers(
 export async function getCarerJobs(carer: WithId<Carer>) {
   const res = await carerCollection.aggregate([
     { $match: { _id: carer._id } },
+    { $unwind: "$offers" },
+    { $replaceWith: "$offers" },
+    { $match: { offerType: "accepted" } },
     {
       $lookup: {
         from: "users",
-        let: { jobs: "$jobs" },
+        let: { job: "$requestId", status: "$status" },
         pipeline: [
           { $unwind: "$requests" },
           {
             $match: {
               $expr: {
-                $in: ["$requests._id", "$$jobs"],
+                $eq: ["$requests._id", "$$job"],
               },
             },
           },
@@ -179,6 +183,7 @@ export async function getCarerJobs(carer: WithId<Carer>) {
               location: 1,
               requestedOn: 1,
               additionalInfo: 1,
+              status: "$$status",
             },
           },
         ],
@@ -212,19 +217,23 @@ export async function getCarerJobs(carer: WithId<Carer>) {
 }
 
 // accept broad offer places the carer's id onto the respondents array in the
-// owners request
+// owners request, and updates the offer status to applied
 export async function acceptBroadOffer(
   carer: WithId<Carer>,
   offerId: ObjectId
 ) {
-  return await ownerCollection.updateOne(
+  await ownerCollection.updateOne(
     { "requests._id": offerId },
     { $push: { "requests.$.respondents": carer._id } }
   );
+
+  await carerCollection.updateOne(
+    { _id: carer._id, "offers.requestId": offerId },
+    { $set: { "offers.$.status": "applied" } }
+  );
 }
 
-// accept direct offer moves the request to the carer's jobs array, and updates
-// the request accordingly
+// accept direct offer updates the carer's offer and the owners request to accepted
 export async function acceptDirectOffer(
   carer: WithId<Carer>,
   offerId: ObjectId
@@ -237,21 +246,23 @@ export async function acceptDirectOffer(
   );
 
   return await carerCollection.updateOne(
-    { _id: carer._id },
-    { $push: { jobs: offerId }, $pull: { offers: offerId } }
+    { _id: carer._id, "offers.requestId": offerId },
+    { $set: { "offers.$.status": "accepted" } }
   );
 }
 
+// reject pulls the offer from the carers offer array,
 export async function rejectBroadOffer(
   carer: WithId<Carer>,
   offerId: ObjectId
 ) {
   return await carerCollection.updateOne(
     { _id: carer._id },
-    { $pull: { offers: offerId } }
+    { $pull: { offers: { requestId: offerId } } }
   );
 }
 
+// reject pulls the offer from the carers array and sets the request status to rejected
 export async function rejectDirectOffer(
   carer: WithId<Carer>,
   offerId: ObjectId
@@ -263,6 +274,6 @@ export async function rejectDirectOffer(
 
   return await carerCollection.updateOne(
     { _id: carer._id },
-    { $pull: { offers: offerId } }
+    { $pull: { offers: { requestId: offerId } } }
   );
 }

@@ -200,9 +200,10 @@ async function createRequest(req: Express.Request, res: Express.Response) {
   const requestData = {
     carer: req.body.carer ?? null,
     isCompleted: false,
+    status: "pending",
     requestedOn: new Date(),
     pets: req.body.pets,
-    message: req.body.message,
+    additionalInfo: req.body.message,
     dateRange: req.body.dateRange,
     respondents: [],
   };
@@ -369,7 +370,7 @@ const ownerController = {
   createRequest,
   editRequest,
   searchRequests,
-  getPetsFromRequest
+  getPetsFromRequest,
 };
 
 export default ownerController;
