@@ -12,6 +12,7 @@ import { Owner, getOwnerByEmail, newOwner } from "../models/owner.js";
 import { Request, Response } from "express";
 import { Carer, getCarerByEmail, newCarer } from "../models/carer.js";
 import { Strategy as JwtStrategy, ExtractJwt } from "passport-jwt";
+import { WithId } from "mongodb";
 
 dotenv.config();
 
@@ -34,8 +35,9 @@ passport.use(
 );
 
 export async function handleLogin(req: Request, res: Response) {
-  const user = req.user as User;
-  const body = { email: user.email, type: user.userType };
+  const user = req.user as WithId<User>;
+  console.log(user._id);
+  const body = { _id: user._id, email: user.email, type: user.userType };
 
   console.log(body);
 

@@ -1,6 +1,7 @@
 import { Router } from "express";
 import passport from "passport";
 import carerController from "../controllers/carerController.js";
+import feedbackController from "../controllers/feedbackController.js";
 
 const carerRouter = Router();
 

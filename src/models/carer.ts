@@ -2,7 +2,6 @@ import { ObjectId, WithId } from "mongodb";
 import { PetSize, PetType, petSizes, petTypes } from "./pet.js";
 import { User } from "./user.js";
 import { carerCollection, ownerCollection } from "../mongo.js";
-import { off } from "process";
 
 const DEFAULT_TRAVEL_DISTANCE_METRES = 50000;
 const DEFAULT_HOURLY_RATE = 20;
@@ -40,7 +39,7 @@ export async function newCarer(email: string, password: string) {
     notifications: [],
     preferredTravelDistance: DEFAULT_TRAVEL_DISTANCE_METRES,
     hourlyRate: DEFAULT_HOURLY_RATE,
-    receivedFeedback: [],
+    feedback: [],
     offers: [],
     jobs: [],
     unavailabilities: [],
@@ -51,7 +50,21 @@ export async function newCarer(email: string, password: string) {
 }
 
 export async function getCarerById(carerId: ObjectId) {
-  return carerCollection.findOne({ _id: carerId });
+  return carerCollection.findOne(
+    { _id: carerId },
+    {
+      projection: {
+        _id: 1,
+        email: 1,
+        userType: 1,
+        preferredTravelDistance: 1,
+        hourlyRate: 1,
+        unavailabilities: 1,
+        preferredPetTypes: 1,
+        preferredPetSizes: 1,
+      },
+    }
+  );
 }
 
 export async function getCarerByEmail(email: string) {
@@ -165,6 +178,7 @@ export async function getCarerJobs(carer: WithId<Carer>) {
               dateRange: 1,
               location: 1,
               requestedOn: 1,
+              additionalInfo: 1,
             },
           },
         ],
