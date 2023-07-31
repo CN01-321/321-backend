@@ -1,6 +1,6 @@
 import { ObjectId, WithId } from "mongodb";
 import { PetSize, PetType, petSizes, petTypes } from "./pet.js";
-import { User } from "./user.js";
+import { User, UserUpdateForm } from "./user.js";
 import { carerCollection, ownerCollection } from "../mongo.js";
 
 const DEFAULT_TRAVEL_DISTANCE_METRES = 50000;
@@ -29,6 +29,11 @@ export interface DateRange {
 export interface Licence {
   name: string;
   number: string;
+}
+
+export interface CarerUpdateForm extends UserUpdateForm {
+  preferredTravelDistance: number; // distance is in metres
+  hourlyRate: number;
 }
 
 export async function newCarer(email: string, password: string) {
@@ -69,6 +74,45 @@ export async function getCarerById(carerId: ObjectId) {
 
 export async function getCarerByEmail(email: string) {
   return carerCollection.findOne({ email, userType: "carer" });
+}
+
+export async function updateCarerDetails(carerId: ObjectId, form: CarerUpdateForm) {
+  const updatedFields: any = {};
+  
+  if (form.name) {
+    updatedFields.name = form.name;
+  }
+  if (form.email) {
+    updatedFields.email = form.email;
+  }
+  if (form.coords && form.street && form.city && form.state && form.postcode) {
+    updatedFields.location = {
+      type: "Point",
+      coordinates: form.coords,
+      street: form.street,
+      city: form.city,
+      state: form.state,
+      postcode: form.postcode
+    }
+  }
+  if (form.phone) {
+    updatedFields.phone = form.phone;
+  }
+  if (form.bio) {
+    updatedFields.bio = form.bio;
+  }
+  if (form.pfp) {}
+  if (form.preferredTravelDistance) {
+    updatedFields.preferredTravelDistance = form.preferredTravelDistance;
+  }
+  if (form.hourlyRate) {
+    updatedFields.hourlyRate = form.hourlyRate;
+  }
+
+  await carerCollection.updateOne(
+    { _id: new ObjectId(carerId) },
+    { $set: updatedFields }
+  );
 }
 
 type OfferType = "broad" | "direct";

@@ -164,6 +164,7 @@ function genLocation(): UserLocation {
     state: "NSW",
     city: city ? "Sydney" : "Wollongong",
     street: city ? "Sydney St" : "Wollongong Way",
+    postcode: city ? 2000 : 2500,
   };
 }
 

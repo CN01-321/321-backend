@@ -8,7 +8,9 @@ import {
   getCarerOffers,
   rejectBroadOffer,
   rejectDirectOffer,
+  updateCarerDetails,
 } from "../models/carer.js";
+import { handleControllerError } from "../util.js";
 
 async function getCarerBySession(
   req: Express.Request,
@@ -22,6 +24,18 @@ async function getCarerBySession(
       "The following error occured while getting a carer by session: " + err
     );
     next(err);
+  }
+}
+
+async function updateCarer(
+  req: Express.Request,
+  res: Express.Response,
+) {
+  try {
+    const carer = req.user as WithId<Carer>;
+    await updateCarerDetails(carer._id, req.body);
+  } catch (err) {
+    handleControllerError(res, err, 400)
   }
 }
 
@@ -86,6 +100,7 @@ async function rejectOffer(req: Express.Request, res: Express.Response) {
 
 const carerController = {
   getCarerBySession,
+  updateCarer,
   getBroadOffers,
   getDirectOffers,
   getJobs,

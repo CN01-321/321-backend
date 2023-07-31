@@ -10,6 +10,13 @@ carerRouter.get(
   passport.authenticate("carer-jwt", { session: false }),
   carerController.getCarerBySession
 );
+
+carerRouter.put(
+  "/carers",
+  passport.authenticate("carer-jwt", { session: false }),
+  carerController.updateCarer
+);
+
 carerRouter.get(
   "/carers/broad",
   passport.authenticate("carer-jwt", { session: false }),
