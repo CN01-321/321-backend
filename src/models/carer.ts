@@ -74,15 +74,11 @@ export async function getCarerOffers(
   carer: WithId<Carer>,
   offerType: OfferType
 ) {
-  // if the request is a direct request the request.carer id will be set,
-  // otherwise filter broad requests by matching null
-  const carerFilter = offerType === "broad" ? null : carer._id;
-
   const res = await carerCollection.aggregate([
     { $match: { _id: carer._id } },
     { $unwind: "$offers" },
     { $replaceWith: "$offers" },
-    { $match: { offerType } },
+    { $match: { offerType, status: { $in: ["pending", "applied"] } } },
     {
       $lookup: {
         from: "users",
@@ -151,7 +147,7 @@ export async function getCarerJobs(carer: WithId<Carer>) {
     { $match: { _id: carer._id } },
     { $unwind: "$offers" },
     { $replaceWith: "$offers" },
-    { $match: { offerType: "accepted" } },
+    { $match: { status: "accepted" } },
     {
       $lookup: {
         from: "users",
