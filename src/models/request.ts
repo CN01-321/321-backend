@@ -53,6 +53,7 @@ export async function getOwnerRequests(owner: WithId<Owner>) {
               $expr: { $eq: ["$_id", { $toObjectId: "$$carer" }] },
             },
           },
+
           { $project: { _id: 1, name: 1 } },
         ],
         as: "carer",
@@ -86,7 +87,15 @@ export async function getOwnerRequests(owner: WithId<Owner>) {
 async function addRequestToCarer(requestId: ObjectId, carerId: ObjectId) {
   await carerCollection.updateOne(
     { _id: carerId },
-    { $push: { offers: requestId } }
+    {
+      $push: {
+        offers: {
+          requestId: requestId,
+          offerType: "direct",
+          status: "pending",
+        },
+      },
+    }
   );
 }
 
@@ -125,6 +134,7 @@ async function addRequestToNearby(owner: WithId<Owner>, request: Request) {
     { $project: { _id: 1 } },
   ]);
 
+  // map the nearby query to an array of carer _id's
   const nearby = (await res.toArray()).map((n) => n._id) as Array<ObjectId>;
   console.log("nearby", nearby);
 
@@ -132,10 +142,17 @@ async function addRequestToNearby(owner: WithId<Owner>, request: Request) {
   console.log(
     await carerCollection.updateMany(
       { _id: { $in: nearby } },
-      { $push: { offers: request._id } }
+      {
+        $push: {
+          offers: {
+            requestId: request._id!,
+            offerType: "broad",
+            status: "pending",
+          },
+        },
+      }
     )
   );
-  // TODO search for nearby carers (haversine?) and push the request to them
 }
 
 export async function createNewRequest(owner: WithId<Owner>, request: Request) {
@@ -202,7 +219,7 @@ export async function acceptRequestRespondent(
   // move the request from offers to the jobs list of the carer
   await carerCollection.updateOne(
     { _id: respondentId },
-    { $push: { jobs: requestId }, $pull: { offers: requestId } }
+    { $push: { jobs: requestId }, $pull: { offers: { requestId: requestId } } }
   );
 
   // update the requests carer to the selected respondent and status to accepted
@@ -289,10 +306,10 @@ export async function searchForNearby(
 
 export async function getRequestPets(requestId: ObjectId) {
   const request = await getRequestWithId(new ObjectId(requestId));
-  
+
   return await Promise.all(
     request.pets.map(async (petId) => {
-        return await getPetWithId(new ObjectId(petId));
+      return await getPetWithId(new ObjectId(petId));
     })
   );
 }

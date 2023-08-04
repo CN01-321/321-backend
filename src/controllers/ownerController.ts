@@ -181,7 +181,17 @@ async function validateRequest(request: any): Promise<Request> {
     throw new Error("No Pets Specified");
   }
 
+  if (!request.pets.every(ObjectId.isValid)) {
+    throw new Error("Pet Id is invalid");
+  }
+
+  request.pets = request.pets.map((id: string) => new ObjectId(id));
+
   validateDateRange(request.dateRange);
+  request.dateRange = {
+    startDate: new Date(request.dateRange.startDate),
+    endDate: new Date(request.dateRange.startDate),
+  };
 
   return request as Request;
 }
@@ -196,13 +206,15 @@ async function getRequests(req: Express.Request, res: Express.Response) {
 }
 
 async function createRequest(req: Express.Request, res: Express.Response) {
+  console.log("new request is: ", req.body);
+
   const owner = req.user as WithId<Owner>;
   const requestData = {
     carer: req.body.carer ?? null,
-    isCompleted: false,
+    status: "pending",
     requestedOn: new Date(),
     pets: req.body.pets,
-    message: req.body.message,
+    additionalInfo: req.body.message,
     dateRange: req.body.dateRange,
     respondents: [],
   };
@@ -369,7 +381,7 @@ const ownerController = {
   createRequest,
   editRequest,
   searchRequests,
-  getPetsFromRequest
+  getPetsFromRequest,
 };
 
 export default ownerController;
