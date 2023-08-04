@@ -1,6 +1,6 @@
 import Express from "express";
 import { ObjectId, WithId } from "mongodb";
-import { Owner } from "../models/owner.js";
+import { Owner, updateOwnerDetails } from "../models/owner.js";
 import {
   Pet,
   createNewPet,
@@ -41,6 +41,18 @@ async function getOwnerBySession(
       "The following error occured while getting an owner by session: " + err
     );
     next(err);
+  }
+}
+
+async function updateOwner(
+  req: Express.Request,
+  res: Express.Response,
+) {
+  try {
+    const owner = req.user as WithId<Owner>;
+    await updateOwnerDetails(owner._id, req.body);
+  } catch(err) {
+    handleControllerError(res, err, 400);
   }
 }
 
@@ -369,6 +381,7 @@ async function getPetsFromRequest(req: Express.Request, res: Express.Response) {
 
 const ownerController = {
   getOwnerBySession,
+  updateOwner,
   getPet,
   getPets,
   addPet,

@@ -21,14 +21,28 @@ export interface User {
 export interface UserLocation {
   type: "Point"; // the GeoJSON type is always "Point"
   coordinates: [number, number]; // longitude, latitude
-  state: string;
-  city: string;
   street: string;
+  city: string;
+  state: string;
+  postcode: number;
 }
 
 export interface Notification {
   name: string;
   desc: string;
+}
+
+export interface UserUpdateForm {
+  name?: string;
+  email?: string;
+  postcode: number;
+  state: string;
+  city: string;
+  street: string;
+  coords?: number[];
+  phone?: string;
+  bio?: string;
+  pfp?: string;
 }
 
 export async function getUserById(userId: ObjectId) {
