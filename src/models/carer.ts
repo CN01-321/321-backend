@@ -114,8 +114,6 @@ export async function updateCarerDetails(carerId: ObjectId, form: CarerUpdateFor
   );
 }
 
-type OfferType = "broad" | "direct";
-
 export async function getCarerOffers(
   carer: WithId<Carer>,
   offerType: OfferType
