@@ -73,7 +73,10 @@ async function acceptOffer(req: Express.Request, res: Express.Response) {
 
   const accept = offerType == "broad" ? acceptBroadOffer : acceptDirectOffer;
 
-  res.json(await accept(carer, offerId));
+  await accept(carer, offerId);
+
+  // return the updated list of offers to the carer
+  res.json(await getCarerOffers(carer, offerType));
 }
 
 async function rejectOffer(req: Express.Request, res: Express.Response) {
@@ -95,7 +98,10 @@ async function rejectOffer(req: Express.Request, res: Express.Response) {
 
   const reject = offerType == "broad" ? rejectBroadOffer : rejectDirectOffer;
 
-  res.json(await reject(carer, offerId));
+  await reject(carer, offerId);
+
+  // return the updated list of offers to the carer
+  res.json(await getCarerOffers(carer, offerType));
 }
 
 const carerController = {
