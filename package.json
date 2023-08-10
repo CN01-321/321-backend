@@ -32,7 +32,8 @@
     "passport": "^0.6.0",
     "passport-jwt": "^4.0.1",
     "passport-local": "^1.0.0",
-    "pure-rand": "^6.0.2"
+    "pure-rand": "^6.0.2",
+    "yup": "^1.2.0"
   },
   "devDependencies": {
     "@types/cors": "^2.8.13",

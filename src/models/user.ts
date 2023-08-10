@@ -14,8 +14,8 @@ export interface User {
   bio?: string;
   pfp?: string;
   userType: UserType;
-  notifications: Array<Notification>;
-  feedback: Array<Feedback>;
+  notifications: Notification[];
+  feedback: Feedback[];
 }
 
 export interface UserLocation {
@@ -24,7 +24,7 @@ export interface UserLocation {
   street: string;
   city: string;
   state: string;
-  postcode: number;
+  postcode: string;
 }
 
 export interface Notification {
@@ -34,15 +34,9 @@ export interface Notification {
 
 export interface UserUpdateForm {
   name?: string;
-  email?: string;
-  postcode: number;
-  state: string;
-  city: string;
-  street: string;
-  coords?: number[];
+  location?: UserLocation;
   phone?: string;
   bio?: string;
-  pfp?: string;
 }
 
 export async function getUserById(userId: ObjectId) {

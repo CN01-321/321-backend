@@ -13,7 +13,7 @@ import {
   newPetComment,
   newPetFeedback,
 } from "../models/feedback.js";
-import { handleControllerError } from "../util.js";
+import { handleControllerError } from "../errors.js";
 
 async function getFeedbackForUser(req: Express.Request, res: Express.Response) {
   if (!ObjectId.isValid(req.params.userId)) {
