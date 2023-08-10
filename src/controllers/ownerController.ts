@@ -26,19 +26,23 @@ import {
   searchForNearby,
   updateRequest,
 } from "../models/request.js";
-import { handleControllerError } from "../errors.js";
+
 import { getCarerById } from "../models/carer.js";
 
 async function getOwnerBySession(req: Express.Request, res: Express.Response) {
   res.json(req.user);
 }
 
-async function updateOwner(req: Express.Request, res: Express.Response) {
+async function updateOwner(
+  req: Express.Request,
+  res: Express.Response,
+  next: Express.NextFunction
+) {
   try {
     const owner = req.user as WithId<Owner>;
     await updateOwnerDetails(owner._id, req.body);
   } catch (err) {
-    handleControllerError(res, err, 400);
+    next(err);
   }
 }
 
