@@ -32,5 +32,5 @@ app.use(errorHandler);
 
 if (process.env.POPULATE_DB === "true") {
   console.log("populating users");
-  dataGenerator.generate();
+  await dataGenerator.generate();
 }

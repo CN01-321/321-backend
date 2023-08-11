@@ -1,5 +1,5 @@
 import { ObjectId, WithId } from "mongodb";
-import { BadRequestError, handleUpdateResult } from "../errors";
+import { BadRequestError, handleUpdateResult } from "../errors.js";
 import {
   Request,
   acceptRequestRespondent,
@@ -9,9 +9,9 @@ import {
   getRequestPets,
   getRequestWithId,
   getRespondents,
-} from "../models/request";
-import { Owner } from "../models/owner";
-import { DateRange } from "../models/carer";
+} from "../models/request.js";
+import { Owner } from "../models/owner.js";
+import { DateRange } from "../models/carer.js";
 import { ObjectSchema, array, date, object, string } from "yup";
 
 class RequestService {

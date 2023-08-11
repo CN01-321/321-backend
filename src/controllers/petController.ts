@@ -1,5 +1,5 @@
 import Express from "express";
-import petService from "../services/pet";
+import petService from "../services/pet.js";
 
 async function getPet(
   req: Express.Request,

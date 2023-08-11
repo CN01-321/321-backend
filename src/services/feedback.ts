@@ -1,5 +1,5 @@
 import { ObjectId, WithId } from "mongodb";
-import { BadRequestError, handleUpdateResult } from "../errors";
+import { BadRequestError, handleUpdateResult } from "../errors.js";
 import {
   Comment,
   Feedback,
@@ -9,9 +9,9 @@ import {
   newComment,
   newFeedback,
   newPetFeedback,
-} from "../models/feedback";
+} from "../models/feedback.js";
 import { ObjectSchema, number, object, string } from "yup";
-import { User } from "../models/user";
+import { User } from "../models/user.js";
 
 class FeedbackService {
   async getUserFeedback(userId: string) {

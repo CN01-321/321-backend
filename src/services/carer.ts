@@ -8,12 +8,12 @@ import {
   rejectBroadOffer,
   rejectDirectOffer,
   updateCarerDetails,
-} from "../models/carer";
-import { UserUpdateForm, userUpdateFormSchema } from "./user";
-import { PetSize, PetType, petSizes, petTypes } from "../models/pet";
+} from "../models/carer.js";
+import { UserUpdateForm, userUpdateFormSchema } from "./user.js";
+import { PetSize, PetType, petSizes, petTypes } from "../models/pet.js";
 import { ObjectSchema, array, number, object, string } from "yup";
-import { UserLocation } from "../models/user";
-import { BadRequestError, handleUpdateResult } from "../errors";
+import { UserLocation } from "../models/user.js";
+import { BadRequestError, handleUpdateResult } from "../errors.js";
 
 class CarerService {
   async updateCarer(carer: WithId<Carer>, updateCarerForm: UpdateCarerForm) {

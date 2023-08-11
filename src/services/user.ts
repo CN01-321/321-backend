@@ -1,9 +1,9 @@
 import { ObjectSchema, number, object, string, tuple } from "yup";
-import { UserLocation, UserType, getUserById } from "../models/user";
-import { newOwner } from "../models/owner";
-import { newCarer } from "../models/carer";
+import { UserLocation, UserType, getUserById } from "../models/user.js";
+import { newOwner } from "../models/owner.js";
+import { newCarer } from "../models/carer.js";
 import { ObjectId } from "mongodb";
-import { BadRequestError, NotFoundError } from "../errors";
+import { BadRequestError, NotFoundError } from "../errors.js";
 
 class UserService {
   async getUser(userId: string) {

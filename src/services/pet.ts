@@ -1,6 +1,6 @@
 import { ObjectId } from "mongodb";
-import { BadRequestError } from "../errors";
-import { getPetWithId } from "../models/pet";
+import { BadRequestError } from "../errors.js";
+import { getPetWithId } from "../models/pet.js";
 
 class PetService {
   async getPet(petId: string) {

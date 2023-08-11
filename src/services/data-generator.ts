@@ -1,39 +1,44 @@
 import prand from "pure-rand";
-import { carerCollection, ownerCollection, userCollection } from "../mongo";
-import { Pet, petSizes, petTypes } from "../models/pet";
-import { Carer } from "../models/carer";
+import { carerCollection, ownerCollection, userCollection } from "../mongo.js";
+import { Pet, petSizes, petTypes } from "../models/pet.js";
+import { Carer } from "../models/carer.js";
 import { ObjectId } from "mongodb";
-import { Owner } from "../models/owner";
-import { User, UserLocation } from "../models/user";
+import { Owner } from "../models/owner.js";
+import { User, UserLocation } from "../models/user.js";
 import { Request } from "../models/request";
-import { Comment, Feedback } from "../models/feedback";
+import { Comment, Feedback } from "../models/feedback.js";
 
 // seed == 3 because it is first seed where carer1@email.com has a direct request
 const DEFAULT_SEED = 3;
+let rng = prand.mersenne(DEFAULT_SEED);
+
+function randNum(min: number, max: number): number {
+  const [num, next_rng] = prand.uniformIntDistribution(min, max, rng);
+  rng = next_rng;
+  return num;
+}
+
+function randBool(): boolean {
+  return randNum(0, 0) == 0;
+}
+
+function createObjectId(): ObjectId {
+  let hexStr = "";
+
+  // generate at 24 long hex string
+  while (hexStr.length < 24) {
+    // genrerate anywhere from '0' - 'f'
+    const asciiCode = randNum(48, 102);
+    // skip if not [0-9a-f]
+    if (asciiCode > 57 && asciiCode < 97) continue;
+    hexStr += String.fromCharCode(asciiCode);
+  }
+
+  console.log(hexStr);
+  return new ObjectId(hexStr);
+}
 
 class DataGeneratorService {
-  private seed: number;
-  private rng: prand.RandomGenerator;
-
-  constructor(seed?: number) {
-    this.seed = seed ?? DEFAULT_SEED;
-    this.rng = prand.mersenne(this.seed);
-  }
-
-  private randNum(min: number, max: number): number {
-    const [num, next_rng] = prand.uniformIntDistribution(min, max, this.rng);
-    this.rng = next_rng;
-    console.log(`got random num ${num}`);
-    return num;
-  }
-
-  private randBool(): boolean {
-    const [num, next_rng] = prand.uniformIntDistribution(0, 1, this.rng);
-    this.rng = next_rng;
-    console.log(`got random bool ${num == 0}`);
-    return num == 0;
-  }
-
   async generate() {
     // drops everything
     await userCollection.deleteMany({});
@@ -53,18 +58,18 @@ class DataGeneratorService {
     // return either a random selection of pet types or all pet types
     // (no carer should prefer nothing)
     const genPreferredPetTypes = () => {
-      const genPetTypes = petTypes.filter(this.randBool);
+      const genPetTypes = petTypes.filter(randBool);
       return genPetTypes.length === 0 ? petTypes : genPetTypes;
     };
 
     const genPreferredPetSizes = () => {
-      const genPetSizes = petSizes.filter(this.randBool);
+      const genPetSizes = petSizes.filter(randBool);
       return genPetSizes.length === 0 ? petSizes : genPetSizes;
     };
 
     const newCarer: (num: number) => Carer = (num) => {
       return {
-        _id: new ObjectId(),
+        _id: createObjectId(),
         email: `carer${num}@email.com`,
         password: "password",
         name: `Carer ${num}`,
@@ -96,7 +101,7 @@ class DataGeneratorService {
   private genOwners(carers: Array<Carer>) {
     const newOwner: (num: number) => Owner = (num) => {
       return {
-        _id: new ObjectId(),
+        _id: createObjectId(),
         email: `owner${num}@email.com`,
         password: "password",
         name: `Owner ${num}`,
@@ -126,7 +131,7 @@ class DataGeneratorService {
     const sydneyCoords = { lat: 33.8688, lng: 151.2093 };
     const wollongongCoords = { lat: 34.4248, lng: 150.8931 };
 
-    const city = this.randBool();
+    const city = randBool();
     const coords = city ? sydneyCoords : wollongongCoords;
 
     return {
@@ -141,23 +146,23 @@ class DataGeneratorService {
 
   private genPets(): Array<Pet> {
     const newPet: (num: number) => Pet = (num) => {
-      const petType = petTypes[this.randNum(0, 3)];
-      const petSize = petSizes[this.randNum(0, 3)];
+      const petType = petTypes[randNum(0, 3)];
+      const petSize = petSizes[randNum(0, 3)];
 
       return {
-        _id: new ObjectId(),
+        _id: createObjectId(),
         name: `${petType} ${num}`,
         petType,
         petSize,
-        isVaccinated: this.randBool(),
-        isFriendly: this.randBool(),
-        isNeutered: this.randBool(),
+        isVaccinated: randBool(),
+        isFriendly: randBool(),
+        isNeutered: randBool(),
         feedback: [],
       };
     };
 
     const pets: Array<Pet> = [];
-    const numPets = this.randNum(1, 5);
+    const numPets = randNum(1, 5);
     for (let i = 1; i <= numPets; i++) {
       pets.push(newPet(i));
     }
@@ -169,7 +174,7 @@ class DataGeneratorService {
   private genRandomPetsForRequests(pets: Array<Pet>) {
     const reqPets: Set<ObjectId> = new Set();
     while (reqPets.size === 0) {
-      pets.filter(this.randBool).forEach((p) => reqPets.add(p._id));
+      pets.filter(randBool).forEach((p) => reqPets.add(p._id));
     }
 
     return Array.from(reqPets);
@@ -178,7 +183,7 @@ class DataGeneratorService {
   private genBroadRequests(owner: Owner, carers: Array<Carer>) {
     const newBroadRequest: (o: Owner) => Request = (o) => {
       return {
-        _id: new ObjectId(),
+        _id: createObjectId(),
         carer: null,
         status: "pending",
         respondents: [],
@@ -195,9 +200,9 @@ class DataGeneratorService {
     const genRespondents: (request: Request) => void = (request) => {
       const respondents: Map<ObjectId, boolean> = new Map();
 
-      const numResp = this.randNum(1, 4);
+      const numResp = randNum(1, 4);
       while (respondents.size < numResp) {
-        const carer = carers[this.randNum(0, carers.length - 1)];
+        const carer = carers[randNum(0, carers.length - 1)];
         respondents.set(carer._id, true);
       }
 
@@ -216,7 +221,7 @@ class DataGeneratorService {
     };
 
     const broad: Array<Request> = [];
-    const numBroad = this.randNum(1, 4);
+    const numBroad = randNum(1, 4);
     for (let i = 0; i < numBroad; i++) {
       const b = newBroadRequest(owner);
       genRespondents(b);
@@ -233,7 +238,7 @@ class DataGeneratorService {
       c
     ) => {
       return {
-        _id: new ObjectId(),
+        _id: createObjectId(),
         carer: c._id,
         status: "pending",
         respondents: [],
@@ -248,9 +253,9 @@ class DataGeneratorService {
     };
 
     const direct: Array<Request> = [];
-    const numDirect = this.randNum(1, 3);
+    const numDirect = randNum(1, 3);
     for (let i = 0; i < numDirect; i++) {
-      const carer = carers[this.randNum(0, carers.length - 1)];
+      const carer = carers[randNum(0, carers.length - 1)];
       const d = newDirectRequest(owner, carer);
       carer.offers.push({
         requestId: d._id,
@@ -266,7 +271,7 @@ class DataGeneratorService {
   private genFeedback(carers: Array<Carer>, owners: Array<Owner>) {
     const newFeedback: (author: User) => Feedback = (author) => {
       const feedback: Feedback = {
-        _id: new ObjectId(),
+        _id: createObjectId(),
         authorId: author._id,
         authorName: author.name ?? "",
         postedOn: new Date(),
@@ -276,8 +281,8 @@ class DataGeneratorService {
       };
 
       // create a 1/4 chance of no rating
-      if (this.randNum(0, 3) !== 3) {
-        feedback.rating = this.randNum(0, 5);
+      if (randNum(0, 3) !== 3) {
+        feedback.rating = randNum(0, 5);
       }
 
       return feedback;
@@ -286,12 +291,12 @@ class DataGeneratorService {
     // add some carer reviews to owners and pets
     carers.forEach((c) =>
       owners
-        .filter(() => this.randNum(0, 4) === 4)
+        .filter(() => randNum(0, 4) === 4)
         .forEach((o) => {
           o.feedback.push(newFeedback(c));
           // give a small chance for the carer to also review a pet
           o.pets
-            .filter(() => this.randNum(0, 5) === 5)
+            .filter(() => randNum(0, 5) === 5)
             .forEach((p) => p.feedback.push(newFeedback(c)));
         })
     );
@@ -299,7 +304,7 @@ class DataGeneratorService {
     // add some owner reviews to carers
     owners.forEach((o) =>
       carers
-        .filter(() => this.randNum(0, 2) === 2)
+        .filter(() => randNum(0, 2) === 2)
         .forEach((c) => {
           c.feedback.push(newFeedback(o));
         })
@@ -308,11 +313,11 @@ class DataGeneratorService {
 
   private genCommentsAndLikes(carers: Array<Carer>, owners: Array<Owner>) {
     const users = [...carers, ...owners];
-    const randUser = () => users[this.randNum(0, users.length - 1)];
+    const randUser = () => users[randNum(0, users.length - 1)];
 
     const genLikes = () => {
       const likes = [];
-      const numLikes = this.randNum(0, 10);
+      const numLikes = randNum(0, 10);
       for (let i = 0; i < numLikes; i++) {
         likes.push(randUser()._id);
       }
@@ -331,7 +336,7 @@ class DataGeneratorService {
 
     const genComments = () => {
       const comments = [];
-      const numComents = this.randNum(0, 5);
+      const numComents = randNum(0, 5);
       for (let i = 0; i < numComents; i++) {
         comments.push(newComment(randUser()));
       }

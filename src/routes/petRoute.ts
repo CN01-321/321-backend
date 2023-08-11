@@ -1,7 +1,7 @@
 import { Router } from "express";
 import passport from "passport";
-import feedbackController from "../controllers/feedbackController";
-import petController from "../controllers/petController";
+import feedbackController from "../controllers/feedbackController.js";
+import petController from "../controllers/petController.js";
 
 const petRouter = Router();
 
