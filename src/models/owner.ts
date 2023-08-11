@@ -11,6 +11,7 @@ export interface Owner extends User {
 
 export async function newOwner(email: string, password: string) {
   return ownerCollection.insertOne({
+    _id: new ObjectId(),
     email,
     password,
     userType: "owner",
@@ -35,7 +36,7 @@ export async function updateOwnerDetails(
   ownerId: ObjectId,
   owner: Omit<Partial<Owner>, "_id">
 ) {
-  await ownerCollection.updateOne(
+  return await ownerCollection.updateOne(
     { _id: new ObjectId(ownerId) },
     { $set: owner }
   );

@@ -4,6 +4,11 @@ import ownerController from "../controllers/ownerController.js";
 
 const ownerRouter = Router();
 
+ownerRouter.post(
+  "/",
+  passport.authenticate("owner-jwt", { session: false }),
+  ownerController.createNewOwner
+);
 ownerRouter.get(
   "/",
   passport.authenticate("owner-jwt", { session: false }),
@@ -38,7 +43,7 @@ ownerRouter.delete(
 ownerRouter.get(
   "/requests/nearby",
   passport.authenticate("owner-jwt", { session: false }),
-  ownerController.searchRequests
+  ownerController.getNearbyRequests
 );
 ownerRouter.get(
   "/requests/:requestId",
@@ -59,11 +64,6 @@ ownerRouter.post(
   "/requests",
   passport.authenticate("owner-jwt", { session: false }),
   ownerController.createRequest
-);
-ownerRouter.put(
-  "/requests/:requestId",
-  passport.authenticate("owner-jwt", { session: false }),
-  ownerController.editRequest
 );
 ownerRouter.post(
   "/requests/:requestId/respondents/:respondentId",

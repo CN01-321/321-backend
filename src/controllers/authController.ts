@@ -4,13 +4,12 @@ import passport from "passport";
 import { Strategy as LocalStrategy, IStrategyOptions } from "passport-local";
 import {
   User,
-  checkEmailExists,
   getUserByEmail,
   getUserByEmailAndPassword,
 } from "../models/user.js";
-import { getOwnerByEmail, newOwner } from "../models/owner.js";
+import { getOwnerByEmail } from "../models/owner.js";
 import { Request, Response } from "express";
-import { getCarerByEmail, newCarer } from "../models/carer.js";
+import { getCarerByEmail } from "../models/carer.js";
 import { Strategy as JwtStrategy, ExtractJwt } from "passport-jwt";
 import { WithId } from "mongodb";
 
@@ -48,52 +47,6 @@ export async function handleLogin(req: Request, res: Response) {
 
   console.log(token);
   res.json({ token });
-}
-
-// TODO more stricter validation (proper emails, stronger passwords)
-async function valdateSignUpRequest(
-  email: string | undefined,
-  password: string | undefined
-) {
-  if (!email) {
-    throw "No email present";
-  }
-
-  if (!password) {
-    throw "No password present";
-  }
-
-  if (await checkEmailExists(email)) {
-    throw "Email is already in use.";
-  }
-}
-
-export async function handleNewOwner(req: Request, res: Response) {
-  const email = req.body.email;
-  const password = req.body.password;
-
-  try {
-    await valdateSignUpRequest(email, password);
-    const owner = await newOwner(email, password);
-    console.log("Created new Owner", owner);
-    res.sendStatus(200);
-  } catch (e) {
-    res.status(400).send(e);
-  }
-}
-
-export async function handleNewCarer(req: Request, res: Response) {
-  const email = req.body.email;
-  const password = req.body.password;
-
-  try {
-    await valdateSignUpRequest(email, password);
-    const carer = await newCarer(email, password);
-    console.log("Created new Carer", carer);
-    res.sendStatus(200);
-  } catch (e) {
-    res.status(400).send(e);
-  }
 }
 
 const jwtOpts = {

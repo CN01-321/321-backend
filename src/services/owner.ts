@@ -1,6 +1,6 @@
 import { ObjectId, WithId } from "mongodb";
 import { Owner, updateOwnerDetails } from "../models/owner";
-import { object, number, string, ObjectSchema, tuple, mixed, bool } from "yup";
+import { object, string, ObjectSchema, mixed, bool } from "yup";
 import {
   Pet,
   PetSize,
@@ -10,12 +10,12 @@ import {
   getOwnerPets,
   updateExisitingPet,
 } from "../models/pet";
-import { UserUpdateForm } from "./user";
+import { UserUpdateForm, userUpdateFormSchema } from "./user";
 import { UserLocation } from "../models/user";
 import { BadRequestError, handleUpdateResult } from "../errors";
 
 class OwnerService {
-  async updateOwner(ownerId: ObjectId, updateFormData: OwnerUpdateForm) {
+  async updateOwner(owner: WithId<Owner>, updateFormData: OwnerUpdateForm) {
     const updateForm = await validateOwnerUpdateForm(updateFormData);
 
     // include type = "Point" if location is being set, otherwise leave location undefined
@@ -24,7 +24,7 @@ class OwnerService {
       : undefined;
 
     const updateOwner: Partial<Owner> = { ...updateForm, location };
-    return await updateOwnerDetails(ownerId, updateOwner);
+    handleUpdateResult(await updateOwnerDetails(owner._id, updateOwner));
   }
 
   async getPets(owner: WithId<Owner>) {
@@ -34,7 +34,7 @@ class OwnerService {
   async addPet(owner: WithId<Owner>, addPetForm: AddPetForm) {
     await validateAddPetForm(addPetForm);
 
-    const pet: Pet = { ...addPetForm, feedback: [] };
+    const pet: Pet = { ...addPetForm, _id: new ObjectId(), feedback: [] };
     handleUpdateResult(await createNewPet(owner, pet));
   }
 
@@ -75,22 +75,7 @@ type OwnerUpdateForm = UserUpdateForm;
 async function validateOwnerUpdateForm(
   form: OwnerUpdateForm
 ): Promise<OwnerUpdateForm> {
-  const schema: ObjectSchema<OwnerUpdateForm> = object({
-    name: string().optional(),
-    location: object({
-      coordinates: tuple([
-        number().required().min(-180).max(180),
-        number().required().min(-90).max(90),
-      ]).required(),
-      street: string().required(),
-      city: string().required(),
-      state: string().required(),
-      postcode: string().required(),
-    }).optional(),
-    phone: string().optional(),
-    bio: string().optional(),
-  });
-
+  const schema: ObjectSchema<OwnerUpdateForm> = userUpdateFormSchema;
   return await schema.validate(form);
 }
 

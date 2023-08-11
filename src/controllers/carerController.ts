@@ -1,29 +1,23 @@
 import Express from "express";
-import { ObjectId, WithId } from "mongodb";
-import {
-  Carer,
-  acceptBroadOffer,
-  acceptDirectOffer,
-  getCarerJobs,
-  getCarerOffers,
-  rejectBroadOffer,
-  rejectDirectOffer,
-  updateCarerDetails,
-} from "../models/carer.js";
+import { WithId } from "mongodb";
+import { Carer } from "../models/carer.js";
+import carerService from "../services/carer.js";
+import userService from "../services/user.js";
 
-async function getCarerBySession(
+async function createNewCarer(
   req: Express.Request,
   res: Express.Response,
   next: Express.NextFunction
 ) {
   try {
-    res.json(req.user);
+    await userService.newUser(req.body, "carer");
+    res.sendStatus(200);
   } catch (err) {
-    console.error(
-      "The following error occured while getting a carer by session: " + err
-    );
     next(err);
   }
+}
+async function getCarerBySession(req: Express.Request, res: Express.Response) {
+  res.json(req.user);
 }
 
 async function updateCarer(
@@ -31,9 +25,9 @@ async function updateCarer(
   res: Express.Response,
   next: Express.NextFunction
 ) {
+  const carer = req.user as WithId<Carer>;
   try {
-    const carer = req.user as WithId<Carer>;
-    await updateCarerDetails(carer._id, req.body);
+    res.json(await carerService.updateCarer(carer, req.body));
   } catch (err) {
     next(err);
   }
@@ -41,70 +35,59 @@ async function updateCarer(
 
 async function getBroadOffers(req: Express.Request, res: Express.Response) {
   const carer = req.user as WithId<Carer>;
-  res.json(await getCarerOffers(carer, "broad"));
+  res.json(await carerService.getBroadOffers(carer));
 }
 
 async function getDirectOffers(req: Express.Request, res: Express.Response) {
   const carer = req.user as WithId<Carer>;
-  res.json(await getCarerOffers(carer, "direct"));
+  res.json(await carerService.getDirectOffers(carer));
 }
 
 async function getJobs(req: Express.Request, res: Express.Response) {
   const carer = req.user as WithId<Carer>;
-  res.json(await getCarerJobs(carer));
+  res.json(await carerService.getJobs(carer));
 }
 
-async function acceptOffer(req: Express.Request, res: Express.Response) {
+async function acceptOffer(
+  req: Express.Request,
+  res: Express.Response,
+  next: Express.NextFunction
+) {
   const carer = req.user as WithId<Carer>;
-  const offerType = req.params.offerType;
-
-  // check that the offer type is valid
-  if (!(offerType === "broad" || offerType === "direct")) {
-    res.status(400).send(`Unkown offer type ${offerType}`);
-    return;
+  try {
+    res.json(
+      await carerService.acceptOffer(
+        carer,
+        req.params.offerId,
+        req.params.offerType
+      )
+    );
+  } catch (err) {
+    next(err);
   }
-
-  if (!ObjectId.isValid(req.params.offerId)) {
-    res.status(400).send("Invalid offerId");
-    return;
-  }
-
-  const offerId = new ObjectId(req.params.offerId);
-
-  const accept = offerType == "broad" ? acceptBroadOffer : acceptDirectOffer;
-
-  await accept(carer, offerId);
-
-  // return the updated list of offers to the carer
-  res.json(await getCarerOffers(carer, offerType));
 }
 
-async function rejectOffer(req: Express.Request, res: Express.Response) {
+async function rejectOffer(
+  req: Express.Request,
+  res: Express.Response,
+  next: Express.NextFunction
+) {
   const carer = req.user as WithId<Carer>;
-  const offerType = req.params.offerType;
-
-  // check that the offer type is valid
-  if (!(offerType === "broad" || offerType === "direct")) {
-    res.status(400).send(`Unkown offer type ${offerType}`);
-    return;
+  try {
+    res.json(
+      await carerService.rejectOffer(
+        carer,
+        req.params.offerId,
+        req.params.offerType
+      )
+    );
+  } catch (err) {
+    next(err);
   }
-
-  if (!ObjectId.isValid(req.params.offerId)) {
-    res.status(400).send("Invalid offerId");
-    return;
-  }
-
-  const offerId = new ObjectId(req.params.offerId);
-
-  const reject = offerType == "broad" ? rejectBroadOffer : rejectDirectOffer;
-
-  await reject(carer, offerId);
-
-  // return the updated list of offers to the carer
-  res.json(await getCarerOffers(carer, offerType));
 }
 
 const carerController = {
+  createNewCarer,
   getCarerBySession,
   updateCarer,
   getBroadOffers,

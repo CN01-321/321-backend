@@ -1,6 +1,5 @@
-import { ObjectId, WithId } from "mongodb";
+import { ObjectId } from "mongodb";
 import { ownerCollection, userCollection } from "../mongo.js";
-import { User } from "./user.js";
 
 export interface Feedback {
   _id: ObjectId;

@@ -1,6 +1,6 @@
 import { ObjectId, WithId } from "mongodb";
 import { PetSize, PetType, petSizes, petTypes } from "./pet.js";
-import { User, UserUpdateForm } from "./user.js";
+import { User } from "./user.js";
 import { carerCollection, ownerCollection } from "../mongo.js";
 
 const DEFAULT_TRAVEL_DISTANCE_METRES = 50000;
@@ -15,7 +15,7 @@ export interface Carer extends User {
   preferredPetSizes: PetSize[];
 }
 
-type OfferType = "broad" | "direct";
+export type OfferType = "broad" | "direct";
 
 interface Offer {
   requestId: ObjectId;
@@ -33,13 +33,9 @@ export interface Licence {
   number: string;
 }
 
-export interface CarerUpdateForm extends UserUpdateForm {
-  preferredTravelDistance: number; // distance is in metres
-  hourlyRate: number;
-}
-
 export async function newCarer(email: string, password: string) {
   return carerCollection.insertOne({
+    _id: new ObjectId(),
     email,
     password,
     userType: "carer",
@@ -83,44 +79,11 @@ export async function getCarerByEmail(email: string) {
 
 export async function updateCarerDetails(
   carerId: ObjectId,
-  form: CarerUpdateForm
+  carer: Omit<Partial<Carer>, "_id">
 ) {
-  const updatedFields: any = {};
-
-  if (form.name) {
-    updatedFields.name = form.name;
-  }
-  if (form.email) {
-    updatedFields.email = form.email;
-  }
-  if (form.coords && form.street && form.city && form.state && form.postcode) {
-    updatedFields.location = {
-      type: "Point",
-      coordinates: form.coords,
-      street: form.street,
-      city: form.city,
-      state: form.state,
-      postcode: form.postcode,
-    };
-  }
-  if (form.phone) {
-    updatedFields.phone = form.phone;
-  }
-  if (form.bio) {
-    updatedFields.bio = form.bio;
-  }
-  if (form.pfp) {
-  }
-  if (form.preferredTravelDistance) {
-    updatedFields.preferredTravelDistance = form.preferredTravelDistance;
-  }
-  if (form.hourlyRate) {
-    updatedFields.hourlyRate = form.hourlyRate;
-  }
-
-  await carerCollection.updateOne(
+  return await carerCollection.updateOne(
     { _id: new ObjectId(carerId) },
-    { $set: updatedFields }
+    { $set: carer }
   );
 }
 
@@ -272,12 +235,15 @@ export async function acceptBroadOffer(
   carer: WithId<Carer>,
   offerId: ObjectId
 ) {
-  await ownerCollection.updateOne(
+  const res = await ownerCollection.updateOne(
     { "requests._id": offerId },
     { $push: { "requests.$.respondents": carer._id } }
   );
 
-  await carerCollection.updateOne(
+  // return early if not matched
+  if (!res.matchedCount) return res;
+
+  return await carerCollection.updateOne(
     { _id: carer._id, "offers.requestId": offerId },
     { $set: { "offers.$.status": "applied" } }
   );
@@ -288,12 +254,12 @@ export async function acceptDirectOffer(
   carer: WithId<Carer>,
   offerId: ObjectId
 ) {
-  console.log(
-    await ownerCollection.updateOne(
-      { "requests._id": offerId },
-      { $set: { "requests.$.status": "accepted" } }
-    )
+  const res = await ownerCollection.updateOne(
+    { "requests._id": offerId },
+    { $set: { "requests.$.status": "accepted" } }
   );
+
+  if (!res.matchedCount) return res;
 
   return await carerCollection.updateOne(
     { _id: carer._id, "offers.requestId": offerId },
@@ -317,10 +283,12 @@ export async function rejectDirectOffer(
   carer: WithId<Carer>,
   offerId: ObjectId
 ) {
-  await ownerCollection.updateOne(
+  const res = await ownerCollection.updateOne(
     { "requests._id": offerId },
     { $set: { "requests.$.status": "rejected" } }
   );
+
+  if (!res.matchedCount) return res;
 
   return await carerCollection.updateOne(
     { _id: carer._id },

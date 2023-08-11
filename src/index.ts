@@ -7,6 +7,7 @@ import dotenv from "dotenv";
 import userRouter from "./routes/userRoute.js";
 import errorHandler from "./errors.js";
 import petRouter from "./routes/petRoute.js";
+import dataGenerator from "./services/data-generator.js";
 
 dotenv.config();
 
@@ -28,3 +29,8 @@ app.use("/api/pets", petRouter);
 app.use("/api", authRouter);
 
 app.use(errorHandler);
+
+if (process.env.POPULATE_DB === "true") {
+  console.log("populating users");
+  dataGenerator.generate();
+}

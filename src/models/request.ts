@@ -2,7 +2,7 @@ import { ObjectId, WithId } from "mongodb";
 import { DateRange } from "./carer.js";
 import { Owner } from "./owner.js";
 import { carerCollection, ownerCollection } from "../mongo.js";
-import { Pet, PetSize, PetType, getPetWithId } from "./pet.js";
+import { PetSize, PetType, getPetWithId } from "./pet.js";
 
 type RequestStatus = "pending" | "accepted" | "rejected" | "completed";
 
@@ -144,7 +144,7 @@ async function addRequestToNearby(owner: WithId<Owner>, request: Request) {
     {
       $push: {
         offers: {
-          requestId: request._id!,
+          requestId: request._id,
           offerType: "broad",
           status: "pending",
         },
@@ -171,7 +171,7 @@ export async function updateRequest(owner: WithId<Owner>, request: Request) {
     { $set: { "requests.$": request } }
   );
 
-  return await getRequestWithId(request._id!);
+  return await getRequestWithId(request._id);
 }
 
 export async function getRespondents(

@@ -5,7 +5,7 @@ import { Feedback } from "./feedback.js";
 export type UserType = "owner" | "carer";
 
 export interface User {
-  _id?: ObjectId;
+  _id: ObjectId;
   name?: string;
   email: string;
   password: string;

@@ -1,9 +1,14 @@
 import { Router } from "express";
 import passport from "passport";
 import carerController from "../controllers/carerController.js";
-import feedbackController from "../controllers/feedbackController.js";
 
 const carerRouter = Router();
+
+carerRouter.post(
+  "/",
+  passport.authenticate("carer-jwt", { session: false }),
+  carerController.createNewCarer
+);
 
 carerRouter.get(
   "/",
@@ -33,12 +38,12 @@ carerRouter.get(
   carerController.getJobs
 );
 carerRouter.post(
-  "/:offerType/:offerId/accept",
+  "/:offerType(broad|direct)/:offerId/accept",
   passport.authenticate("carer-jwt", { session: false }),
   carerController.acceptOffer
 );
 carerRouter.post(
-  "/:offerType/:offerId/reject",
+  "/:offerType(broad|direct)/:offerId/reject",
   passport.authenticate("carer-jwt", { session: false }),
   carerController.rejectOffer
 );

@@ -1,14 +1,26 @@
 import Express from "express";
 import { ObjectId, WithId } from "mongodb";
-import { Owner, updateOwnerDetails } from "../models/owner.js";
+import { Owner } from "../models/owner.js";
 import ownerService from "../services/owner.js";
 import requestService from "../services/request.js";
+import userService from "../services/user.js";
 
 async function getOwnerBySession(req: Express.Request, res: Express.Response) {
-  const owner = req.user as WithId<Owner>;
-  res.json(owner);
+  res.json(req.user);
 }
 
+export async function createNewOwner(
+  req: Express.Request,
+  res: Express.Response,
+  next: Express.NextFunction
+) {
+  try {
+    await userService.newUser(req.body, "owner");
+    res.sendStatus(200);
+  } catch (err) {
+    next(err);
+  }
+}
 async function updateOwner(
   req: Express.Request,
   res: Express.Response,
@@ -17,7 +29,7 @@ async function updateOwner(
   const owner = req.user as WithId<Owner>;
 
   try {
-    res.json(await updateOwnerDetails(owner._id, req.body));
+    res.json(await ownerService.updateOwner(owner, req.body));
   } catch (err) {
     next(err);
   }
@@ -161,6 +173,7 @@ async function getPetsFromRequest(
 }
 
 const ownerController = {
+  createNewOwner,
   getOwnerBySession,
   updateOwner,
   getPets,

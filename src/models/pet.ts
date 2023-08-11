@@ -10,7 +10,7 @@ export type PetSize = "small" | "medium" | "large";
 export const petSizes: Array<PetSize> = ["small", "medium", "large"];
 
 export interface Pet {
-  _id?: ObjectId;
+  _id: ObjectId;
   name: string;
   petType: PetType;
   petSize: PetSize;

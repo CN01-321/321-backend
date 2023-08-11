@@ -1,10 +1,14 @@
 import { ObjectId } from "mongodb";
+import { BadRequestError } from "../errors";
+import { getPetWithId } from "../models/pet";
 
 class PetService {
-  getPet(petId: string) {
+  async getPet(petId: string) {
     if (!ObjectId.isValid(petId)) {
-      throw new Error();
+      throw new BadRequestError("Pet id is invalid");
     }
+
+    return await getPetWithId(new ObjectId(petId));
   }
 }
 
