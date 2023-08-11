@@ -1,9 +1,15 @@
 import { Router } from "express";
 import passport from "passport";
 import feedbackController from "../controllers/feedbackController";
+import petController from "../controllers/petController";
 
 const petRouter = Router();
 
+petRouter.get(
+  "/pets/:petId",
+  passport.authenticate("user-jwt", { session: false }),
+  petController.getPet
+);
 petRouter.get(
   "/:petId/feedback",
   passport.authenticate("user-jwt", { session: false }),

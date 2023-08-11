@@ -1,7 +1,6 @@
 import { Router } from "express";
 import passport from "passport";
 import ownerController from "../controllers/ownerController.js";
-import feedbackController from "../controllers/feedbackController.js";
 
 const ownerRouter = Router();
 
@@ -14,11 +13,6 @@ ownerRouter.put(
   "/",
   passport.authenticate("owner-jwt", { session: false }),
   ownerController.updateOwner
-);
-ownerRouter.get(
-  "/pets/:petId",
-  passport.authenticate("user-jwt", { session: false }),
-  ownerController.getPet
 );
 ownerRouter.get(
   "/pets",

@@ -10,7 +10,6 @@ import {
   rejectDirectOffer,
   updateCarerDetails,
 } from "../models/carer.js";
-import { handleControllerError } from "../errors.js";
 
 async function getCarerBySession(
   req: Express.Request,
@@ -27,12 +26,16 @@ async function getCarerBySession(
   }
 }
 
-async function updateCarer(req: Express.Request, res: Express.Response) {
+async function updateCarer(
+  req: Express.Request,
+  res: Express.Response,
+  next: Express.NextFunction
+) {
   try {
     const carer = req.user as WithId<Carer>;
     await updateCarerDetails(carer._id, req.body);
   } catch (err) {
-    handleControllerError(res, err, 400);
+    next(err);
   }
 }
 

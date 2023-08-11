@@ -55,23 +55,28 @@ export async function checkOwnerPetExists(
 
 export async function createNewPet(owner: WithId<Owner>, pet: Pet) {
   pet._id = new ObjectId();
-  await ownerCollection.updateOne({ _id: owner._id }, { $push: { pets: pet } });
-  return pet;
+  return await ownerCollection.updateOne(
+    { _id: owner._id },
+    { $push: { pets: pet } }
+  );
 }
 
-export async function updateExisitingPet(owner: WithId<Owner>, pet: Pet) {
-  await ownerCollection.updateOne(
-    { _id: owner._id, "pets._id": pet._id },
+export async function updateExisitingPet(
+  owner: WithId<Owner>,
+  petId: ObjectId,
+  pet: Partial<Pet>
+) {
+  return await ownerCollection.updateOne(
+    { _id: owner._id, "pets._id": petId },
     { $set: { "pets.$": pet } }
   );
-  return await getPetWithId(pet._id!)!;
 }
 
 export async function deleteExisitingPet(
   owner: WithId<Owner>,
   petId: ObjectId
 ) {
-  await ownerCollection.updateOne(
+  return await ownerCollection.updateOne(
     { _id: owner._id },
     { $pull: { pets: { _id: petId } } }
   );

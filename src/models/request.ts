@@ -7,14 +7,14 @@ import { Pet, PetSize, PetType, getPetWithId } from "./pet.js";
 type RequestStatus = "pending" | "accepted" | "rejected" | "completed";
 
 export interface Request {
-  _id?: ObjectId;
+  _id: ObjectId;
   carer: ObjectId | null;
   status: RequestStatus;
-  pets: Array<ObjectId>;
-  respondents: Array<ObjectId>;
+  pets: ObjectId[];
+  respondents: ObjectId[];
   requestedOn: Date;
   dateRange: DateRange;
-  additionalInfo: string;
+  additionalInfo?: string;
 }
 
 export async function getRequestWithId(requestId: ObjectId) {
@@ -85,7 +85,7 @@ export async function getOwnerRequests(owner: WithId<Owner>) {
 }
 
 async function addRequestToCarer(requestId: ObjectId, carerId: ObjectId) {
-  await carerCollection.updateOne(
+  return await carerCollection.updateOne(
     { _id: carerId },
     {
       $push: {
@@ -139,19 +139,17 @@ async function addRequestToNearby(owner: WithId<Owner>, request: Request) {
   console.log("nearby", nearby);
 
   // add the request to all the nearby carers
-  console.log(
-    await carerCollection.updateMany(
-      { _id: { $in: nearby } },
-      {
-        $push: {
-          offers: {
-            requestId: request._id!,
-            offerType: "broad",
-            status: "pending",
-          },
+  return await carerCollection.updateMany(
+    { _id: { $in: nearby } },
+    {
+      $push: {
+        offers: {
+          requestId: request._id!,
+          offerType: "broad",
+          status: "pending",
         },
-      }
-    )
+      },
+    }
   );
 }
 
@@ -162,11 +160,9 @@ export async function createNewRequest(owner: WithId<Owner>, request: Request) {
     { $push: { requests: request } }
   );
 
-  request.carer
+  return request.carer
     ? await addRequestToCarer(request._id, request.carer)
     : await addRequestToNearby(owner, request);
-
-  return request;
 }
 
 export async function updateRequest(owner: WithId<Owner>, request: Request) {
@@ -216,14 +212,8 @@ export async function acceptRequestRespondent(
   requestId: ObjectId,
   respondentId: ObjectId
 ) {
-  // move the request from offers to the jobs list of the carer
-  await carerCollection.updateOne(
-    { _id: respondentId },
-    { $push: { jobs: requestId }, $pull: { offers: { requestId: requestId } } }
-  );
-
   // update the requests carer to the selected respondent and status to accepted
-  return await ownerCollection.updateOne(
+  const res = await ownerCollection.updateOne(
     {
       _id: owner._id,
       requests: {
@@ -240,6 +230,15 @@ export async function acceptRequestRespondent(
       },
     }
   );
+
+  // return early if nothing matched
+  if (res.matchedCount == 0) return res;
+
+  // move the request from offers to the jobs list of the carer
+  return await carerCollection.updateOne(
+    { _id: respondentId },
+    { $push: { jobs: requestId }, $pull: { offers: { requestId: requestId } } }
+  );
 }
 
 // TODO add carer rating and availability date range
@@ -250,30 +249,7 @@ export interface SearchQuery {
   petSizes?: Array<PetSize>;
 }
 
-export async function searchForNearby(
-  owner: WithId<Owner>,
-  query: SearchQuery
-) {
-  // add the optional query filters for the optional
-  const optional: any = {};
-  if (query.price) {
-    optional.hourlyRate = { $lt: query.price };
-  }
-
-  if (query.petTypes) {
-    optional.preferredPetTypes = { $all: query.petTypes };
-  }
-
-  if (query.petSizes) {
-    optional.preferredPetSizes = { $all: query.petSizes };
-  }
-
-  if (query.rating) {
-    optional.rating;
-  }
-
-  console.log(optional);
-
+export async function findNearbyRequests(owner: WithId<Owner>) {
   // query all the nearby carers and get a list of their object id's
   const res = await carerCollection.aggregate([
     // filter the carers that are nearby
@@ -284,7 +260,6 @@ export async function searchForNearby(
         maxDistance: 100 * 1000, // keep the query within 100km as a hard maximum
         query: {
           userType: "carer",
-          ...optional, // spread out any optional queries to add to the match stage
         },
         herical: true,
       },

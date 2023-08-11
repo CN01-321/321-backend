@@ -32,13 +32,6 @@ export interface Notification {
   desc: string;
 }
 
-export interface UserUpdateForm {
-  name?: string;
-  location?: UserLocation;
-  phone?: string;
-  bio?: string;
-}
-
 export async function getUserById(userId: ObjectId) {
   return await userCollection.findOne(
     { _id: userId },

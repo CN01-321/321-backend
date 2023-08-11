@@ -8,9 +8,9 @@ import {
   getUserByEmail,
   getUserByEmailAndPassword,
 } from "../models/user.js";
-import { Owner, getOwnerByEmail, newOwner } from "../models/owner.js";
+import { getOwnerByEmail, newOwner } from "../models/owner.js";
 import { Request, Response } from "express";
-import { Carer, getCarerByEmail, newCarer } from "../models/carer.js";
+import { getCarerByEmail, newCarer } from "../models/carer.js";
 import { Strategy as JwtStrategy, ExtractJwt } from "passport-jwt";
 import { WithId } from "mongodb";
 

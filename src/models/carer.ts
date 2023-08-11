@@ -53,6 +53,12 @@ export async function newCarer(email: string, password: string) {
   });
 }
 
+export async function carerExists(carerId: ObjectId) {
+  return (
+    (await ownerCollection.findOne({ _id: carerId, userType: "carer" })) != null
+  );
+}
+
 export async function getCarerById(carerId: ObjectId) {
   return carerCollection.findOne(
     { _id: carerId },
@@ -75,9 +81,12 @@ export async function getCarerByEmail(email: string) {
   return carerCollection.findOne({ email, userType: "carer" });
 }
 
-export async function updateCarerDetails(carerId: ObjectId, form: CarerUpdateForm) {
+export async function updateCarerDetails(
+  carerId: ObjectId,
+  form: CarerUpdateForm
+) {
   const updatedFields: any = {};
-  
+
   if (form.name) {
     updatedFields.name = form.name;
   }
@@ -91,8 +100,8 @@ export async function updateCarerDetails(carerId: ObjectId, form: CarerUpdateFor
       street: form.street,
       city: form.city,
       state: form.state,
-      postcode: form.postcode
-    }
+      postcode: form.postcode,
+    };
   }
   if (form.phone) {
     updatedFields.phone = form.phone;
@@ -100,7 +109,8 @@ export async function updateCarerDetails(carerId: ObjectId, form: CarerUpdateFor
   if (form.bio) {
     updatedFields.bio = form.bio;
   }
-  if (form.pfp) {}
+  if (form.pfp) {
+  }
   if (form.preferredTravelDistance) {
     updatedFields.preferredTravelDistance = form.preferredTravelDistance;
   }

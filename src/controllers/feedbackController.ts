@@ -13,7 +13,6 @@ import {
   newPetComment,
   newPetFeedback,
 } from "../models/feedback.js";
-import { handleControllerError } from "../errors.js";
 
 async function getFeedbackForUser(req: Express.Request, res: Express.Response) {
   if (!ObjectId.isValid(req.params.userId)) {
@@ -42,7 +41,11 @@ function validateFeedback(feedback: any): Feedback {
   return feedback as Feedback;
 }
 
-async function newFeedbackForUser(req: Express.Request, res: Express.Response) {
+async function newFeedbackForUser(
+  req: Express.Request,
+  res: Express.Response,
+  next: Express.NextFunction
+) {
   const author = req.user as WithId<User>;
 
   if (!ObjectId.isValid(req.params.userId)) {
@@ -71,8 +74,8 @@ async function newFeedbackForUser(req: Express.Request, res: Express.Response) {
   try {
     const feedback = validateFeedback(feedbackData);
     res.json(await newFeedback(feedback, new ObjectId(req.params.userId)));
-  } catch (e) {
-    handleControllerError(res, e, 400);
+  } catch (err) {
+    next(err);
   }
 }
 
@@ -145,7 +148,11 @@ async function getFeedbackForPet(req: Express.Request, res: Express.Response) {
   res.json(await getPetFeedback(new ObjectId(req.params.petId)));
 }
 
-async function newFeedbackForPet(req: Express.Request, res: Express.Response) {
+async function newFeedbackForPet(
+  req: Express.Request,
+  res: Express.Response,
+  next: Express.NextFunction
+) {
   const author = req.user as WithId<User>;
 
   if (!ObjectId.isValid(req.params.petId)) {
@@ -172,8 +179,8 @@ async function newFeedbackForPet(req: Express.Request, res: Express.Response) {
   try {
     const feedback = validateFeedback(feedbackData);
     res.json(await newPetFeedback(feedback, new ObjectId(req.params.petId)));
-  } catch (e) {
-    handleControllerError(res, e, 400);
+  } catch (err) {
+    next(err);
   }
 }
 
