@@ -1,6 +1,6 @@
 import { ObjectId, WithId } from "mongodb";
 import { Owner, updateOwnerDetails } from "../models/owner.js";
-import { object, string, ObjectSchema, mixed, bool } from "yup";
+import { object, string, ObjectSchema, bool } from "yup";
 import {
   Pet,
   PetSize,
@@ -79,7 +79,7 @@ async function validateOwnerUpdateForm(
   return await schema.validate(form);
 }
 
-interface AddPetForm {
+export interface AddPetForm {
   name: string;
   petType: PetType;
   petSize: PetSize;
@@ -91,8 +91,8 @@ interface AddPetForm {
 async function validateAddPetForm(form: AddPetForm) {
   const schema: ObjectSchema<AddPetForm> = object({
     name: string().required(),
-    petType: mixed<PetType>().required(),
-    petSize: mixed<PetSize>().required(),
+    petType: string<PetType>().required(),
+    petSize: string<PetSize>().required(),
     isVaccinated: bool().required(),
     isFriendly: bool().required(),
     isNeutered: bool().required(),
@@ -113,8 +113,8 @@ interface UpdatePetForm {
 async function validateUpdatePetForm(form: UpdatePetForm) {
   const schema: ObjectSchema<UpdatePetForm> = object({
     name: string().optional(),
-    petType: mixed<PetType>().optional(),
-    petSize: mixed<PetSize>().optional(),
+    petType: string<PetType>().optional(),
+    petSize: string<PetSize>().optional(),
     isVaccinated: bool().optional(),
     isFriendly: bool().optional(),
     isNeutered: bool().optional(),

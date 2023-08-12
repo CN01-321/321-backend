@@ -5,8 +5,11 @@ import { Carer } from "../models/carer.js";
 import { ObjectId } from "mongodb";
 import { Owner } from "../models/owner.js";
 import { User, UserLocation } from "../models/user.js";
-import { Request } from "../models/request";
-import { Comment, Feedback } from "../models/feedback.js";
+import { Feedback } from "../models/feedback.js";
+import ownerService, { AddPetForm } from "./owner.js";
+import requestService from "./request.js";
+import feedbackService, { NewFeedbackForm } from "./feedback.js";
+import carerService from "./carer.js";
 
 // seed == 3 because it is first seed where carer1@email.com has a direct request
 const DEFAULT_SEED = 3;
@@ -34,7 +37,6 @@ function createObjectId(): ObjectId {
     hexStr += String.fromCharCode(asciiCode);
   }
 
-  console.log(hexStr);
   return new ObjectId(hexStr);
 }
 
@@ -43,18 +45,34 @@ class DataGeneratorService {
     // drops everything
     await userCollection.deleteMany({});
 
-    const carers = this.genCarers();
-    const owners = this.genOwners(carers);
-    this.genFeedback(carers, owners);
-    this.genCommentsAndLikes(carers, owners);
+    await this.genCarers();
+    await this.genOwners();
+    let carers = await carerCollection.find({ userType: "carer" }).toArray();
+    let owners = await ownerCollection.find({ userType: "owner" }).toArray();
 
-    await carerCollection.insertMany(carers);
-    await ownerCollection.insertMany(owners);
+    console.log("Generated owners and carers: ", owners, carers);
 
-    console.log(owners, carers);
+    await this.genBroadRequests(owners);
+    console.log("Generated broad requests");
+    await this.genDirectRequests(owners, carers);
+    console.log("Generated direct requests");
+
+    await this.genFeedback(carers, owners);
+    console.log("Generated feedback");
+
+    carers = await carerCollection.find({ userType: "carer" }).toArray();
+    await this.acceptOffers(carers);
+    console.log("Accepted Offers");
+
+    carers = await carerCollection.find({ userType: "carer" }).toArray();
+    console.log("carers after accept offers: ", carers);
+
+    owners = await ownerCollection.find({ userType: "owner" }).toArray();
+    await this.genCommentsAndLikes(carers, owners);
+    console.log("Generated Comments and Likes");
   }
 
-  private genCarers() {
+  private async genCarers() {
     // return either a random selection of pet types or all pet types
     // (no carer should prefer nothing)
     const genPreferredPetTypes = () => {
@@ -67,15 +85,15 @@ class DataGeneratorService {
       return genPetSizes.length === 0 ? petSizes : genPetSizes;
     };
 
-    const newCarer: (num: number) => Carer = (num) => {
-      return {
+    for (let i = 1; i <= 20; i++) {
+      const carer: Carer = {
         _id: createObjectId(),
-        email: `carer${num}@email.com`,
+        email: `carer${i}@email.com`,
         password: "password",
-        name: `Carer ${num}`,
+        name: `Carer ${i}`,
         userType: "carer",
         phone: "0412345678",
-        bio: `My name is Carer ${num}, I would like to care for your pet`,
+        bio: `My name is Carer ${i}, I would like to care for your pet`,
         location: this.genLocation(),
         notifications: [],
         feedback: [],
@@ -83,48 +101,35 @@ class DataGeneratorService {
         preferredTravelDistance: 50000,
         hourlyRate: 50,
         offers: [],
-        jobs: [],
-        unavailabilities: [],
         preferredPetTypes: genPreferredPetTypes(),
         preferredPetSizes: genPreferredPetSizes(),
-        licences: [],
       };
-    };
 
-    const carers: Array<Carer> = [];
-    for (let i = 1; i <= 20; i++) {
-      carers.push(newCarer(i));
+      await carerCollection.insertOne(carer);
     }
-    return carers;
   }
 
-  private genOwners(carers: Array<Carer>) {
-    const newOwner: (num: number) => Owner = (num) => {
-      return {
+  private async genOwners() {
+    for (let i = 1; i <= 10; i++) {
+      const owner: Owner = {
         _id: createObjectId(),
-        email: `owner${num}@email.com`,
+        email: `owner${i}@email.com`,
         password: "password",
-        name: `Owner ${num}`,
+        name: `Owner ${i}`,
         phone: "0412345678",
-        bio: `My name is Owner ${num}, I have pets that need caring for.`,
+        bio: `My name is Owner ${i}, I have pets that need caring for.`,
         userType: "owner",
         location: this.genLocation(),
         notifications: [],
         feedback: [],
-        pets: this.genPets(),
+        pets: [],
         requests: [],
       };
-    };
 
-    const owners: Array<Owner> = [];
-    for (let i = 1; i <= 10; i++) {
-      const owner = newOwner(i);
-      this.genBroadRequests(owner, carers);
-      this.genDirectRequests(owner, carers);
-      owners.push(owner);
+      await ownerCollection.insertOne(owner);
+      console.log("inserted");
+      await this.genPets(owner);
     }
-
-    return owners;
   }
 
   private genLocation(): UserLocation {
@@ -144,34 +149,29 @@ class DataGeneratorService {
     };
   }
 
-  private genPets(): Array<Pet> {
-    const newPet: (num: number) => Pet = (num) => {
+  private async genPets(owner: Owner) {
+    const newPet: (num: number) => AddPetForm = (num) => {
       const petType = petTypes[randNum(0, 3)];
-      const petSize = petSizes[randNum(0, 3)];
+      const petSize = petSizes[randNum(0, 2)];
 
       return {
-        _id: createObjectId(),
         name: `${petType} ${num}`,
         petType,
         petSize,
         isVaccinated: randBool(),
         isFriendly: randBool(),
         isNeutered: randBool(),
-        feedback: [],
       };
     };
 
-    const pets: Array<Pet> = [];
     const numPets = randNum(1, 5);
     for (let i = 1; i <= numPets; i++) {
-      pets.push(newPet(i));
+      await ownerService.addPet(owner, newPet(i));
     }
-
-    return pets;
   }
 
   // generate random pets ensuring that at lease one pet has been added
-  private genRandomPetsForRequests(pets: Array<Pet>) {
+  private genRandomPetsForRequests(pets: Pet[]) {
     const reqPets: Set<ObjectId> = new Set();
     while (reqPets.size === 0) {
       pets.filter(randBool).forEach((p) => reqPets.add(p._id));
@@ -180,104 +180,49 @@ class DataGeneratorService {
     return Array.from(reqPets);
   }
 
-  private genBroadRequests(owner: Owner, carers: Array<Carer>) {
-    const newBroadRequest: (o: Owner) => Request = (o) => {
-      return {
-        _id: createObjectId(),
-        carer: null,
-        status: "pending",
-        respondents: [],
-        requestedOn: new Date(),
-        pets: this.genRandomPetsForRequests(o.pets),
-        dateRange: {
-          startDate: new Date(Date() + 60 * 60 * 60 * 24),
-          endDate: new Date(Date() + 60 * 60 * 60 * 24 * 3),
-        },
-        additionalInfo: "Hi, please look after my pets.",
-      };
-    };
-
-    const genRespondents: (request: Request) => void = (request) => {
-      const respondents: Map<ObjectId, boolean> = new Map();
-
-      const numResp = randNum(1, 4);
-      while (respondents.size < numResp) {
-        const carer = carers[randNum(0, carers.length - 1)];
-        respondents.set(carer._id, true);
+  private async genBroadRequests(owners: Owner[]) {
+    for (const owner of owners) {
+      const numBroad = randNum(1, 4);
+      for (let i = 0; i < numBroad; i++) {
+        await requestService.newRequest(owner, {
+          carer: null,
+          pets: this.genRandomPetsForRequests(owner.pets).map((id) =>
+            id.toString()
+          ),
+          dateRange: {
+            startDate: new Date(Date() + 60 * 60 * 60 * 24),
+            endDate: new Date(Date() + 60 * 60 * 60 * 24 * 3),
+          },
+          additionalInfo: "Hi, please look after my pets.",
+        });
       }
-
-      [...respondents.keys()].forEach((r) => {
-        request.respondents.push(r);
-        carers
-          .find((c) => c._id === r)
-          ?.offers.push({
-            requestId: request._id,
-            offerType: "broad",
-            status: "pending",
-          });
-      });
-
-      request.respondents = [...respondents.keys()];
-    };
-
-    const broad: Array<Request> = [];
-    const numBroad = randNum(1, 4);
-    for (let i = 0; i < numBroad; i++) {
-      const b = newBroadRequest(owner);
-      genRespondents(b);
-
-      broad.push(b);
     }
-
-    owner.requests.push(...broad);
   }
 
-  private genDirectRequests(owner: Owner, carers: Array<Carer>) {
-    const newDirectRequest: (owner: Owner, carer: Carer) => Request = (
-      o,
-      c
-    ) => {
-      return {
-        _id: createObjectId(),
-        carer: c._id,
-        status: "pending",
-        respondents: [],
-        requestedOn: new Date(),
-        pets: this.genRandomPetsForRequests(owner.pets),
-        dateRange: {
-          startDate: new Date(Date() + 60 * 60 * 60 * 24),
-          endDate: new Date(Date() + 60 * 60 * 60 * 24 * 3),
-        },
-        additionalInfo: `Hi ${c.name}, please look after my pets.`,
-      };
-    };
-
-    const direct: Array<Request> = [];
-    const numDirect = randNum(1, 3);
-    for (let i = 0; i < numDirect; i++) {
-      const carer = carers[randNum(0, carers.length - 1)];
-      const d = newDirectRequest(owner, carer);
-      carer.offers.push({
-        requestId: d._id,
-        offerType: "direct",
-        status: "pending",
-      });
-      direct.push(d);
+  private async genDirectRequests(owners: Owner[], carers: Carer[]) {
+    for (const owner of owners) {
+      const numDirect = randNum(1, 3);
+      for (let i = 0; i < numDirect; i++) {
+        const carer = carers[randNum(0, carers.length - 1)];
+        await requestService.newRequest(owner, {
+          carer: carer._id.toString(),
+          pets: this.genRandomPetsForRequests(owner.pets).map((id) =>
+            id.toString()
+          ),
+          dateRange: {
+            startDate: new Date(Date() + 60 * 60 * 60 * 24),
+            endDate: new Date(Date() + 60 * 60 * 60 * 24 * 3),
+          },
+          additionalInfo: "Hi, please look after my pets.",
+        });
+      }
     }
-
-    owner.requests.push(...direct);
   }
 
-  private genFeedback(carers: Array<Carer>, owners: Array<Owner>) {
-    const newFeedback: (author: User) => Feedback = (author) => {
-      const feedback: Feedback = {
-        _id: createObjectId(),
-        authorId: author._id,
-        authorName: author.name ?? "",
-        postedOn: new Date(),
+  private async genFeedback(carers: Carer[], owners: Owner[]) {
+    const newFeedback: (author: User) => NewFeedbackForm = (author) => {
+      const feedback: NewFeedbackForm = {
         message: `My name is ${author.name} and I am leaving some feedback`,
-        likes: [],
-        comments: [],
       };
 
       // create a 1/4 chance of no rating
@@ -288,77 +233,138 @@ class DataGeneratorService {
       return feedback;
     };
 
-    // add some carer reviews to owners and pets
-    carers.forEach((c) =>
-      owners
-        .filter(() => randNum(0, 4) === 4)
-        .forEach((o) => {
-          o.feedback.push(newFeedback(c));
-          // give a small chance for the carer to also review a pet
-          o.pets
-            .filter(() => randNum(0, 5) === 5)
-            .forEach((p) => p.feedback.push(newFeedback(c)));
-        })
-    );
+    for (const carer of carers) {
+      for (const owner of owners) {
+        if (randNum(0, 4) === 4) continue;
 
-    // add some owner reviews to carers
-    owners.forEach((o) =>
-      carers
-        .filter(() => randNum(0, 2) === 2)
-        .forEach((c) => {
-          c.feedback.push(newFeedback(o));
-        })
-    );
+        await feedbackService.newUserFeedback(
+          carer,
+          owner._id.toString(),
+          newFeedback(carer)
+        );
+
+        for (const pet of owner.pets) {
+          if (randNum(0, 5) !== 5) continue;
+
+          await feedbackService.newPetFeedback(
+            carer,
+            pet._id.toString(),
+            newFeedback(carer)
+          );
+        }
+      }
+    }
+
+    for (const owner of owners) {
+      for (const carer of carers) {
+        if (randNum(0, 2) !== 2) continue;
+
+        await feedbackService.newUserFeedback(
+          owner,
+          carer._id.toString(),
+          newFeedback(owner)
+        );
+      }
+    }
   }
 
-  private genCommentsAndLikes(carers: Array<Carer>, owners: Array<Owner>) {
+  private async acceptOffers(carers: Carer[]) {
+    for (const carer of carers) {
+      for (const offer of carer.offers) {
+        const chance = randNum(0, 10);
+
+        if (chance < 3) {
+          continue;
+        } else if (chance < 8) {
+          await carerService.acceptOffer(
+            carer,
+            offer.requestId.toString(),
+            offer.offerType
+          );
+        } else {
+          await carerService.rejectOffer(
+            carer,
+            offer.requestId.toString(),
+            offer.offerType
+          );
+        }
+      }
+    }
+  }
+
+  private async genCommentsAndLikes(carers: Carer[], owners: Owner[]) {
     const users = [...carers, ...owners];
     const randUser = () => users[randNum(0, users.length - 1)];
 
-    const genLikes = () => {
-      const likes = [];
+    const genLikes = async (user: User, review: Feedback) => {
       const numLikes = randNum(0, 10);
       for (let i = 0; i < numLikes; i++) {
-        likes.push(randUser()._id);
+        await feedbackService.likeUserFeedback(
+          randUser(),
+          user._id.toString(),
+          review._id.toString()
+        );
       }
-
-      return likes;
     };
 
-    const newComment = (user: User): Comment => {
-      return {
-        authorId: user._id,
-        authorName: user.name ?? "",
-        postedOn: new Date(),
-        message: "Nice review!",
-      };
-    };
-
-    const genComments = () => {
-      const comments = [];
+    const genComments = async (user: User, review: Feedback) => {
       const numComents = randNum(0, 5);
       for (let i = 0; i < numComents; i++) {
-        comments.push(newComment(randUser()));
+        const author = randUser();
+        await feedbackService.commentOnFeedback(
+          author,
+          user._id.toString(),
+          review._id.toString(),
+          { message: "Nice Review!" }
+        );
       }
-
-      return comments;
     };
 
-    // generate likes for each carer review
-    carers.forEach((c) =>
-      c.feedback.forEach((feedback) => {
-        feedback.likes = genLikes();
-        feedback.comments = genComments();
-      })
-    );
+    const genPetLikes = async (pet: Pet, review: Feedback) => {
+      const numLikes = randNum(0, 10);
+      for (let i = 0; i < numLikes; i++) {
+        await feedbackService.likePetFeedback(
+          randUser(),
+          pet._id.toString(),
+          review._id.toString()
+        );
+      }
+    };
 
-    // generate likes for each owner review
-    owners.forEach((o) =>
-      o.feedback.forEach((feedback) => {
-        feedback.likes = genLikes();
-        feedback.comments = genComments();
-      })
-    );
+    const genPetComments = async (pet: Pet, review: Feedback) => {
+      const numComents = randNum(0, 5);
+      for (let i = 0; i < numComents; i++) {
+        const author = randUser();
+        await feedbackService.commentOnPetFeedback(
+          author,
+          pet._id.toString(),
+          review._id.toString(),
+          { message: "Nice Review!" }
+        );
+      }
+    };
+
+    for (const user of users) {
+      for (const review of user.feedback) {
+        await genLikes(user, review);
+        await genComments(user, review);
+      }
+    }
+
+    console.log("Generated User comments and likes");
+
+    for (const owner of owners) {
+      for (const pet of owner.pets) {
+        for (const review of pet.feedback) {
+          await genPetLikes(pet, review);
+          console.log("Generated Pet likes");
+          await genPetComments(pet, review);
+          console.log("Generated Pet comments");
+        }
+      }
+    }
+
+    console.log("Generated Pet comments and likes");
   }
 }
 

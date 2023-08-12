@@ -5,8 +5,8 @@ import { Request } from "./request.js";
 import { User } from "./user.js";
 
 export interface Owner extends User {
-  pets: Array<Pet>;
-  requests: Array<Request>;
+  pets: Pet[];
+  requests: Request[];
 }
 
 export async function newOwner(email: string, password: string) {

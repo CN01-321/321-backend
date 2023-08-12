@@ -4,10 +4,10 @@ import { Owner } from "./owner.js";
 import { ownerCollection } from "../mongo.js";
 
 export type PetType = "dog" | "cat" | "bird" | "rabbit";
-export const petTypes: Array<PetType> = ["dog", "cat", "bird", "rabbit"];
+export const petTypes: PetType[] = ["dog", "cat", "bird", "rabbit"];
 
 export type PetSize = "small" | "medium" | "large";
-export const petSizes: Array<PetSize> = ["small", "medium", "large"];
+export const petSizes: PetSize[] = ["small", "medium", "large"];
 
 export interface Pet {
   _id: ObjectId;
@@ -18,7 +18,7 @@ export interface Pet {
   isFriendly: boolean;
   isNeutered: boolean;
   profilePicture?: string;
-  feedback: Array<Feedback>;
+  feedback: Feedback[];
 }
 
 export async function getPetWithId(petId: ObjectId): Promise<Pet | null> {

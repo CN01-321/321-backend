@@ -5,9 +5,11 @@ import {
   Feedback,
   getFeedback,
   getPetFeedback,
+  likePetReview,
   likeReview,
   newComment,
   newFeedback,
+  newPetComment,
   newPetFeedback,
 } from "../models/feedback.js";
 import { ObjectSchema, number, object, string } from "yup";
@@ -30,7 +32,7 @@ class FeedbackService {
     return await getPetFeedback(new ObjectId(petId));
   }
 
-  async createFeedback(
+  private async createFeedback(
     author: WithId<User>,
     userId: string,
     feedbackForm: NewFeedbackForm
@@ -71,7 +73,7 @@ class FeedbackService {
     handleUpdateResult(await newPetFeedback(feedback, new ObjectId(petId)));
   }
 
-  async createComment(
+  private async createComment(
     author: WithId<User>,
     userId: string,
     feedbackId: string,
@@ -122,7 +124,11 @@ class FeedbackService {
     );
 
     handleUpdateResult(
-      await newComment(comment, new ObjectId(petId), new ObjectId(feedbackId))
+      await newPetComment(
+        comment,
+        new ObjectId(petId),
+        new ObjectId(feedbackId)
+      )
     );
   }
 
@@ -150,7 +156,11 @@ class FeedbackService {
     validateFeedbackPath(petId, feedbackId);
 
     handleUpdateResult(
-      await likeReview(liker._id, new ObjectId(petId), new ObjectId(feedbackId))
+      await likePetReview(
+        liker._id,
+        new ObjectId(petId),
+        new ObjectId(feedbackId)
+      )
     );
   }
 }
@@ -159,7 +169,7 @@ const feedbackService = new FeedbackService();
 
 export default feedbackService;
 
-interface NewFeedbackForm {
+export interface NewFeedbackForm {
   message: string;
   rating?: number;
 }
@@ -173,7 +183,7 @@ async function validateNewFeedbackForm(form: NewFeedbackForm) {
   return await schema.validate(form);
 }
 
-type NewCommentForm = Omit<NewFeedbackForm, "rating">;
+export type NewCommentForm = Omit<NewFeedbackForm, "rating">;
 
 async function validateNewCommentForm(form: NewCommentForm) {
   const schema: ObjectSchema<NewCommentForm> = object({

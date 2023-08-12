@@ -135,7 +135,7 @@ async function addRequestToNearby(owner: WithId<Owner>, request: Request) {
   ]);
 
   // map the nearby query to an array of carer _id's
-  const nearby = (await res.toArray()).map((n) => n._id) as Array<ObjectId>;
+  const nearby = (await res.toArray()).map((n) => n._id) as ObjectId[];
   console.log("nearby", nearby);
 
   // add the request to all the nearby carers
@@ -245,8 +245,8 @@ export async function acceptRequestRespondent(
 export interface SearchQuery {
   price?: number;
   rating?: number;
-  petTypes?: Array<PetType>;
-  petSizes?: Array<PetSize>;
+  petTypes?: PetType[];
+  petSizes?: PetSize[];
 }
 
 export async function findNearbyRequests(owner: WithId<Owner>) {

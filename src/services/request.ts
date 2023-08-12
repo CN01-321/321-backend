@@ -94,7 +94,7 @@ const requestService = new RequestService();
 
 export default requestService;
 
-interface NewRequestForm {
+export interface NewRequestForm {
   carer: string | null;
   pets: string[];
   additionalInfo?: string;
@@ -104,16 +104,16 @@ interface NewRequestForm {
 function validateNewRequestForm(form: NewRequestForm) {
   const schema: ObjectSchema<NewRequestForm> = object({
     carer: string()
+      .required()
       .nullable()
-      .test((c) => (c ? ObjectId.isValid(c) : true))
-      .required(),
+      .test((c) => (c ? ObjectId.isValid(c) : true)),
     pets: array()
       .of(string().required().test(ObjectId.isValid))
       .min(1)
       .required(),
     additionalInfo: string().optional(),
     dateRange: object({
-      startDate: date().min(new Date()).required(),
+      startDate: date().min(Date()).required(),
       endDate: date().min(new Date(form.dateRange.startDate)).required(),
     }).required(),
   });
