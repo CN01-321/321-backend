@@ -6,10 +6,10 @@ import { ObjectId } from "mongodb";
 import { Owner } from "../models/owner.js";
 import { User, UserLocation } from "../models/user.js";
 import { Feedback } from "../models/feedback.js";
-import ownerService, { AddPetForm } from "./owner.js";
-import requestService from "./request.js";
-import feedbackService, { NewFeedbackForm } from "./feedback.js";
-import carerService from "./carer.js";
+import ownerService, { AddPetForm } from "./ownerService.js";
+import requestService from "./requestService.js";
+import feedbackService, { NewFeedbackForm } from "./feedbackService.js";
+import carerService from "./carerService.js";
 
 // seed == 3 because it is first seed where carer1@email.com has a direct request
 const DEFAULT_SEED = 3;

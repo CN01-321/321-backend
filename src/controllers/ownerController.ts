@@ -1,9 +1,9 @@
 import Express from "express";
 import { ObjectId, WithId } from "mongodb";
 import { Owner } from "../models/owner.js";
-import ownerService from "../services/owner.js";
-import requestService from "../services/request.js";
-import userService from "../services/user.js";
+import ownerService from "../services/ownerService.js";
+import requestService from "../services/requestService.js";
+import userService from "../services/userService.js";
 
 async function getOwnerBySession(req: Express.Request, res: Express.Response) {
   res.json(req.user);

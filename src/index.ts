@@ -7,7 +7,7 @@ import dotenv from "dotenv";
 import userRouter from "./routes/userRoute.js";
 import errorHandler from "./errors.js";
 import petRouter from "./routes/petRoute.js";
-import dataGenerator from "./services/data-generator.js";
+import dataGenerator from "./services/dataGeneratorService.js";
 
 dotenv.config();
 

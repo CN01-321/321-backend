@@ -1,8 +1,8 @@
 import Express from "express";
 import { WithId } from "mongodb";
 import { Carer } from "../models/carer.js";
-import carerService from "../services/carer.js";
-import userService from "../services/user.js";
+import carerService from "../services/carerService.js";
+import userService from "../services/userService.js";
 
 async function createNewCarer(
   req: Express.Request,

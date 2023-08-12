@@ -1,5 +1,5 @@
 import Express from "express";
-import userService from "../services/user.js";
+import userService from "../services/userService.js";
 
 async function getUser(
   req: Express.Request,

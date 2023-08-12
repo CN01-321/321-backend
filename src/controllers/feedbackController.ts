@@ -1,7 +1,7 @@
 import Express from "express";
 import { WithId } from "mongodb";
 import { User } from "../models/user.js";
-import feedbackService from "../services/feedback.js";
+import feedbackService from "../services/feedbackService.js";
 
 async function getFeedbackForUser(
   req: Express.Request,

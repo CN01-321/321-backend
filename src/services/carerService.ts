@@ -3,19 +3,24 @@ import {
   Carer,
   acceptBroadOffer,
   acceptDirectOffer,
+  getCarerByEmail,
   getCarerJobs,
   getCarerOffers,
   rejectBroadOffer,
   rejectDirectOffer,
   updateCarerDetails,
 } from "../models/carer.js";
-import { UserUpdateForm, userUpdateFormSchema } from "./user.js";
+import { UserUpdateForm, userUpdateFormSchema } from "./userService.js";
 import { PetSize, PetType, petSizes, petTypes } from "../models/pet.js";
 import { ObjectSchema, array, number, object, string } from "yup";
 import { UserLocation } from "../models/user.js";
 import { BadRequestError, handleUpdateResult } from "../errors.js";
 
 class CarerService {
+  async getCarerByEmail(email: string) {
+    return await getCarerByEmail(email);
+  }
+
   async updateCarer(carer: WithId<Carer>, updateCarerForm: UpdateCarerForm) {
     await validateUpdateCarerForm(updateCarerForm);
 

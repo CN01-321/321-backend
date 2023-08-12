@@ -1,5 +1,5 @@
 import { ObjectId, WithId } from "mongodb";
-import { Owner, updateOwnerDetails } from "../models/owner.js";
+import { Owner, getOwnerByEmail, updateOwnerDetails } from "../models/owner.js";
 import { object, string, ObjectSchema, bool } from "yup";
 import {
   Pet,
@@ -10,11 +10,15 @@ import {
   getOwnerPets,
   updateExisitingPet,
 } from "../models/pet.js";
-import { UserUpdateForm, userUpdateFormSchema } from "./user.js";
+import { UserUpdateForm, userUpdateFormSchema } from "./userService.js";
 import { UserLocation } from "../models/user.js";
 import { BadRequestError, handleUpdateResult } from "../errors.js";
 
 class OwnerService {
+  async getOwnerByEmail(email: string) {
+    return await getOwnerByEmail(email);
+  }
+
   async updateOwner(owner: WithId<Owner>, updateFormData: OwnerUpdateForm) {
     const updateForm = await validateOwnerUpdateForm(updateFormData);
 

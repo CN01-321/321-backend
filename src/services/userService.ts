@@ -1,5 +1,11 @@
 import { ObjectSchema, number, object, string, tuple } from "yup";
-import { UserLocation, UserType, getUserById } from "../models/user.js";
+import {
+  UserLocation,
+  UserType,
+  getUserByEmail,
+  getUserByEmailAndPassword,
+  getUserById,
+} from "../models/user.js";
 import { newOwner } from "../models/owner.js";
 import { newCarer } from "../models/carer.js";
 import { ObjectId } from "mongodb";
@@ -18,6 +24,14 @@ class UserService {
     }
 
     return user;
+  }
+
+  async getUserByEmailAndPassword(email: string, password: string) {
+    return await getUserByEmailAndPassword(email, password);
+  }
+
+  async getUserByEmail(email: string) {
+    return await getUserByEmail(email);
   }
 
   async newUser(newUserForm: NewUserForm, userType: UserType) {
