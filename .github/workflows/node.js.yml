@@ -9,6 +9,9 @@ on:
   pull_request:
     branches: [ "refactor" ]
 
+env:
+  MONGODB_URL: mongodb+srv://${{ATLAS_USERNAME}}:${{ATLAS_PASSWORD}}@petcarercluster.m2fiovm.mongodb.net/?retryWrites=true&w=majority
+
 jobs:
   build:
 
