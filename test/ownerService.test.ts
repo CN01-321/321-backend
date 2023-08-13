@@ -9,12 +9,25 @@ import ownerService, {
 import chai, { expect } from "chai";
 import { beforeEach, describe } from "mocha";
 import chaiAsPromised from "chai-as-promised";
+import { Owner } from "../src/models/owner.js";
+import { NotFoundError } from "../src/errors.js";
 
 chai.use(chaiAsPromised);
 chai.should();
 
-beforeEach(async () => {
+let owner: Owner;
+
+before(async () => {
   await dataGenerator.generate();
+  const res = await ownerCollection.findOne({ name: "Owner 1" });
+  if (!res) throw new NotFoundError("owner not found");
+  owner = res;
+});
+
+beforeEach(async () => {
+  // wait until data has finished generating
+  while (!owner) continue;
+  await ownerCollection.updateOne({ _id: owner._id }, { $set: owner });
 });
 
 describe("Update Owner", () => {
@@ -170,7 +183,9 @@ describe("Delete Pet", async () => {
     await ownerService.deletePet(before, petId);
 
     const after = await ownerCollection.findOne({ name: "Owner 1" });
-    expect(after?.pets[0]._id === pet?._id).to.be.false;
+    const deletedPet = after?.pets.find((p) => p._id === pet._id);
+
+    expect(deletedPet).to.be.undefined;
   });
 
   it("delete pet fails", async () => {
