@@ -74,7 +74,7 @@ const ownerService = new OwnerService();
 export default ownerService;
 
 // TODO move user update form into user service
-type OwnerUpdateForm = UserUpdateForm;
+export type OwnerUpdateForm = UserUpdateForm;
 
 async function validateOwnerUpdateForm(
   form: OwnerUpdateForm
@@ -105,7 +105,7 @@ async function validateAddPetForm(form: AddPetForm) {
   return await schema.validate(form);
 }
 
-interface UpdatePetForm {
+export interface UpdatePetForm {
   name?: string;
   petType?: PetType;
   petSize?: PetSize;

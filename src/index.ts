@@ -20,7 +20,7 @@ app.get("/", (_, res) => {
   res.status(200).send("Hello world");
 });
 
-app.listen(port, () => console.log(`Running on port ${port}`));
+app.listen(port, () => console.debug(`Running on port ${port}`));
 
 app.use("/api/owners", ownerRouter);
 app.use("/api/carers", carerRouter);
@@ -31,6 +31,6 @@ app.use("/api", authRouter);
 app.use(errorHandler);
 
 if (process.env.POPULATE_DB === "true") {
-  console.log("populating users");
+  console.debug("populating users");
   await dataGenerator.generate();
 }

@@ -50,26 +50,18 @@ class DataGeneratorService {
     let carers = await carerCollection.find({ userType: "carer" }).toArray();
     let owners = await ownerCollection.find({ userType: "owner" }).toArray();
 
-    console.log("Generated owners and carers: ", owners, carers);
-
     await this.genBroadRequests(owners);
-    console.log("Generated broad requests");
     await this.genDirectRequests(owners, carers);
-    console.log("Generated direct requests");
 
     await this.genFeedback(carers, owners);
-    console.log("Generated feedback");
 
     carers = await carerCollection.find({ userType: "carer" }).toArray();
     await this.acceptOffers(carers);
-    console.log("Accepted Offers");
 
     carers = await carerCollection.find({ userType: "carer" }).toArray();
-    console.log("carers after accept offers: ", carers);
 
     owners = await ownerCollection.find({ userType: "owner" }).toArray();
     await this.genCommentsAndLikes(carers, owners);
-    console.log("Generated Comments and Likes");
   }
 
   private async genCarers() {
@@ -127,7 +119,6 @@ class DataGeneratorService {
       };
 
       await ownerCollection.insertOne(owner);
-      console.log("inserted");
       await this.genPets(owner);
     }
   }
@@ -351,20 +342,14 @@ class DataGeneratorService {
       }
     }
 
-    console.log("Generated User comments and likes");
-
     for (const owner of owners) {
       for (const pet of owner.pets) {
         for (const review of pet.feedback) {
           await genPetLikes(pet, review);
-          console.log("Generated Pet likes");
           await genPetComments(pet, review);
-          console.log("Generated Pet comments");
         }
       }
     }
-
-    console.log("Generated Pet comments and likes");
   }
 }
 

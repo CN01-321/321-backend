@@ -64,11 +64,20 @@ export async function createNewPet(owner: WithId<Owner>, pet: Pet) {
 export async function updateExisitingPet(
   owner: WithId<Owner>,
   petId: ObjectId,
-  pet: Partial<Pet>
+  pet: Omit<Partial<Pet>, "_id">
 ) {
   return await ownerCollection.updateOne(
     { _id: owner._id, "pets._id": petId },
-    { $set: { "pets.$": pet } }
+    {
+      $set: {
+        "pets.$.name": pet.name,
+        "pets.$.petType": pet.petType,
+        "pets.$.petSize": pet.petSize,
+        "pets.$.isVaccinated": pet.isVaccinated,
+        "pets.$.isFriendly": pet.isFriendly,
+        "pets.$.isNeutered": pet.isNeutered,
+      },
+    }
   );
 }
 

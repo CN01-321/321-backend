@@ -19,7 +19,7 @@ const signUpOptions: IStrategyOptions = {
 passport.use(
   "login",
   new LocalStrategy(signUpOptions, async (email, password, callback) => {
-    console.log("login", email, password);
+    console.debug("login", email, password);
     const user = await userService.getUserByEmailAndPassword(email, password);
     return user ? callback(null, user) : callback(null, false);
   })

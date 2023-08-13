@@ -10,16 +10,16 @@ const jwtSecret = process.env.JWT_SECRET ?? "";
 
 export async function handleLogin(req: Request, res: Response) {
   const user = req.user as WithId<User>;
-  console.log(user._id);
+  console.debug(user._id);
   const body = { _id: user._id, email: user.email, type: user.userType };
 
-  console.log(body);
+  console.debug(body);
 
   const token = jwt.sign({ user: body }, jwtSecret, {
     issuer: "pet-carer.com",
     noTimestamp: true,
   });
 
-  console.log(token);
+  console.debug(token);
   res.json({ token });
 }

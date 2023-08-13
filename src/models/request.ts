@@ -100,8 +100,6 @@ async function addRequestToCarer(requestId: ObjectId, carerId: ObjectId) {
 }
 
 async function addRequestToNearby(owner: WithId<Owner>, request: Request) {
-  console.log("owner location is", owner.location);
-
   // query all the nearby carers and get a list of their object id's
   const res = await ownerCollection.aggregate([
     { $unwind: "$requests" },
@@ -136,7 +134,6 @@ async function addRequestToNearby(owner: WithId<Owner>, request: Request) {
 
   // map the nearby query to an array of carer _id's
   const nearby = (await res.toArray()).map((n) => n._id) as ObjectId[];
-  console.log("nearby", nearby);
 
   // add the request to all the nearby carers
   return await carerCollection.updateMany(
