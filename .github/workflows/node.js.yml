@@ -10,7 +10,7 @@ on:
     branches: [ "refactor" ]
 
 env:
-  MONGODB_URL: mongodb+srv://${{ATLAS_USERNAME}}:${{ATLAS_PASSWORD}}@petcarercluster.m2fiovm.mongodb.net/?retryWrites=true&w=majority
+  MONGODB_URL: mongodb+srv://${{ secrets.ATLAS_USERNAME }}:${{ secrets.ATLAS_PASSWORD }}@petcarercluster.m2fiovm.mongodb.net/?retryWrites=true&w=majority
 
 jobs:
   build:
