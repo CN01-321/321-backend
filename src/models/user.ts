@@ -5,7 +5,7 @@ import { Feedback } from "./feedback.js";
 export type UserType = "owner" | "carer";
 
 export interface User {
-  _id?: ObjectId;
+  _id: ObjectId;
   name?: string;
   email: string;
   password: string;
@@ -14,8 +14,8 @@ export interface User {
   bio?: string;
   pfp?: string;
   userType: UserType;
-  notifications: Array<Notification>;
-  feedback: Array<Feedback>;
+  notifications: Notification[];
+  feedback: Feedback[];
 }
 
 export interface UserLocation {
@@ -24,25 +24,12 @@ export interface UserLocation {
   street: string;
   city: string;
   state: string;
-  postcode: number;
+  postcode: string;
 }
 
 export interface Notification {
   name: string;
   desc: string;
-}
-
-export interface UserUpdateForm {
-  name?: string;
-  email?: string;
-  postcode: number;
-  state: string;
-  city: string;
-  street: string;
-  coords?: number[];
-  phone?: string;
-  bio?: string;
-  pfp?: string;
 }
 
 export async function getUserById(userId: ObjectId) {

@@ -1,14 +1,16 @@
 import Express from "express";
-import { ObjectId } from "mongodb";
-import { getUserById } from "../models/user.js";
+import userService from "../services/userService.js";
 
-async function getUser(req: Express.Request, res: Express.Response) {
-  if (!ObjectId.isValid(req.params.userId)) {
-    res.status(400).send("userId is invalid");
-    return;
+async function getUser(
+  req: Express.Request,
+  res: Express.Response,
+  next: Express.NextFunction
+) {
+  try {
+    res.json(await userService.getUser(req.params.userId));
+  } catch (err) {
+    next(err);
   }
-
-  res.json(await getUserById(new ObjectId(req.params.userId)));
 }
 
 const userController = {

@@ -4,13 +4,13 @@ import { Owner } from "./owner.js";
 import { ownerCollection } from "../mongo.js";
 
 export type PetType = "dog" | "cat" | "bird" | "rabbit";
-export const petTypes: Array<PetType> = ["dog", "cat", "bird", "rabbit"];
+export const petTypes: PetType[] = ["dog", "cat", "bird", "rabbit"];
 
 export type PetSize = "small" | "medium" | "large";
-export const petSizes: Array<PetSize> = ["small", "medium", "large"];
+export const petSizes: PetSize[] = ["small", "medium", "large"];
 
 export interface Pet {
-  _id?: ObjectId;
+  _id: ObjectId;
   name: string;
   petType: PetType;
   petSize: PetSize;
@@ -18,7 +18,7 @@ export interface Pet {
   isFriendly: boolean;
   isNeutered: boolean;
   profilePicture?: string;
-  feedback: Array<Feedback>;
+  feedback: Feedback[];
 }
 
 export async function getPetWithId(petId: ObjectId): Promise<Pet | null> {
@@ -55,23 +55,37 @@ export async function checkOwnerPetExists(
 
 export async function createNewPet(owner: WithId<Owner>, pet: Pet) {
   pet._id = new ObjectId();
-  await ownerCollection.updateOne({ _id: owner._id }, { $push: { pets: pet } });
-  return pet;
+  return await ownerCollection.updateOne(
+    { _id: owner._id },
+    { $push: { pets: pet } }
+  );
 }
 
-export async function updateExisitingPet(owner: WithId<Owner>, pet: Pet) {
-  await ownerCollection.updateOne(
-    { _id: owner._id, "pets._id": pet._id },
-    { $set: { "pets.$": pet } }
+export async function updateExisitingPet(
+  owner: WithId<Owner>,
+  petId: ObjectId,
+  pet: Omit<Partial<Pet>, "_id">
+) {
+  return await ownerCollection.updateOne(
+    { _id: owner._id, "pets._id": petId },
+    {
+      $set: {
+        "pets.$.name": pet.name,
+        "pets.$.petType": pet.petType,
+        "pets.$.petSize": pet.petSize,
+        "pets.$.isVaccinated": pet.isVaccinated,
+        "pets.$.isFriendly": pet.isFriendly,
+        "pets.$.isNeutered": pet.isNeutered,
+      },
+    }
   );
-  return await getPetWithId(pet._id!)!;
 }
 
 export async function deleteExisitingPet(
   owner: WithId<Owner>,
   petId: ObjectId
 ) {
-  await ownerCollection.updateOne(
+  return await ownerCollection.updateOne(
     { _id: owner._id },
     { $pull: { pets: { _id: petId } } }
   );

@@ -1,44 +1,49 @@
 import { Router } from "express";
 import passport from "passport";
 import carerController from "../controllers/carerController.js";
-import feedbackController from "../controllers/feedbackController.js";
 
 const carerRouter = Router();
 
+carerRouter.post(
+  "/",
+  passport.authenticate("carer-jwt", { session: false }),
+  carerController.createNewCarer
+);
+
 carerRouter.get(
-  "/carers",
+  "/",
   passport.authenticate("carer-jwt", { session: false }),
   carerController.getCarerBySession
 );
 
 carerRouter.put(
-  "/carers",
+  "/",
   passport.authenticate("carer-jwt", { session: false }),
   carerController.updateCarer
 );
 
 carerRouter.get(
-  "/carers/broad",
+  "/broad",
   passport.authenticate("carer-jwt", { session: false }),
   carerController.getBroadOffers
 );
 carerRouter.get(
-  "/carers/direct",
+  "/direct",
   passport.authenticate("carer-jwt", { session: false }),
   carerController.getDirectOffers
 );
 carerRouter.get(
-  "/carers/jobs",
+  "/jobs",
   passport.authenticate("carer-jwt", { session: false }),
   carerController.getJobs
 );
 carerRouter.post(
-  "/carers/:offerType/:offerId/accept",
+  "/:offerType(broad|direct)/:offerId/accept",
   passport.authenticate("carer-jwt", { session: false }),
   carerController.acceptOffer
 );
 carerRouter.post(
-  "/carers/:offerType/:offerId/reject",
+  "/:offerType(broad|direct)/:offerId/reject",
   passport.authenticate("carer-jwt", { session: false }),
   carerController.rejectOffer
 );

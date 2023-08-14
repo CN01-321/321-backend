@@ -1,13 +1,34 @@
 import { Router } from "express";
 import userController from "../controllers/userController.js";
 import passport from "passport";
+import feedbackController from "../controllers/feedbackController.js";
 
 const userRouter = Router();
 
 userRouter.get(
-  "/users/:userId",
+  "/:userId",
   passport.authenticate("user-jwt", { session: false }),
   userController.getUser
+);
+userRouter.get(
+  "/:userId/feedback",
+  passport.authenticate("user-jwt", { session: false }),
+  feedbackController.getFeedbackForUser
+);
+userRouter.post(
+  "/:userId/feedback",
+  passport.authenticate("user-jwt", { session: false }),
+  feedbackController.newFeedbackForUser
+);
+userRouter.post(
+  "/:userId/feedback/:feedbackId/comments",
+  passport.authenticate("user-jwt", { session: false }),
+  feedbackController.addCommentToFeedback
+);
+userRouter.post(
+  "/:userId/feedback/:feedbackId/likes",
+  passport.authenticate("user-jwt", { session: false }),
+  feedbackController.addLikeToReview
 );
 
 export default userRouter;

@@ -1,6 +1,5 @@
-import { ObjectId, WithId } from "mongodb";
+import { ObjectId } from "mongodb";
 import { ownerCollection, userCollection } from "../mongo.js";
-import { User } from "./user.js";
 
 export interface Feedback {
   _id: ObjectId;
@@ -11,8 +10,8 @@ export interface Feedback {
   rating?: number;
   message: string;
   image?: string;
-  likes: Array<ObjectId>; // array of userIds who have liked this feedback
-  comments: Array<Comment>;
+  likes: ObjectId[]; // array of userIds who have liked this feedback
+  comments: Comment[];
 }
 
 export interface Comment {
@@ -110,7 +109,8 @@ export async function newPetComment(
 ) {
   return await ownerCollection.updateOne(
     { "pets._id": petId, "pets.feedback._id": feedbackId },
-    { $push: { "pets.$feedback.$.comments": comment } }
+    { $push: { "pets.$[pid].feedback.$[fid].comments": comment } },
+    { arrayFilters: [{ "pid._id": petId }, { "fid._id": feedbackId }] }
   );
 }
 
