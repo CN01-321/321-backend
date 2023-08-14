@@ -1,4 +1,4 @@
-import { MongoClient } from "mongodb";
+import { MongoClient, ServerApiVersion } from "mongodb";
 import { User } from "./models/user.js";
 import dotenv from "dotenv";
 import { Owner } from "./models/owner.js";
@@ -13,7 +13,13 @@ let client: MongoClient | null = null;
 
 async function getDatabase() {
   if (client) return client.db(mongo_db);
-  client = await MongoClient.connect(mongo_url);
+  client = await MongoClient.connect(mongo_url, {
+    serverApi: {
+      version: ServerApiVersion.v1,
+      strict: true,
+      deprecationErrors: true,
+    },
+  });
   return client.db(mongo_db);
 }
 

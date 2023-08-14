@@ -17,7 +17,8 @@ chai.should();
 
 let owner: Owner;
 
-before(async () => {
+before(async function () {
+  this.timeout(20000);
   await dataGenerator.generate();
   const res = await ownerCollection.findOne({ name: "Owner 1" });
   if (!res) throw new NotFoundError("owner not found");
