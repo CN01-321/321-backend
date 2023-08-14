@@ -17,14 +17,14 @@ chai.should();
 
 let owner: Owner;
 
-// before(async function () {
-//   this.timeout(0);
-//   await dataGenerator.generate();
+before(async function () {
+  this.timeout(5000);
+  await dataGenerator.generate();
 
-//   const res = await ownerCollection.findOne({ name: "Owner 1" });
-//   if (!res) throw new NotFoundError("owner not found");
-//   owner = res;
-// });
+  const res = await ownerCollection.findOne({ name: "Owner 1" });
+  if (!res) throw new NotFoundError("owner not found");
+  owner = res;
+});
 
 beforeEach(async () => {
   // wait until data has finished generating
