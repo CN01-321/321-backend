@@ -201,8 +201,8 @@ class DataGeneratorService {
             id.toString()
           ),
           dateRange: {
-            startDate: new Date(Date() + 60 * 60 * 60 * 24),
-            endDate: new Date(Date() + 60 * 60 * 60 * 24 * 3),
+            startDate: new Date(Date.now() + 1000 * 60 * 60 * 24),
+            endDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 3),
           },
           additionalInfo: "Hi, please look after my pets.",
         });

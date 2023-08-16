@@ -1,6 +1,5 @@
 import { ObjectId } from "mongodb";
 import { ownerCollection } from "../../src/mongo.js";
-import dataGenerator from "../../src/services/dataGeneratorService.js";
 import ownerService, {
   AddPetForm,
   OwnerUpdateForm,
@@ -11,10 +10,6 @@ import { describe } from "mocha";
 import chaiAsPromised from "chai-as-promised";
 chai.use(chaiAsPromised);
 chai.should();
-
-before(async function () {
-  await dataGenerator.generate();
-});
 
 describe("Update Owner", () => {
   it("updating owner successful", async () => {
