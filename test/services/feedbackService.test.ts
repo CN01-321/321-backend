@@ -1,48 +1,283 @@
-import { expect } from "chai";
+import { assert, expect } from "chai";
 import { describe } from "mocha";
+import { carerCollection, ownerCollection } from "../../src/mongo.js";
+import feedbackService, {
+  NewCommentForm,
+  NewFeedbackForm,
+} from "../../src/services/feedbackService.js";
 
 describe("Create Feedback", () => {
-  it("create user feedback succeeds", () => {
-    expect(true).to.be.true;
+  it("create user feedback succeeds", async () => {
+    const author = await ownerCollection.findOne({ name: "Owner 1" });
+    assert(author);
+
+    const feedbackForm: NewFeedbackForm = {
+      message: "Test Feedback",
+      rating: 5,
+    };
+
+    let user = await carerCollection.findOne({ name: "Carer 1" });
+    assert(user);
+
+    await feedbackService.newUserFeedback(
+      author,
+      user._id.toString(),
+      feedbackForm
+    );
+
+    user = await carerCollection.findOne({ name: "Carer 1" });
+    assert(user);
+
+    expect(
+      user.feedback.find(
+        (f) =>
+          f.authorId.equals(author._id) &&
+          f.authorName === author.name &&
+          f.message === feedbackForm.message &&
+          f.rating === feedbackForm.rating
+      )
+    ).to.exist;
   });
 
-  it("create user feedback fails", () => {
-    expect(true).to.be.true;
+  it("create user feedback fails", async () => {
+    const author = await ownerCollection.findOne({ name: "Owner 1" });
+    assert(author);
+
+    const feedbackForm: NewFeedbackForm = {
+      message: "Test Feedback",
+      rating: -1,
+    };
+
+    const user = await carerCollection.findOne({ name: "Carer 1" });
+    assert(user);
+
+    feedbackService.newUserFeedback(author, user._id.toString(), feedbackForm)
+      .should.be.rejected;
   });
 
-  it("create pet feedback succeeds", () => {
-    expect(true).to.be.true;
+  it("create pet feedback succeeds", async () => {
+    const author = await carerCollection.findOne({ name: "Carer 1" });
+    assert(author);
+
+    const feedbackForm: NewFeedbackForm = {
+      message: "Test Feedback",
+      rating: 5,
+    };
+
+    let owner = await ownerCollection.findOne({ name: "Owner 1" });
+    assert(owner);
+    const petId = owner.pets[0]._id;
+
+    await feedbackService.newPetFeedback(
+      author,
+      petId.toString(),
+      feedbackForm
+    );
+
+    owner = await ownerCollection.findOne({ name: "Owner 1" });
+    assert(owner);
+    const pet = owner.pets.find((p) => p._id.equals(petId));
+    assert(pet);
+
+    expect(
+      pet.feedback.find(
+        (f) =>
+          f.authorId.equals(author._id) &&
+          f.authorName === author.name &&
+          f.message === feedbackForm.message &&
+          f.rating === feedbackForm.rating
+      )
+    ).to.exist;
   });
 
-  it("create pet feedback fails", () => {
-    expect(true).to.be.true;
+  it("create pet feedback fails", async () => {
+    const author = await carerCollection.findOne({ name: "Carer 1" });
+    assert(author);
+
+    const feedbackForm: NewFeedbackForm = {
+      message: "Test Feedback",
+      rating: -1,
+    };
+
+    const owner = await ownerCollection.findOne({ name: "Owner 1" });
+    assert(owner);
+    const pet = owner.pets[0];
+    assert(pet);
+
+    feedbackService.newPetFeedback(author, pet._id.toString(), feedbackForm)
+      .should.be.rejected;
   });
 });
 
 describe("Create comment", () => {
-  it("create user comment succeeds", () => {
-    expect(true).to.be.true;
+  it("create user comment succeeds", async () => {
+    const author = await ownerCollection.findOne({ name: "Owner 1" });
+    assert(author);
+
+    let carer = await carerCollection.findOne({ name: "Carer 1" });
+    assert(carer);
+
+    const feedback = carer.feedback[0];
+    assert(carer);
+
+    const commentForm: NewCommentForm = {
+      message: "Test Comment",
+    };
+
+    await feedbackService.commentOnFeedback(
+      author,
+      carer._id.toString(),
+      feedback._id.toString(),
+      commentForm
+    );
+
+    carer = await carerCollection.findOne({ name: "Carer 1" });
+    assert(carer);
+
+    expect(
+      carer.feedback.find((f) =>
+        f.comments.find(
+          (c) =>
+            c.authorId.equals(author._id) &&
+            c.authorName === author.name &&
+            c.message === commentForm.message
+        )
+      )
+    ).to.exist;
   });
 
-  it("create user comment fails", () => {
-    expect(true).to.be.true;
+  it("create user comment fails", async () => {
+    const author = await ownerCollection.findOne({ name: "Owner 1" });
+    assert(author);
+
+    const carer = await carerCollection.findOne({ name: "Carer 1" });
+    assert(carer);
+
+    const feedback = carer.feedback[0];
+    assert(carer);
+
+    const commentForm = {} as unknown as NewCommentForm;
+
+    feedbackService.commentOnFeedback(
+      author,
+      carer._id.toString(),
+      feedback._id.toString(),
+      commentForm
+    ).should.be.rejected;
   });
 
-  it("create pet comment succeeds", () => {
-    expect(true).to.be.true;
+  it("create pet comment succeeds", async () => {
+    const author = await carerCollection.findOne({ name: "Carer 1" });
+    assert(author);
+
+    let owner = await ownerCollection.findOne({ name: "Owner 1" });
+    assert(owner);
+
+    let pet = owner.pets.find((p) => p.feedback.length > 0);
+    assert(pet);
+
+    const commentForm: NewCommentForm = {
+      message: "Test Comment",
+    };
+
+    await feedbackService.commentOnPetFeedback(
+      author,
+      pet._id.toString(),
+      pet.feedback[0]._id.toString(),
+      commentForm
+    );
+
+    owner = await ownerCollection.findOne({ name: "Owner 1" });
+    assert(owner);
+
+    pet = owner.pets.find((p) => pet?._id.equals(p._id));
+    assert(pet);
+
+    expect(
+      pet.feedback.find((f) =>
+        f.comments.find(
+          (c) =>
+            c.authorId.equals(author._id) &&
+            c.authorName === author.name &&
+            c.message === commentForm.message
+        )
+      )
+    ).to.exist;
   });
 
-  it("create pet comment fails", () => {
-    expect(true).to.be.true;
+  it("create pet comment fails", async () => {
+    const author = await carerCollection.findOne({ name: "Carer 1" });
+    assert(author);
+
+    const owner = await ownerCollection.findOne({ name: "Owner 1" });
+    assert(owner);
+
+    const pet = owner.pets.find((p) => p.feedback.length > 0);
+    assert(pet);
+
+    const commentForm = {} as unknown as NewCommentForm;
+
+    feedbackService.commentOnPetFeedback(
+      author,
+      pet._id.toString(),
+      pet.feedback[0]._id.toString(),
+      commentForm
+    ).should.be.rejected;
   });
 });
 
 describe("Like feedback", () => {
-  it("like user feedback succeeds", () => {
-    expect(true).to.be.true;
+  it("like user feedback succeeds", async () => {
+    const liker = await ownerCollection.findOne({ name: "Owner 1" });
+    assert(liker);
+
+    let carer = await carerCollection.findOne({ name: "Carer 1" });
+    assert(carer);
+
+    const feedback = carer.feedback[0];
+    assert(feedback);
+
+    await feedbackService.likeUserFeedback(
+      liker,
+      carer._id.toString(),
+      feedback._id.toString()
+    );
+
+    carer = await carerCollection.findOne({ name: "Carer 1" });
+    assert(carer);
+
+    expect(
+      carer.feedback
+        .find((f) => f._id.equals(feedback._id))
+        ?.likes.find((l) => l.equals(liker._id))
+    ).to.exist;
   });
 
-  it("like pet feedback succeeds", () => {
-    expect(true).to.be.true;
+  it("like pet feedback succeeds", async () => {
+    const liker = await carerCollection.findOne({ name: "Carer 1" });
+    assert(liker);
+
+    let owner = await ownerCollection.findOne({ name: "Owner 1" });
+    assert(owner);
+    const pet = owner.pets[0];
+    assert(pet);
+
+    const feedback = pet.feedback[0];
+    assert(feedback);
+
+    await feedbackService.likePetFeedback(
+      liker,
+      pet._id.toString(),
+      feedback._id.toString()
+    );
+
+    owner = await ownerCollection.findOne({ name: "Owner 1" });
+    assert(owner);
+
+    expect(
+      owner.pets
+        .find((p) => p._id.equals(pet._id))
+        ?.feedback.find((f) => f.likes.find((l) => l.equals(liker._id)))
+    ).to.exist;
   });
 });

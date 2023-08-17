@@ -233,8 +233,8 @@ export async function acceptRequestRespondent(
 
   // move the request from offers to the jobs list of the carer
   return await carerCollection.updateOne(
-    { _id: respondentId },
-    { $push: { jobs: requestId }, $pull: { offers: { requestId: requestId } } }
+    { _id: respondentId, "offers.requestId": requestId },
+    { $set: { "offers.$.status": "accepted" } }
   );
 }
 
