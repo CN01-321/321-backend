@@ -1,36 +1,15 @@
 import { ObjectId } from "mongodb";
-import { ownerCollection } from "../src/mongo.js";
-import dataGenerator from "../src/services/dataGeneratorService.js";
+import { ownerCollection } from "../../src/mongo.js";
 import ownerService, {
   AddPetForm,
   OwnerUpdateForm,
   UpdatePetForm,
-} from "../src/services/ownerService.js";
+} from "../../src/services/ownerService.js";
 import chai, { expect } from "chai";
-import { beforeEach, describe } from "mocha";
+import { describe } from "mocha";
 import chaiAsPromised from "chai-as-promised";
-import { Owner } from "../src/models/owner.js";
-import { NotFoundError } from "../src/errors.js";
-
 chai.use(chaiAsPromised);
 chai.should();
-
-let owner: Owner;
-
-before(async function () {
-  this.timeout(5000);
-  await dataGenerator.generate();
-
-  const res = await ownerCollection.findOne({ name: "Owner 1" });
-  if (!res) throw new NotFoundError("owner not found");
-  owner = res;
-});
-
-beforeEach(async () => {
-  // wait until data has finished generating
-  while (!owner) continue;
-  await ownerCollection.updateOne({ _id: owner._id }, { $set: owner });
-});
 
 describe("Update Owner", () => {
   it("updating owner successful", async () => {

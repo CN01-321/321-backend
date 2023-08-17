@@ -17,7 +17,7 @@ import { ObjectSchema, array, date, object, string } from "yup";
 class RequestService {
   async getRequest(requestId: string) {
     if (!ObjectId.isValid(requestId)) {
-      return new BadRequestError("Request id is invalid");
+      throw new BadRequestError("Request id is invalid");
     }
 
     return await getRequestWithId(new ObjectId(requestId));
@@ -102,6 +102,8 @@ export interface NewRequestForm {
 }
 
 function validateNewRequestForm(form: NewRequestForm) {
+  const startDate = new Date(Date.now() - 5 * 1000);
+
   const schema: ObjectSchema<NewRequestForm> = object({
     carer: string()
       .required()
@@ -113,7 +115,9 @@ function validateNewRequestForm(form: NewRequestForm) {
       .required(),
     additionalInfo: string().optional(),
     dateRange: object({
-      startDate: date().min(Date()).required(),
+      startDate: date()
+        .min(startDate, `${form.dateRange.startDate} is less than ${startDate}`)
+        .required(),
       endDate: date().min(new Date(form.dateRange.startDate)).required(),
     }).required(),
   });

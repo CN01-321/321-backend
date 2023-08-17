@@ -9,7 +9,7 @@
     "build": "tsc",
     "start": "tsc && node .",
     "dev": "tsc -w && nodemon .",
-    "test": "tsc && mocha ./dist/test/**/*.js --exit"
+    "test": "tsc && mocha ./dist/test/**/*.js --file ./dist/test/setup.js --exit"
   },
   "repository": {
     "type": "git",

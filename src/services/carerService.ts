@@ -75,7 +75,7 @@ const carerService = new CarerService();
 
 export default carerService;
 
-interface UpdateCarerForm extends UserUpdateForm {
+export interface UpdateCarerForm extends UserUpdateForm {
   skillsAndExp?: string;
   preferredTravelDistance?: number;
   hourlyRate?: number;
@@ -87,7 +87,7 @@ async function validateUpdateCarerForm(form: UpdateCarerForm) {
   const schema: ObjectSchema<UpdateCarerForm> = object({
     skillsAndExp: string().optional(),
     preferredTravelDistance: number().optional(),
-    hourlyRate: number().optional(),
+    hourlyRate: number().min(0).optional(),
     preferredPetTypes: array()
       .of(string<PetType>().required())
       .max(petTypes.length)
