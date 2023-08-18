@@ -1,6 +1,7 @@
+import fs from "fs";
 import prand from "pure-rand";
 import { carerCollection, ownerCollection, userCollection } from "../mongo.js";
-import { Pet, petSizes, petTypes } from "../models/pet.js";
+import { Pet, PetType, petSizes, petTypes } from "../models/pet.js";
 import { Carer } from "../models/carer.js";
 import { ObjectId } from "mongodb";
 import { Owner } from "../models/owner.js";
@@ -10,6 +11,7 @@ import ownerService, { AddPetForm } from "./ownerService.js";
 import requestService from "./requestService.js";
 import feedbackService, { NewFeedbackForm } from "./feedbackService.js";
 import carerService from "./carerService.js";
+import imageStorageService, { ImageMetadata } from "./imageStorageService.js";
 
 // seed == 3 because it is first seed where carer1@email.com has a direct request
 const DEFAULT_SEED = 3;
@@ -41,7 +43,17 @@ function createObjectId(): ObjectId {
 }
 
 class DataGeneratorService {
+  private pfps: string[] = [];
+  private petPfps: Map<PetType, string> = new Map<PetType, string>();
+
   async generate() {
+    if (process.env.POPULATE_IMAGES === "true") {
+      await this.generateImages();
+    }
+
+    this.pfps = await this.getPfpIds();
+    this.petPfps = await this.getPetPfpIds();
+
     // drops everything
     await userCollection.deleteMany({});
 
@@ -62,6 +74,62 @@ class DataGeneratorService {
 
     owners = await ownerCollection.find({ userType: "owner" }).toArray();
     await this.genCommentsAndLikes(carers, owners);
+  }
+
+  async generateImages() {
+    imageStorageService.deleteAll();
+
+    const pfpDir = fs.readdirSync("assets/images/pfp");
+    for (const pfp of pfpDir) {
+      await this.storePfp(pfp);
+    }
+
+    const petPfpDir = fs.readdirSync("assets/images/pet");
+    for (const pfp of petPfpDir) {
+      await this.storePetPfp(pfp);
+    }
+  }
+
+  async getPfpIds() {
+    return await imageStorageService.getImageIds({ pfp: "profile" });
+  }
+
+  async getPetPfpIds() {
+    return new Map(
+      await Promise.all(
+        petTypes.map(
+          async (petType) =>
+            [
+              petType,
+              (await imageStorageService.getImageIds({ petType }))[0],
+            ] as [PetType, string]
+        )
+      )
+    );
+  }
+
+  async storePfp(pfp: string) {
+    const metadata: ImageMetadata = {
+      imageType: "image/png",
+      pfp: "profile",
+    };
+
+    const buffer = fs.readFileSync("assets/images/pfp/" + pfp);
+
+    await imageStorageService.storeImage(metadata, buffer, pfp);
+  }
+
+  async storePetPfp(pfp: string) {
+    const pet = pfp.slice(0, pfp.indexOf("."));
+
+    const metadata: ImageMetadata = {
+      imageType: "image/png",
+      petType: pet,
+    };
+
+    const buffer = fs.readFileSync("assets/images/pet/" + pfp);
+
+    await imageStorageService.storeImage(metadata, buffer, pfp);
   }
 
   private async genCarers() {
@@ -95,6 +163,8 @@ class DataGeneratorService {
         offers: [],
         preferredPetTypes: genPreferredPetTypes(),
         preferredPetSizes: genPreferredPetSizes(),
+        // set pfp or have chance that no pfp has been set
+        pfp: this.pfps[randNum(0, this.pfps.length + 2)] ?? undefined,
       };
 
       await carerCollection.insertOne(carer);
@@ -116,6 +186,7 @@ class DataGeneratorService {
         feedback: [],
         pets: [],
         requests: [],
+        pfp: this.pfps[randNum(0, this.pfps.length + 2)] ?? undefined,
       };
 
       await ownerCollection.insertOne(owner);
@@ -152,6 +223,7 @@ class DataGeneratorService {
         isVaccinated: randBool(),
         isFriendly: randBool(),
         isNeutered: randBool(),
+        pfp: this.petPfps.get(petType),
       };
     };
 

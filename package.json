@@ -2,13 +2,13 @@
   "name": "backend",
   "version": "1.0.0",
   "description": "Backend for Pet Carer",
-  "main": "dist/index.js",
+  "main": "dist/src/index.js",
   "type": "module",
   "module": "esnext",
   "scripts": {
     "build": "tsc",
     "start": "tsc && node .",
-    "dev": "tsc -w && nodemon .",
+    "dev": "tsc -w & nodemon .",
     "test": "tsc && mocha ./dist/test/**/*.js --file ./dist/test/setup.js --exit"
   },
   "repository": {
