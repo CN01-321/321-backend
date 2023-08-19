@@ -164,8 +164,13 @@ class DataGeneratorService {
         preferredPetTypes: genPreferredPetTypes(),
         preferredPetSizes: genPreferredPetSizes(),
         // set pfp or have chance that no pfp has been set
-        pfp: this.pfps[randNum(0, this.pfps.length + 2)] ?? undefined,
       };
+
+      // set pfp iff there is a pfp to set
+      const pfp = this.pfps[randNum(0, this.pfps.length + 2)];
+      if (pfp) {
+        carer.pfp = pfp;
+      }
 
       await carerCollection.insertOne(carer);
     }
@@ -186,8 +191,13 @@ class DataGeneratorService {
         feedback: [],
         pets: [],
         requests: [],
-        pfp: this.pfps[randNum(0, this.pfps.length + 2)] ?? undefined,
       };
+
+      // set pfp iff there is a pfp to set
+      const pfp = this.pfps[randNum(0, this.pfps.length + 2)];
+      if (pfp) {
+        owner.pfp = pfp;
+      }
 
       await ownerCollection.insertOne(owner);
       await this.genPets(owner);

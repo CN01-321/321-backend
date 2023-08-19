@@ -17,7 +17,7 @@ export interface Pet {
   isVaccinated: boolean;
   isFriendly: boolean;
   isNeutered: boolean;
-  profilePicture?: string;
+  pfp?: string;
   feedback: Feedback[];
 }
 
