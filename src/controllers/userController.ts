@@ -1,5 +1,8 @@
 import Express from "express";
 import userService from "../services/userService.js";
+import { ImageType } from "../services/imageStorageService.js";
+import { User } from "../models/user.js";
+import { WithId } from "mongodb";
 
 async function getUser(
   req: Express.Request,
@@ -13,8 +16,27 @@ async function getUser(
   }
 }
 
+async function setPfp(
+  req: Express.Request,
+  res: Express.Response,
+  next: Express.NextFunction
+) {
+  const user = req.user as WithId<User>;
+
+  const metadata = {
+    imageType: req.headers["content-type"] as ImageType,
+  };
+
+  try {
+    res.json(await userService.setPfp(user, metadata, req.body));
+  } catch (err) {
+    next(err);
+  }
+}
+
 const userController = {
   getUser,
+  setPfp,
 };
 
 export default userController;

@@ -90,3 +90,14 @@ export async function deleteExisitingPet(
     { $pull: { pets: { _id: petId } } }
   );
 }
+
+export async function setPetPfp(
+  owner: WithId<Owner>,
+  petId: ObjectId,
+  imageId: string
+) {
+  return await ownerCollection.updateOne(
+    { _id: owner._id, "pets._id": petId },
+    { $set: { "pets.$.pfp": imageId } }
+  );
+}

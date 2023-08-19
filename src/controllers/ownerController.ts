@@ -4,6 +4,7 @@ import { Owner } from "../models/owner.js";
 import ownerService from "../services/ownerService.js";
 import requestService from "../services/requestService.js";
 import userService from "../services/userService.js";
+import { ImageType } from "../services/imageStorageService.js";
 
 async function getOwnerBySession(req: Express.Request, res: Express.Response) {
   res.json(req.user);
@@ -82,6 +83,26 @@ async function deletePet(
   const owner = req.user as WithId<Owner>;
   try {
     res.json(await ownerService.deletePet(owner, req.params.petId));
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function setPetPfp(
+  req: Express.Request,
+  res: Express.Response,
+  next: Express.NextFunction
+) {
+  const owner = req.user as WithId<Owner>;
+
+  const metadata = {
+    imageType: req.headers["content-type"] as ImageType,
+  };
+
+  try {
+    res.json(
+      await ownerService.setPetPfp(owner, req.params.petId, metadata, req.body)
+    );
   } catch (err) {
     next(err);
   }
@@ -180,6 +201,7 @@ const ownerController = {
   addPet,
   updatePet,
   deletePet,
+  setPetPfp,
   getRequest,
   getRequestRespondents,
   acceptRespondent,
