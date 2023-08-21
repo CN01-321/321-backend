@@ -268,6 +268,7 @@ export async function findNearbyRequests(owner: WithId<Owner>) {
         _id: 1,
         name: 1,
         bio: 1,
+        pfp: 1,
         rating: { $avg: "$feedback.rating" },
       },
     },

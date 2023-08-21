@@ -12,10 +12,6 @@ imageRouter.post(
   imageController.storeImage
 );
 
-imageRouter.get(
-  "/:imageId",
-  passport.authenticate("user-jwt", { session: false }),
-  imageController.getImage
-);
+imageRouter.get("/:imageId", imageController.getImage);
 
 export default imageRouter;
