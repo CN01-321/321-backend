@@ -5,9 +5,10 @@ import ownerService, {
   OwnerUpdateForm,
   UpdatePetForm,
 } from "../../src/services/ownerService.js";
-import chai, { expect } from "chai";
+import chai, { assert, expect } from "chai";
 import { describe } from "mocha";
 import chaiAsPromised from "chai-as-promised";
+import { ImageMetadata } from "../../src/services/imageStorageService.js";
 chai.use(chaiAsPromised);
 chai.should();
 
@@ -177,5 +178,33 @@ describe("Delete Pet", async () => {
     }
 
     ownerService.deletePet(owner, new ObjectId().toString()).should.be.rejected;
+  });
+});
+
+describe("Set Pet Pfp", () => {
+  it("set pfp succeeds", async () => {
+    let owner = await ownerCollection.findOne({ userType: "owner" });
+    assert(owner);
+
+    const beforePet = owner.pets[0];
+    assert(beforePet);
+
+    const metadata: ImageMetadata = { imageType: "image/png" };
+    const image = Buffer.from("some image");
+
+    await ownerService.setPetPfp(
+      owner,
+      beforePet._id.toString(),
+      metadata,
+      image
+    );
+
+    owner = await ownerCollection.findOne({ _id: owner._id });
+    assert(owner);
+
+    const pet = owner.pets.find((p) => p._id.equals(beforePet._id));
+    assert(pet);
+
+    expect(pet.pfp).to.not.equal(beforePet.pfp);
   });
 });

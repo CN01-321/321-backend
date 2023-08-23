@@ -5,14 +5,21 @@ import {
   Pet,
   PetSize,
   PetType,
+  checkOwnerPetExists,
   createNewPet,
   deleteExisitingPet,
   getOwnerPets,
+  setPetPfp,
   updateExisitingPet,
 } from "../models/pet.js";
 import { UserUpdateForm, userUpdateFormSchema } from "./userService.js";
 import { UserLocation } from "../models/user.js";
-import { BadRequestError, handleUpdateResult } from "../errors.js";
+import {
+  BadRequestError,
+  NotFoundError,
+  handleUpdateResult,
+} from "../errors.js";
+import imageStorageService, { ImageMetadata } from "./imageStorageService.js";
 
 class OwnerService {
   async getOwnerByEmail(email: string) {
@@ -65,6 +72,29 @@ class OwnerService {
 
     return handleUpdateResult(
       await deleteExisitingPet(owner, new ObjectId(petId))
+    );
+  }
+
+  async setPetPfp(
+    owner: WithId<Owner>,
+    petId: string,
+    metadata: ImageMetadata,
+    image: Buffer
+  ) {
+    if (!ObjectId.isValid(petId)) {
+      throw new BadRequestError("Pet Id is invalid");
+    }
+
+    const petExists = await checkOwnerPetExists(owner, new ObjectId(petId));
+    // check the pet exists first before storing image
+    if (!petExists) {
+      throw new NotFoundError("Owner does not have a pet with that id");
+    }
+
+    const imageId = await imageStorageService.storeImage(metadata, image);
+
+    return handleUpdateResult(
+      await setPetPfp(owner, new ObjectId(petId), imageId)
     );
   }
 }

@@ -1,15 +1,22 @@
 import { ObjectSchema, number, object, string, tuple } from "yup";
 import {
+  User,
   UserLocation,
   UserType,
   getUserByEmail,
   getUserByEmailAndPassword,
   getUserById,
+  updateUserPfp,
 } from "../models/user.js";
 import { newOwner } from "../models/owner.js";
 import { newCarer } from "../models/carer.js";
-import { ObjectId } from "mongodb";
-import { BadRequestError, NotFoundError } from "../errors.js";
+import { ObjectId, WithId } from "mongodb";
+import {
+  BadRequestError,
+  NotFoundError,
+  handleUpdateResult,
+} from "../errors.js";
+import imageStorageService, { ImageMetadata } from "./imageStorageService.js";
 
 class UserService {
   async getUser(userId: string) {
@@ -38,6 +45,16 @@ class UserService {
     await validateNewUserForm(newUserForm);
     const newUser = userType === "owner" ? newOwner : newCarer;
     await newUser(newUserForm.email, newUserForm.password);
+  }
+
+  async setPfp(user: WithId<User>, metadata: ImageMetadata, image: Buffer) {
+    // delete the current profile pick if one is set
+    if (user.pfp) {
+      await imageStorageService.deleteImage(user.pfp);
+    }
+
+    const imageId = await imageStorageService.storeImage(metadata, image);
+    return handleUpdateResult(await updateUserPfp(user, imageId));
   }
 }
 

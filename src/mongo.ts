@@ -11,7 +11,7 @@ const mongo_db = process.env.MONGODB_DB ?? "";
 
 let client: MongoClient | null = null;
 
-async function getDatabase() {
+export async function getDatabase() {
   if (client) return client.db(mongo_db);
   client = await MongoClient.connect(mongo_url, {
     serverApi: {

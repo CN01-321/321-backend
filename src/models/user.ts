@@ -68,3 +68,10 @@ export async function getUserByEmailAndPassword(
 export async function checkEmailExists(email: string) {
   return await userCollection.findOne({ email });
 }
+
+export async function updateUserPfp(user: User, imageId: string) {
+  return await userCollection.updateOne(
+    { _id: user._id },
+    { $set: { pfp: imageId } }
+  );
+}

@@ -1,6 +1,7 @@
 import { Router } from "express";
 import passport from "passport";
 import ownerController from "../controllers/ownerController.js";
+import bodyParser from "body-parser";
 
 const ownerRouter = Router();
 
@@ -39,6 +40,13 @@ ownerRouter.delete(
   passport.authenticate("owner-jwt", { session: false }),
   ownerController.deletePet
 );
+ownerRouter.post(
+  "/pets/:petId/pfp",
+  passport.authenticate("owner-jwt", { session: false }),
+  bodyParser.raw({ type: ["image/jpeg", "image/png"], limit: "20mb" }),
+  ownerController.setPetPfp
+);
+
 // search must be above :requestId so that "nearby" is not matched as an id
 ownerRouter.get(
   "/requests/nearby",

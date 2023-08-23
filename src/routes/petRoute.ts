@@ -6,7 +6,7 @@ import petController from "../controllers/petController.js";
 const petRouter = Router();
 
 petRouter.get(
-  "/pets/:petId",
+  "/:petId",
   passport.authenticate("user-jwt", { session: false }),
   petController.getPet
 );

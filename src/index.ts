@@ -8,6 +8,7 @@ import userRouter from "./routes/userRoute.js";
 import errorHandler from "./errors.js";
 import petRouter from "./routes/petRoute.js";
 import dataGenerator from "./services/dataGeneratorService.js";
+import imageRouter from "./routes/imageRoute.js";
 
 dotenv.config();
 
@@ -15,10 +16,7 @@ const port = process.env.SERVER_PORT;
 const app = express();
 
 app.use(bodyParser.json());
-
-app.get("/", (_, res) => {
-  res.status(200).send("Hello world");
-});
+app.use(bodyParser.raw());
 
 app.listen(port, () => console.debug(`Running on port ${port}`));
 
@@ -27,6 +25,7 @@ app.use("/api/carers", carerRouter);
 app.use("/api/users", userRouter);
 app.use("/api/pets", petRouter);
 app.use("/api", authRouter);
+app.use("/api/images", imageRouter);
 
 app.use(errorHandler);
 
