@@ -15,6 +15,7 @@ import { PetSize, PetType, petSizes, petTypes } from "../models/pet.js";
 import { ObjectSchema, array, number, object, string } from "yup";
 import { UserLocation } from "../models/user.js";
 import { BadRequestError, handleUpdateResult } from "../errors.js";
+import notificationService from "./notificationService.js";
 
 class CarerService {
   async getCarerByEmail(email: string) {
@@ -51,6 +52,13 @@ class CarerService {
 
     if (offerType !== "broad" && offerType !== "direct") {
       throw new BadRequestError("Invalid offer type");
+    }
+
+    if (offerType === "direct") {
+      await notificationService.pushCarerAcceptedDirect(
+        new ObjectId(offerId),
+        carer
+      );
     }
 
     const accept = offerType === "broad" ? acceptBroadOffer : acceptDirectOffer;

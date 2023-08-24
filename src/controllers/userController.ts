@@ -16,6 +16,19 @@ async function getUser(
   }
 }
 
+async function getUserNotifications(
+  req: Express.Request,
+  res: Express.Response,
+  next: Express.NextFunction
+) {
+  const user = req.user as WithId<User>;
+  console.log("user is: ", user);
+  try {
+    res.json(await userService.getUserNotifications(user._id.toString()));
+  } catch (err) {
+    next(err);
+  }
+}
 async function setPfp(
   req: Express.Request,
   res: Express.Response,
@@ -36,6 +49,7 @@ async function setPfp(
 
 const userController = {
   getUser,
+  getUserNotifications,
   setPfp,
 };
 

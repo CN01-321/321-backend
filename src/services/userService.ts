@@ -3,6 +3,7 @@ import {
   User,
   UserLocation,
   UserType,
+  getNotifications,
   getUserByEmail,
   getUserByEmailAndPassword,
   getUserById,
@@ -39,6 +40,16 @@ class UserService {
 
   async getUserByEmail(email: string) {
     return await getUserByEmail(email);
+  }
+
+  async getUserNotifications(userId: string) {
+    console.log(userId);
+
+    if (!ObjectId.isValid(userId)) {
+      throw new BadRequestError("User id is invalid");
+    }
+
+    return await getNotifications(new ObjectId(userId));
   }
 
   async newUser(newUserForm: NewUserForm, userType: UserType) {
