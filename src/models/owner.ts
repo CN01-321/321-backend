@@ -41,3 +41,7 @@ export async function updateOwnerDetails(
     { $set: owner }
   );
 }
+
+export async function findOwnerWithRequest(requestId: ObjectId) {
+  return await ownerCollection.findOne({ "requests._id": requestId });
+}

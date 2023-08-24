@@ -194,7 +194,7 @@ class DataGeneratorService {
       };
 
       // set pfp iff there is a pfp to set
-      const pfp = this.pfps[randNum(0, this.pfps.length + 2)];
+      const pfp = this.pfps[randNum(0, this.pfps.length + 1)];
       if (pfp) {
         owner.pfp = pfp;
       }

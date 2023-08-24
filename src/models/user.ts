@@ -27,9 +27,17 @@ export interface UserLocation {
   postcode: string;
 }
 
+type NotificationType =
+  | "recievedDirect"
+  | "recievedFeedback"
+  | "acceptedDirect"
+  | "acceptedBroad";
+
 export interface Notification {
-  name: string;
-  desc: string;
+  notificationType: NotificationType;
+  subjectName: string;
+  subjectPfp?: string;
+  notifiedOn: Date;
 }
 
 export async function getUserById(userId: ObjectId) {
@@ -73,5 +81,25 @@ export async function updateUserPfp(user: User, imageId: string) {
   return await userCollection.updateOne(
     { _id: user._id },
     { $set: { pfp: imageId } }
+  );
+}
+
+export async function getNotifications(userId: ObjectId) {
+  const res = await userCollection.aggregate([
+    { $match: { _id: userId } },
+    { $unwind: "$notifications" },
+    { $replaceWith: "$notifications" },
+  ]);
+
+  return await res.toArray();
+}
+
+export async function newNotification(
+  userId: ObjectId,
+  notification: Notification
+) {
+  return userCollection.updateOne(
+    { _id: userId },
+    { $push: { notifications: notification } }
   );
 }

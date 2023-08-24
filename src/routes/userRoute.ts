@@ -6,6 +6,17 @@ import bodyParser from "body-parser";
 
 const userRouter = Router();
 
+userRouter.post(
+  "/pfp",
+  passport.authenticate("user-jwt", { session: false }),
+  bodyParser.raw({ type: ["image/jpeg", "image/png"], limit: "20mb" }),
+  userController.setPfp
+);
+userRouter.get(
+  "/notifications",
+  passport.authenticate("user-jwt", { session: false }),
+  userController.getUserNotifications
+);
 userRouter.get(
   "/:userId",
   passport.authenticate("user-jwt", { session: false }),
@@ -30,12 +41,6 @@ userRouter.post(
   "/:userId/feedback/:feedbackId/likes",
   passport.authenticate("user-jwt", { session: false }),
   feedbackController.addLikeToReview
-);
-userRouter.post(
-  "/pfp",
-  passport.authenticate("user-jwt", { session: false }),
-  bodyParser.raw({ type: ["image/jpeg", "image/png"], limit: "20mb" }),
-  userController.setPfp
 );
 
 export default userRouter;

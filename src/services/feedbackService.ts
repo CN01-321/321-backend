@@ -14,6 +14,7 @@ import {
 } from "../models/feedback.js";
 import { ObjectSchema, number, object, string } from "yup";
 import { User } from "../models/user.js";
+import notificationService from "./notificationService.js";
 
 class FeedbackService {
   async getUserFeedback(userId: string) {
@@ -61,6 +62,12 @@ class FeedbackService {
     feedbackForm: NewFeedbackForm
   ) {
     const feedback = await this.createFeedback(author, userId, feedbackForm);
+
+    await notificationService.pushRecievedFeedback(
+      new ObjectId(userId),
+      author
+    );
+
     handleUpdateResult(await newFeedback(feedback, new ObjectId(userId)));
   }
 

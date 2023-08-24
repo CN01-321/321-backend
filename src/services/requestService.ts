@@ -1,5 +1,9 @@
 import { ObjectId, WithId } from "mongodb";
-import { BadRequestError, handleUpdateResult } from "../errors.js";
+import {
+  BadRequestError,
+  NotFoundError,
+  handleUpdateResult,
+} from "../errors.js";
 import {
   Request,
   acceptRequestRespondent,
@@ -11,8 +15,9 @@ import {
   getRespondents,
 } from "../models/request.js";
 import { Owner } from "../models/owner.js";
-import { DateRange } from "../models/carer.js";
+import { DateRange, getCarerById } from "../models/carer.js";
 import { ObjectSchema, array, date, object, string } from "yup";
+import notificationService from "./notificationService.js";
 
 class RequestService {
   async getRequest(requestId: string) {
@@ -44,6 +49,17 @@ class RequestService {
       additionalInfo: newRequestForm.additionalInfo,
     };
 
+    // if direct request then also send notification to the carer
+    if (request.carer) {
+      const carer = await getCarerById(request.carer);
+
+      if (!carer) {
+        throw new NotFoundError("Carer does not exist");
+      }
+
+      await notificationService.pushRecievedDirect(carer._id, owner);
+    }
+
     return handleUpdateResult(await createNewRequest(owner, request));
   }
 
@@ -67,6 +83,11 @@ class RequestService {
     if (!ObjectId.isValid(respondentId)) {
       throw new BadRequestError("Respondent id is invalid");
     }
+
+    await notificationService.pushOwnerAcceptedBroad(
+      new ObjectId(respondentId),
+      owner
+    );
 
     return handleUpdateResult(
       await acceptRequestRespondent(
