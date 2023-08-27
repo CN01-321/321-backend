@@ -8,7 +8,7 @@ import {
   Request,
   acceptRequestRespondent,
   createNewRequest,
-  findNearbyRequests,
+  findNearbyCarers,
   getOwnerRequests,
   getRequestPets,
   getRequestWithId,
@@ -29,7 +29,9 @@ class RequestService {
   }
 
   async getRequestsForOwner(owner: WithId<Owner>) {
-    return await getOwnerRequests(owner);
+    const reqs = await getOwnerRequests(owner);
+    console.log(reqs);
+    return reqs;
   }
 
   async newRequest(owner: WithId<Owner>, newRequestForm: NewRequestForm) {
@@ -99,7 +101,7 @@ class RequestService {
   }
 
   async getNearbyRequests(owner: WithId<Owner>) {
-    return findNearbyRequests(owner);
+    return findNearbyCarers(owner);
   }
 
   async getPetsFromRequest(requestId: string) {

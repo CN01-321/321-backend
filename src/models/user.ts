@@ -50,6 +50,7 @@ export async function getUserById(userId: ObjectId) {
         name: 1,
         email: 1,
         userType: 1,
+        pfp: 1,
         bio: 1,
         phone: 1,
         preferredTravelDistance: 1,

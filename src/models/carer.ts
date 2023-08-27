@@ -63,6 +63,7 @@ export async function getCarerById(carerId: ObjectId) {
         _id: 1,
         email: 1,
         userType: 1,
+        pfp: 1,
         preferredTravelDistance: 1,
         hourlyRate: 1,
         unavailabilities: 1,
@@ -113,6 +114,7 @@ export async function getCarerOffers(
             $set: {
               "requests.ownerId": "$_id",
               "requests.ownerName": "$name",
+              "requests.ownerIcon": "$pfp",
               "requests.location": "$location",
             },
           },
@@ -122,6 +124,7 @@ export async function getCarerOffers(
               _id: 1,
               ownerId: 1,
               ownerName: 1,
+              ownerIcon: 1,
               pets: 1,
               dateRange: 1,
               location: 1,

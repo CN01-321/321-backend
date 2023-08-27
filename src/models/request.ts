@@ -71,7 +71,7 @@ export async function getOwnerRequests(owner: WithId<Owner>) {
           { $unwind: "$pets" },
           { $replaceWith: "$pets" },
           { $match: { $expr: { $in: ["$_id", "$$pets"] } } },
-          { $project: { _id: 1, name: 1, petType: 1 } },
+          { $project: { _id: 1, name: 1, petType: 1, pfp: 1 } },
         ],
         as: "pets",
       },
@@ -246,7 +246,7 @@ export interface SearchQuery {
   petSizes?: PetSize[];
 }
 
-export async function findNearbyRequests(owner: WithId<Owner>) {
+export async function findNearbyCarers(owner: WithId<Owner>) {
   // query all the nearby carers and get a list of their object id's
   const res = await carerCollection.aggregate([
     // filter the carers that are nearby
@@ -270,6 +270,7 @@ export async function findNearbyRequests(owner: WithId<Owner>) {
         bio: 1,
         pfp: 1,
         rating: { $avg: "$feedback.rating" },
+        hourlyRate: 1,
       },
     },
   ]);
