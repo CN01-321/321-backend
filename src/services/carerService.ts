@@ -6,6 +6,7 @@ import {
   getCarerByEmail,
   getCarerJobs,
   getCarerOffers,
+  getTopNearbyCarers,
   rejectBroadOffer,
   rejectDirectOffer,
   updateCarerDetails,
@@ -31,6 +32,15 @@ class CarerService {
 
     const updateCarer: Partial<Carer> = { ...updateCarerForm, location };
     handleUpdateResult(await updateCarerDetails(carer._id, updateCarer));
+  }
+
+  async getHomeOverview(carer: WithId<Carer>) {
+    return {
+      recentReviews: carer.feedback
+        .sort((f1, f2) => f2.postedOn.getTime() - f1.postedOn.getTime())
+        .slice(0, 10),
+      topCarers: await getTopNearbyCarers(carer.location!),
+    };
   }
 
   async getBroadOffers(carer: WithId<Carer>) {

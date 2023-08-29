@@ -1,6 +1,6 @@
 import { ObjectId, WithId } from "mongodb";
 import { PetSize, PetType, petSizes, petTypes } from "./pet.js";
-import { User } from "./user.js";
+import { User, UserLocation } from "./user.js";
 import { carerCollection, ownerCollection } from "../mongo.js";
 
 const DEFAULT_TRAVEL_DISTANCE_METRES = 50000;
@@ -297,4 +297,33 @@ export async function rejectDirectOffer(
     { _id: carer._id },
     { $pull: { offers: { requestId: offerId } } }
   );
+}
+
+export async function getTopNearbyCarers(location: UserLocation) {
+  const res = await carerCollection.aggregate([
+    {
+      $geoNear: {
+        near: location,
+        distanceField: "distance",
+        maxDistance: 100 * 1000, // keep the query within 100km as a hard maximum
+        query: { userType: "carer" },
+        spherical: true,
+      },
+    },
+    { $match: { $expr: { $lt: ["$distance", "$preferredTravelDistance"] } } },
+    { $addFields: { rating: { $avg: "$feedback.rating" } } },
+    { $sort: { rating: -1 } },
+    {
+      $project: {
+        _id: 1,
+        name: 1,
+        pfp: 1,
+        rating: 1,
+        totalReviews: { $size: "$feedback" },
+        recentReview: { $arrayElemAt: ["$feedback", -1] },
+      },
+    },
+  ]);
+
+  return await res.toArray();
 }

@@ -77,7 +77,7 @@ class DataGeneratorService {
   }
 
   async generateImages() {
-    imageStorageService.deleteAll();
+    await imageStorageService.deleteAll();
 
     const pfpDir = fs.readdirSync("assets/images/pfp");
     for (const pfp of pfpDir) {

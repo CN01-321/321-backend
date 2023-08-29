@@ -15,11 +15,16 @@ carerRouter.get(
   passport.authenticate("carer-jwt", { session: false }),
   carerController.getCarerBySession
 );
-
 carerRouter.put(
   "/",
   passport.authenticate("carer-jwt", { session: false }),
   carerController.updateCarer
+);
+
+carerRouter.get(
+  "/home",
+  passport.authenticate("carer-jwt", { session: false }),
+  carerController.getHomeOverview
 );
 
 carerRouter.get(

@@ -33,6 +33,20 @@ async function updateCarer(
   }
 }
 
+async function getHomeOverview(
+  req: Express.Request,
+  res: Express.Response,
+  next: Express.NextFunction
+) {
+  const carer = req.user as WithId<Carer>;
+
+  try {
+    res.json(await carerService.getHomeOverview(carer));
+  } catch (err) {
+    next(err);
+  }
+}
+
 async function getBroadOffers(req: Express.Request, res: Express.Response) {
   const carer = req.user as WithId<Carer>;
   res.json(await carerService.getBroadOffers(carer));
@@ -90,6 +104,7 @@ const carerController = {
   createNewCarer,
   getCarerBySession,
   updateCarer,
+  getHomeOverview,
   getBroadOffers,
   getDirectOffers,
   getJobs,

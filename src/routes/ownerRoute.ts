@@ -21,6 +21,11 @@ ownerRouter.put(
   ownerController.updateOwner
 );
 ownerRouter.get(
+  "/home",
+  passport.authenticate("owner-jwt", { session: false }),
+  ownerController.getHomeOverview
+);
+ownerRouter.get(
   "/pets",
   passport.authenticate("owner-jwt", { session: false }),
   ownerController.getPets
