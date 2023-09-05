@@ -1,4 +1,4 @@
-import { ObjectId, WithId } from "mongodb";
+import { ObjectId, UpdateResult, WithId } from "mongodb";
 import { Feedback } from "./feedback.js";
 import { Owner } from "./owner.js";
 import { ownerCollection } from "../mongo.js";
@@ -27,10 +27,12 @@ export async function getPetWithId(petId: ObjectId): Promise<Pet | null> {
     { $match: { "pets._id": petId } },
   ]);
   const pet = await res.next();
-  return pet?.pets as Pet;
+  return pet?.pets as Pet | null;
 }
 
-export async function getOwnerPets(owner: WithId<Owner>) {
+export type PetDTO = Omit<Pet, "feedback">;
+
+export async function getOwnerPets(owner: WithId<Owner>): Promise<PetDTO[]> {
   const res = await ownerCollection.aggregate([
     { $match: { _id: owner._id } },
     { $unwind: "$pets" },
@@ -38,13 +40,13 @@ export async function getOwnerPets(owner: WithId<Owner>) {
     { $project: { feedback: 0 } },
   ]);
 
-  return await res.toArray();
+  return (await res.toArray()) as PetDTO[];
 }
 
 export async function checkOwnerPetExists(
   owner: WithId<Owner>,
   petId: ObjectId
-) {
+): Promise<boolean> {
   const count = await ownerCollection.countDocuments({
     _id: owner._id,
     "pets._id": petId,
@@ -53,7 +55,10 @@ export async function checkOwnerPetExists(
   return count > 0;
 }
 
-export async function createNewPet(owner: WithId<Owner>, pet: Pet) {
+export async function createNewPet(
+  owner: WithId<Owner>,
+  pet: Pet
+): Promise<UpdateResult<Owner>> {
   pet._id = new ObjectId();
   return await ownerCollection.updateOne(
     { _id: owner._id },
@@ -65,7 +70,7 @@ export async function updateExisitingPet(
   owner: WithId<Owner>,
   petId: ObjectId,
   pet: Omit<Partial<Pet>, "_id">
-) {
+): Promise<UpdateResult<Owner>> {
   return await ownerCollection.updateOne(
     { _id: owner._id, "pets._id": petId },
     {
@@ -84,7 +89,7 @@ export async function updateExisitingPet(
 export async function deleteExisitingPet(
   owner: WithId<Owner>,
   petId: ObjectId
-) {
+): Promise<UpdateResult<Owner>> {
   return await ownerCollection.updateOne(
     { _id: owner._id },
     { $pull: { pets: { _id: petId } } }
@@ -95,7 +100,7 @@ export async function setPetPfp(
   owner: WithId<Owner>,
   petId: ObjectId,
   imageId: string
-) {
+): Promise<UpdateResult<Owner>> {
   return await ownerCollection.updateOne(
     { _id: owner._id, "pets._id": petId },
     { $set: { "pets.$.pfp": imageId } }

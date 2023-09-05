@@ -1,5 +1,7 @@
-import { ObjectId } from "mongodb";
+import { ObjectId, UpdateResult } from "mongodb";
 import { ownerCollection, userCollection } from "../mongo.js";
+import { User } from "./user.js";
+import { Owner } from "./owner.js";
 
 export interface Feedback {
   _id: ObjectId;
@@ -22,7 +24,19 @@ export interface Comment {
   message: string;
 }
 
-export async function getFeedback(userId: ObjectId) {
+interface FeedbackDTO {
+  _id: ObjectId;
+  authorId: ObjectId;
+  authorName: string;
+  authorIcon?: string;
+  postedOn: Date;
+  message: string;
+  rating?: number;
+  likes: number;
+  comments: Comment[];
+}
+
+export async function getFeedback(userId: ObjectId): Promise<FeedbackDTO[]> {
   const res = await userCollection.aggregate([
     { $match: { _id: userId } },
     { $unwind: "$feedback" },
@@ -35,13 +49,14 @@ export async function getFeedback(userId: ObjectId) {
         authorIcon: 1,
         postedOn: 1,
         message: 1,
+        rating: 1,
         likes: { $size: "$likes" },
         comments: 1,
       },
     },
   ]);
 
-  return await res.toArray();
+  return (await res.toArray()) as FeedbackDTO[];
 }
 
 export async function newFeedback(feedback: Feedback, userId: ObjectId) {
@@ -55,7 +70,7 @@ export async function newComment(
   comment: Comment,
   userId: ObjectId,
   feedbackId: ObjectId
-) {
+): Promise<UpdateResult<User>> {
   return await userCollection.updateOne(
     { _id: userId, "feedback._id": feedbackId },
     { $push: { "feedback.$.comments": comment } }
@@ -66,14 +81,14 @@ export async function likeReview(
   likerId: ObjectId,
   userId: ObjectId,
   feedbackId: ObjectId
-) {
-  return await ownerCollection.updateOne(
+): Promise<UpdateResult<User>> {
+  return await userCollection.updateOne(
     { _id: userId, "feedback._id": feedbackId },
     { $addToSet: { "feedback.$.likes": likerId } }
   );
 }
 
-export async function getPetFeedback(petId: ObjectId) {
+export async function getPetFeedback(petId: ObjectId): Promise<FeedbackDTO[]> {
   const res = await ownerCollection.aggregate([
     { $match: { "pets._id": petId } },
     { $unwind: "$pets" },
@@ -94,10 +109,13 @@ export async function getPetFeedback(petId: ObjectId) {
     },
   ]);
 
-  return await res.toArray();
+  return (await res.toArray()) as FeedbackDTO[];
 }
 
-export async function newPetFeedback(feedback: Feedback, petId: ObjectId) {
+export async function newPetFeedback(
+  feedback: Feedback,
+  petId: ObjectId
+): Promise<UpdateResult<Owner>> {
   return await ownerCollection.updateOne(
     { "pets._id": petId },
     { $push: { "pets.$.feedback": feedback } }
@@ -108,7 +126,7 @@ export async function newPetComment(
   comment: Comment,
   petId: ObjectId,
   feedbackId: ObjectId
-) {
+): Promise<UpdateResult<Owner>> {
   return await ownerCollection.updateOne(
     { "pets._id": petId, "pets.feedback._id": feedbackId },
     { $push: { "pets.$[pid].feedback.$[fid].comments": comment } },
@@ -120,7 +138,7 @@ export async function likePetReview(
   likerId: ObjectId,
   petId: ObjectId,
   feedbackId: ObjectId
-) {
+): Promise<UpdateResult<Owner>> {
   return await ownerCollection.updateOne(
     { "pets._id": petId, "pets.feedback._id": feedbackId },
     { $addToSet: { "pets.$[pid].feedback.$[fid].likes": likerId } },
