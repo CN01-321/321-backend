@@ -101,7 +101,7 @@ class RequestService {
   }
 
   async getNearbyRequests(owner: WithId<Owner>) {
-    return findNearbyCarers(owner);
+    return await findNearbyCarers(owner);
   }
 
   async getPetsFromRequest(requestId: string) {

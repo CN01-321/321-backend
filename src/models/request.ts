@@ -2,7 +2,7 @@ import { ObjectId, UpdateResult, WithId } from "mongodb";
 import { Carer, DateRange } from "./carer.js";
 import { Owner } from "./owner.js";
 import { carerCollection, ownerCollection } from "../mongo.js";
-import { PetDTO, PetType } from "./pet.js";
+import { PetDTO, PetSize, PetType } from "./pet.js";
 import { User } from "./user.js";
 
 type RequestStatus = "pending" | "accepted" | "rejected" | "completed";
@@ -292,6 +292,8 @@ interface NearbyCarerDTO {
   pfp?: string;
   rating?: number;
   hourlyRate: number;
+  preferredPetTypes: PetType[];
+  preferredPetSizes: PetSize[];
 }
 
 export async function findNearbyCarers(
@@ -321,6 +323,8 @@ export async function findNearbyCarers(
         pfp: 1,
         rating: { $avg: "$feedback.rating" },
         hourlyRate: 1,
+        preferredPetTypes: 1,
+        preferredPetSizes: 1,
       },
     },
   ]);
