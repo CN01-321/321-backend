@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken";
 import { User } from "../models/user.js";
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import { WithId } from "mongodb";
 import passport from "passport";
 import { Strategy as LocalStrategy, IStrategyOptions } from "passport-local";
@@ -9,6 +9,7 @@ import dotenv from "dotenv";
 import { Strategy as JwtStrategy, ExtractJwt } from "passport-jwt";
 import ownerService from "../services/ownerService.js";
 import carerService from "../services/carerService.js";
+import { Carer } from "../models/carer.js";
 
 dotenv.config();
 
@@ -64,6 +65,31 @@ passport.use(
     return done(null, carer);
   })
 );
+
+export function validateUserHasInformation(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  const userHasRequiredFields = (u: User) => u.name && u.location && u.phone;
+  const carerHasRequiredFields = (c: Carer) =>
+    c.hourlyRate && c.preferredTravelDistance;
+
+  const user = req.user as User;
+
+  // check that a user has the required fields, and if the user is a carer, check
+  // the required carer fields are present as well
+  if (
+    !userHasRequiredFields(user) &&
+    !(user.userType === "carer" && !carerHasRequiredFields(user as Carer))
+  ) {
+    res.status(403).send("User has not filled out information");
+    return;
+  }
+
+  next();
+}
+
 export async function handleLogin(req: Request, res: Response) {
   const user = req.user as WithId<User>;
   console.debug(user._id);

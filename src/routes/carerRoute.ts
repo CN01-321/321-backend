@@ -1,14 +1,11 @@
 import { Router } from "express";
 import passport from "passport";
 import carerController from "../controllers/carerController.js";
+import { validateUserHasInformation } from "../controllers/authController.js";
 
 const carerRouter = Router();
 
-carerRouter.post(
-  "/",
-  passport.authenticate("carer-jwt", { session: false }),
-  carerController.createNewCarer
-);
+carerRouter.post("/", carerController.createNewCarer);
 
 carerRouter.get(
   "/",
@@ -24,6 +21,7 @@ carerRouter.put(
 carerRouter.get(
   "/home",
   passport.authenticate("carer-jwt", { session: false }),
+  validateUserHasInformation,
   carerController.getHomeOverview
 );
 

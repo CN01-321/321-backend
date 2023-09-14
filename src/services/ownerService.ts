@@ -41,11 +41,10 @@ class OwnerService {
 
   async getHomeOverview(owner: WithId<Owner>) {
     return {
-      completedRequests: owner.requests.filter((r) => r.status == "completed")
-        .length,
-      pendingRequests: owner.requests.filter((r) => r.status == "pending")
-        .length,
-      jobRequests: owner.requests.filter((r) => r.status === "accepted").length,
+      name: owner.name,
+      completed: owner.requests.filter((r) => r.status == "completed").length,
+      pending: owner.requests.filter((r) => r.status == "pending").length,
+      current: owner.requests.filter((r) => r.status === "accepted").length,
       topCarers: await getTopNearbyCarers(owner.location!),
     };
   }
