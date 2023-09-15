@@ -55,7 +55,11 @@ class DataGeneratorService {
     this.petPfps = await this.getPetPfpIds();
 
     // drops everything
-    await userCollection.deleteMany({});
+    try {
+      await userCollection.deleteMany({});
+    } catch (err) {
+      console.error(err);
+    }
 
     await this.genCarers();
     await this.genOwners();
@@ -77,7 +81,11 @@ class DataGeneratorService {
   }
 
   async generateImages() {
-    await imageStorageService.deleteAll();
+    try {
+      await imageStorageService.deleteAll();
+    } catch (err) {
+      console.error(err);
+    }
 
     const pfpDir = fs.readdirSync("assets/images/pfp");
     for (const pfp of pfpDir) {
