@@ -3,6 +3,7 @@ import {
   Carer,
   acceptBroadOffer,
   acceptDirectOffer,
+  completeOffer,
   getCarerByEmail,
   getCarerJobs,
   getCarerOffers,
@@ -90,6 +91,14 @@ class CarerService {
 
     const reject = offerType === "broad" ? rejectBroadOffer : rejectDirectOffer;
     handleUpdateResult(await reject(carer, new ObjectId(offerId)));
+  }
+
+  async completeCarerOffer(carer: WithId<Carer>, offerId: string) {
+    if (!ObjectId.isValid(offerId)) {
+      throw new BadRequestError("Offer id is invalid");
+    }
+
+    handleUpdateResult(await completeOffer(carer, new ObjectId(offerId)));
   }
 }
 

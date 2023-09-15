@@ -100,6 +100,19 @@ async function rejectOffer(
   }
 }
 
+async function completeOffer(
+  req: Express.Request,
+  res: Express.Response,
+  next: Express.NextFunction
+) {
+  const carer = req.user as WithId<Carer>;
+  try {
+    res.json(await carerService.completeCarerOffer(carer, req.params.offerId));
+  } catch (err) {
+    next(err);
+  }
+}
+
 const carerController = {
   createNewCarer,
   getCarerBySession,
@@ -110,6 +123,7 @@ const carerController = {
   getJobs,
   acceptOffer,
   rejectOffer,
+  completeOffer,
 };
 
 export default carerController;

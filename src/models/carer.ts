@@ -17,7 +17,7 @@ export interface Carer extends User {
 }
 
 export type OfferType = "broad" | "direct";
-type OfferStatus = "pending" | "applied" | "accepted";
+type OfferStatus = "pending" | "applied" | "accepted" | "completed";
 interface Offer {
   requestId: ObjectId;
   offerType: OfferType;
@@ -190,7 +190,7 @@ export async function getCarerJobs(carer: WithId<Carer>): Promise<OfferDTO[]> {
     { $match: { _id: carer._id } },
     { $unwind: "$offers" },
     { $replaceWith: "$offers" },
-    { $match: { status: "accepted" } },
+    { $match: { status: { $in: ["accepted", "completed"] } } },
     {
       $lookup: {
         from: "users",
@@ -319,6 +319,24 @@ export async function rejectDirectOffer(
   return await carerCollection.updateOne(
     { _id: carer._id },
     { $pull: { offers: { requestId: offerId } } }
+  );
+}
+
+export async function completeOffer(
+  carer: WithId<Carer>,
+  offerId: ObjectId
+): Promise<UpdateResult<User>> {
+  const res = await ownerCollection.updateOne(
+    { "requests._id": offerId },
+    { $set: { "requests.$.status": "completed" } }
+  );
+
+  // return early if not matched
+  if (!res.matchedCount) return res;
+
+  return await carerCollection.updateOne(
+    { _id: carer._id, "offers.requestId": offerId },
+    { $set: { "offers.$.status": "completed" } }
   );
 }
 

@@ -50,5 +50,10 @@ carerRouter.post(
   passport.authenticate("carer-jwt", { session: false }),
   carerController.rejectOffer
 );
+carerRouter.post(
+  "/jobs/:offerId/complete",
+  passport.authenticate("carer-jwt", { session: false }),
+  carerController.completeOffer
+);
 
 export default carerRouter;
