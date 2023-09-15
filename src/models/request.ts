@@ -18,13 +18,66 @@ export interface Request {
   additionalInfo?: string;
 }
 
-export async function getRequestWithId(requestId: ObjectId): Promise<Request> {
+export async function getRequestWithId(
+  owner: WithId<Owner>,
+  requestId: ObjectId
+): Promise<RequestDTO> {
   const res = await ownerCollection.aggregate([
+    { $match: { _id: owner._id } },
     { $unwind: "$requests" },
     { $match: { "requests._id": requestId } },
+    // add location information into each request
+    {
+      $addFields: {
+        "requests.location": {
+          state: "$location.state",
+          city: "$location.city",
+          street: "$location.street",
+        },
+      },
+    },
+    { $replaceWith: "$requests" },
+    // add some of the carers info onto the request by joining their information
+    // if the carer id is present in the request
+    {
+      $lookup: {
+        from: "users",
+        let: { carer: "$carer" },
+        pipeline: [
+          {
+            $match: {
+              $expr: { $eq: ["$_id", { $toObjectId: "$$carer" }] },
+            },
+          },
+
+          { $project: { _id: 1, name: 1 } },
+        ],
+        as: "carer",
+      },
+    },
+    // add some of the pet info back into the request
+    {
+      $lookup: {
+        from: "users",
+        let: { pets: "$pets" },
+        pipeline: [
+          {
+            $match: { _id: owner._id },
+          },
+          { $unwind: "$pets" },
+          { $replaceWith: "$pets" },
+          { $match: { $expr: { $in: ["$_id", "$$pets"] } } },
+          { $project: { _id: 1, name: 1, petType: 1, pfp: 1 } },
+        ],
+        as: "pets",
+      },
+    },
+    // flatten the carer array if it is present
+    { $unwind: { path: "$carer", preserveNullAndEmptyArrays: true } },
+    { $project: { carerInfo: 0 } },
   ]);
-  const request = await res.next();
-  return request?.requests as Request;
+
+  return (await res.next()) as RequestDTO;
 }
 
 interface RequestDTO {
@@ -202,13 +255,13 @@ export async function createNewRequest(
 export async function updateRequest(
   owner: WithId<Owner>,
   request: Request
-): Promise<Request> {
+): Promise<RequestDTO> {
   await ownerCollection.updateOne(
     { _id: owner._id, "requests._id": request._id },
     { $set: { "requests.$": request } }
   );
 
-  return await getRequestWithId(request._id);
+  return await getRequestWithId(owner, request._id);
 }
 
 interface RespondentDTO {
@@ -216,6 +269,7 @@ interface RespondentDTO {
   name: string;
   bio?: string;
   rating?: number;
+  hourlyRate: number;
 }
 
 export async function getRespondents(
@@ -244,6 +298,7 @@ export async function getRespondents(
         name: 1,
         bio: 1,
         rating: { $avg: "$feedback.rating" },
+        hourlyRate: 1,
       },
     },
   ]);
@@ -340,6 +395,7 @@ export async function getRequestPets(requestId: ObjectId): Promise<PetDTO[]> {
     { $unwind: "$pets" },
     { $unwind: "$requests.pets" },
     { $match: { $expr: { $eq: ["$pets._id", "$requests.pets"] } } },
+    { $replaceWith: "$pets" },
     { $project: { feedback: 0 } },
   ]);
 

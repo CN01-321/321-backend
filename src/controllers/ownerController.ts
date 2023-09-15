@@ -124,7 +124,8 @@ async function setPetPfp(
 }
 
 async function getRequest(req: Express.Request, res: Express.Response) {
-  res.json(await requestService.getRequest(req.params.requestId));
+  const owner = req.user as WithId<Owner>;
+  res.json(await requestService.getRequest(owner, req.params.requestId));
 }
 
 async function getRequests(req: Express.Request, res: Express.Response) {
