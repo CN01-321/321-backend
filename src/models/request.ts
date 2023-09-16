@@ -1,8 +1,9 @@
-import { ObjectId, WithId } from "mongodb";
-import { DateRange } from "./carer.js";
+import { ObjectId, UpdateResult, WithId } from "mongodb";
+import { Carer, DateRange } from "./carer.js";
 import { Owner } from "./owner.js";
 import { carerCollection, ownerCollection } from "../mongo.js";
-import { PetSize, PetType, getPetWithId } from "./pet.js";
+import { PetDTO, PetSize, PetType } from "./pet.js";
+import { User } from "./user.js";
 
 type RequestStatus = "pending" | "accepted" | "rejected" | "completed";
 
@@ -17,16 +18,92 @@ export interface Request {
   additionalInfo?: string;
 }
 
-export async function getRequestWithId(requestId: ObjectId) {
+export async function getRequestWithId(
+  owner: WithId<Owner>,
+  requestId: ObjectId
+): Promise<RequestDTO> {
   const res = await ownerCollection.aggregate([
+    { $match: { _id: owner._id } },
     { $unwind: "$requests" },
     { $match: { "requests._id": requestId } },
+    // add location information into each request
+    {
+      $addFields: {
+        "requests.location": {
+          state: "$location.state",
+          city: "$location.city",
+          street: "$location.street",
+        },
+      },
+    },
+    { $replaceWith: "$requests" },
+    // add some of the carers info onto the request by joining their information
+    // if the carer id is present in the request
+    {
+      $lookup: {
+        from: "users",
+        let: { carer: "$carer" },
+        pipeline: [
+          {
+            $match: {
+              $expr: { $eq: ["$_id", { $toObjectId: "$$carer" }] },
+            },
+          },
+
+          { $project: { _id: 1, name: 1 } },
+        ],
+        as: "carer",
+      },
+    },
+    // add some of the pet info back into the request
+    {
+      $lookup: {
+        from: "users",
+        let: { pets: "$pets" },
+        pipeline: [
+          {
+            $match: { _id: owner._id },
+          },
+          { $unwind: "$pets" },
+          { $replaceWith: "$pets" },
+          { $match: { $expr: { $in: ["$_id", "$$pets"] } } },
+          { $project: { _id: 1, name: 1, petType: 1, pfp: 1 } },
+        ],
+        as: "pets",
+      },
+    },
+    // flatten the carer array if it is present
+    { $unwind: { path: "$carer", preserveNullAndEmptyArrays: true } },
+    { $project: { carerInfo: 0 } },
   ]);
-  const request = await res.next();
-  return request?.requests as Request;
+
+  return (await res.next()) as RequestDTO;
 }
 
-export async function getOwnerRequests(owner: WithId<Owner>) {
+interface RequestDTO {
+  _id: ObjectId;
+  carer: { _id: ObjectId; name: string } | null;
+  status: RequestStatus;
+  pets: Array<{
+    _id: ObjectId;
+    name: string;
+    petType: PetType;
+    pfp?: string;
+  }>;
+  location: {
+    state: string;
+    city: string;
+    street: string;
+  };
+  respondents: ObjectId[];
+  requestedOn: Date;
+  dateRange: DateRange;
+  additionalInfo?: string;
+}
+
+export async function getOwnerRequests(
+  owner: WithId<Owner>
+): Promise<RequestDTO[]> {
   const res = await ownerCollection.aggregate([
     { $match: { _id: owner._id } },
     { $unwind: "$requests" },
@@ -81,10 +158,13 @@ export async function getOwnerRequests(owner: WithId<Owner>) {
     { $project: { carerInfo: 0 } },
   ]);
 
-  return await res.toArray();
+  return (await res.toArray()) as RequestDTO[];
 }
 
-async function addRequestToCarer(requestId: ObjectId, carerId: ObjectId) {
+async function addRequestToCarer(
+  requestId: ObjectId,
+  carerId: ObjectId
+): Promise<UpdateResult<Carer>> {
   return await carerCollection.updateOne(
     { _id: carerId },
     {
@@ -99,7 +179,10 @@ async function addRequestToCarer(requestId: ObjectId, carerId: ObjectId) {
   );
 }
 
-async function addRequestToNearby(owner: WithId<Owner>, request: Request) {
+async function addRequestToNearby(
+  owner: WithId<Owner>,
+  request: Request
+): Promise<UpdateResult<Carer>> {
   // query all the nearby carers and get a list of their object id's
   const res = await ownerCollection.aggregate([
     { $unwind: "$requests" },
@@ -150,31 +233,49 @@ async function addRequestToNearby(owner: WithId<Owner>, request: Request) {
   );
 }
 
-export async function createNewRequest(owner: WithId<Owner>, request: Request) {
+export async function createNewRequest(
+  owner: WithId<Owner>,
+  request: Request
+): Promise<UpdateResult<User>> {
   request._id = new ObjectId();
-  await ownerCollection.updateOne(
+  const res = await ownerCollection.updateOne(
     { _id: owner._id },
     { $push: { requests: request } }
   );
+
+  if (!res.matchedCount) {
+    return res;
+  }
 
   return request.carer
     ? await addRequestToCarer(request._id, request.carer)
     : await addRequestToNearby(owner, request);
 }
 
-export async function updateRequest(owner: WithId<Owner>, request: Request) {
+export async function updateRequest(
+  owner: WithId<Owner>,
+  request: Request
+): Promise<RequestDTO> {
   await ownerCollection.updateOne(
     { _id: owner._id, "requests._id": request._id },
     { $set: { "requests.$": request } }
   );
 
-  return await getRequestWithId(request._id);
+  return await getRequestWithId(owner, request._id);
+}
+
+interface RespondentDTO {
+  _id: ObjectId;
+  name: string;
+  bio?: string;
+  rating?: number;
+  hourlyRate: number;
 }
 
 export async function getRespondents(
   owner: WithId<Owner>,
   requestId: ObjectId
-) {
+): Promise<RespondentDTO[]> {
   const res = await ownerCollection.aggregate([
     { $match: { _id: owner._id } },
     { $unwind: "$requests" },
@@ -197,18 +298,19 @@ export async function getRespondents(
         name: 1,
         bio: 1,
         rating: { $avg: "$feedback.rating" },
+        hourlyRate: 1,
       },
     },
   ]);
 
-  return res.toArray();
+  return (await res.toArray()) as RespondentDTO[];
 }
 
 export async function acceptRequestRespondent(
   owner: WithId<Owner>,
   requestId: ObjectId,
   respondentId: ObjectId
-) {
+): Promise<UpdateResult<User>> {
   // update the requests carer to the selected respondent and status to accepted
   const res = await ownerCollection.updateOne(
     {
@@ -238,15 +340,20 @@ export async function acceptRequestRespondent(
   );
 }
 
-// TODO add carer rating and availability date range
-export interface SearchQuery {
-  price?: number;
+interface NearbyCarerDTO {
+  _id: ObjectId;
+  name: string;
+  bio?: string;
+  pfp?: string;
   rating?: number;
-  petTypes?: PetType[];
-  petSizes?: PetSize[];
+  hourlyRate: number;
+  preferredPetTypes: PetType[];
+  preferredPetSizes: PetSize[];
 }
 
-export async function findNearbyCarers(owner: WithId<Owner>) {
+export async function findNearbyCarers(
+  owner: WithId<Owner>
+): Promise<NearbyCarerDTO[]> {
   // query all the nearby carers and get a list of their object id's
   const res = await carerCollection.aggregate([
     // filter the carers that are nearby
@@ -271,19 +378,26 @@ export async function findNearbyCarers(owner: WithId<Owner>) {
         pfp: 1,
         rating: { $avg: "$feedback.rating" },
         hourlyRate: 1,
+        preferredPetTypes: 1,
+        preferredPetSizes: 1,
       },
     },
   ]);
 
-  return await res.toArray();
+  return (await res.toArray()) as NearbyCarerDTO[];
 }
 
-export async function getRequestPets(requestId: ObjectId) {
-  const request = await getRequestWithId(new ObjectId(requestId));
+export async function getRequestPets(requestId: ObjectId): Promise<PetDTO[]> {
+  const res = await ownerCollection.aggregate([
+    { $match: { "requests._id": requestId } },
+    { $unwind: "$requests" },
+    { $match: { "requests._id": requestId } },
+    { $unwind: "$pets" },
+    { $unwind: "$requests.pets" },
+    { $match: { $expr: { $eq: ["$pets._id", "$requests.pets"] } } },
+    { $replaceWith: "$pets" },
+    { $project: { feedback: 0 } },
+  ]);
 
-  return await Promise.all(
-    request.pets.map(async (petId) => {
-      return await getPetWithId(new ObjectId(petId));
-    })
-  );
+  return (await res.toArray()) as PetDTO[];
 }

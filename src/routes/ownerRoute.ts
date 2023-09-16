@@ -2,14 +2,11 @@ import { Router } from "express";
 import passport from "passport";
 import ownerController from "../controllers/ownerController.js";
 import bodyParser from "body-parser";
+import { validateUserHasInformation } from "../controllers/authController.js";
 
 const ownerRouter = Router();
 
-ownerRouter.post(
-  "/",
-  passport.authenticate("owner-jwt", { session: false }),
-  ownerController.createNewOwner
-);
+ownerRouter.post("/", ownerController.createNewOwner);
 ownerRouter.get(
   "/",
   passport.authenticate("owner-jwt", { session: false }),
@@ -19,6 +16,12 @@ ownerRouter.put(
   "/",
   passport.authenticate("owner-jwt", { session: false }),
   ownerController.updateOwner
+);
+ownerRouter.get(
+  "/home",
+  passport.authenticate("owner-jwt", { session: false }),
+  validateUserHasInformation,
+  ownerController.getHomeOverview
 );
 ownerRouter.get(
   "/pets",

@@ -20,6 +20,7 @@ import {
   handleUpdateResult,
 } from "../errors.js";
 import imageStorageService, { ImageMetadata } from "./imageStorageService.js";
+import { getTopNearbyCarers } from "../models/carer.js";
 
 class OwnerService {
   async getOwnerByEmail(email: string) {
@@ -36,6 +37,16 @@ class OwnerService {
 
     const updateOwner: Partial<Owner> = { ...updateForm, location };
     handleUpdateResult(await updateOwnerDetails(owner._id, updateOwner));
+  }
+
+  async getHomeOverview(owner: WithId<Owner>) {
+    return {
+      name: owner.name,
+      completed: owner.requests.filter((r) => r.status == "completed").length,
+      pending: owner.requests.filter((r) => r.status == "pending").length,
+      current: owner.requests.filter((r) => r.status === "accepted").length,
+      topCarers: await getTopNearbyCarers(owner.location!),
+    };
   }
 
   async getPets(owner: WithId<Owner>) {

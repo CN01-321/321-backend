@@ -55,7 +55,11 @@ class DataGeneratorService {
     this.petPfps = await this.getPetPfpIds();
 
     // drops everything
-    await userCollection.deleteMany({});
+    try {
+      await userCollection.deleteMany({});
+    } catch (err) {
+      console.error(err);
+    }
 
     await this.genCarers();
     await this.genOwners();
@@ -77,7 +81,11 @@ class DataGeneratorService {
   }
 
   async generateImages() {
-    imageStorageService.deleteAll();
+    try {
+      await imageStorageService.deleteAll();
+    } catch (err) {
+      console.error(err);
+    }
 
     const pfpDir = fs.readdirSync("assets/images/pfp");
     for (const pfp of pfpDir) {
@@ -136,12 +144,12 @@ class DataGeneratorService {
     // return either a random selection of pet types or all pet types
     // (no carer should prefer nothing)
     const genPreferredPetTypes = () => {
-      const genPetTypes = petTypes.filter(randBool);
+      const genPetTypes = petTypes.filter(() => randNum(0, 2) === 0);
       return genPetTypes.length === 0 ? petTypes : genPetTypes;
     };
 
     const genPreferredPetSizes = () => {
-      const genPetSizes = petSizes.filter(randBool);
+      const genPetSizes = petSizes.filter(() => randNum(0, 2) === 0);
       return genPetSizes.length === 0 ? petSizes : genPetSizes;
     };
 
@@ -159,7 +167,7 @@ class DataGeneratorService {
         feedback: [],
         skillsAndExp: "Skills and Experience",
         preferredTravelDistance: 50000,
-        hourlyRate: 50,
+        hourlyRate: randNum(25, 150),
         offers: [],
         preferredPetTypes: genPreferredPetTypes(),
         preferredPetSizes: genPreferredPetSizes(),

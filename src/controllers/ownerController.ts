@@ -22,6 +22,7 @@ export async function createNewOwner(
     next(err);
   }
 }
+
 async function updateOwner(
   req: Express.Request,
   res: Express.Response,
@@ -31,6 +32,20 @@ async function updateOwner(
 
   try {
     res.json(await ownerService.updateOwner(owner, req.body));
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function getHomeOverview(
+  req: Express.Request,
+  res: Express.Response,
+  next: Express.NextFunction
+) {
+  const owner = req.user as WithId<Owner>;
+
+  try {
+    res.json(await ownerService.getHomeOverview(owner));
   } catch (err) {
     next(err);
   }
@@ -109,7 +124,8 @@ async function setPetPfp(
 }
 
 async function getRequest(req: Express.Request, res: Express.Response) {
-  res.json(await requestService.getRequest(req.params.requestId));
+  const owner = req.user as WithId<Owner>;
+  res.json(await requestService.getRequest(owner, req.params.requestId));
 }
 
 async function getRequests(req: Express.Request, res: Express.Response) {
@@ -197,6 +213,7 @@ const ownerController = {
   createNewOwner,
   getOwnerBySession,
   updateOwner,
+  getHomeOverview,
   getPets,
   addPet,
   updatePet,

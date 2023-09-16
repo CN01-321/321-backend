@@ -20,12 +20,12 @@ import { ObjectSchema, array, date, object, string } from "yup";
 import notificationService from "./notificationService.js";
 
 class RequestService {
-  async getRequest(requestId: string) {
+  async getRequest(owner: WithId<Owner>, requestId: string) {
     if (!ObjectId.isValid(requestId)) {
       throw new BadRequestError("Request id is invalid");
     }
 
-    return await getRequestWithId(new ObjectId(requestId));
+    return await getRequestWithId(owner, new ObjectId(requestId));
   }
 
   async getRequestsForOwner(owner: WithId<Owner>) {
@@ -101,7 +101,7 @@ class RequestService {
   }
 
   async getNearbyRequests(owner: WithId<Owner>) {
-    return findNearbyCarers(owner);
+    return await findNearbyCarers(owner);
   }
 
   async getPetsFromRequest(requestId: string) {

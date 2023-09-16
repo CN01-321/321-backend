@@ -1,4 +1,4 @@
-import { ObjectId } from "mongodb";
+import { ObjectId, UpdateResult, WithId } from "mongodb";
 import { userCollection } from "../mongo.js";
 import { Feedback } from "./feedback.js";
 
@@ -40,65 +40,57 @@ export interface Notification {
   notifiedOn: Date;
 }
 
-export async function getUserById(userId: ObjectId) {
-  return await userCollection.findOne(
-    { _id: userId },
-    // only include fields for owners and carers that arent associated with other endpoints
-    {
-      projection: {
-        _id: 1,
-        name: 1,
-        email: 1,
-        userType: 1,
-        pfp: 1,
-        bio: 1,
-        phone: 1,
-        preferredTravelDistance: 1,
-        hourlyRate: 1,
-        unavailabilities: 1,
-        preferredPetTypes: 1,
-        preferredPetSizes: 1,
-      },
-    }
-  );
+export async function getUserById(
+  userId: ObjectId
+): Promise<WithId<User> | null> {
+  return await userCollection.findOne({ _id: userId });
 }
 
-export async function getUserByEmail(email: string) {
+export async function getUserByEmail(
+  email: string
+): Promise<WithId<User> | null> {
   return await userCollection.findOne({ email });
 }
 
 export async function getUserByEmailAndPassword(
   email: string,
   password: string
-) {
+): Promise<WithId<User> | null> {
   return await userCollection.findOne({ email, password });
 }
 
-export async function checkEmailExists(email: string) {
+export async function checkEmailExists(
+  email: string
+): Promise<WithId<User> | null> {
   return await userCollection.findOne({ email });
 }
 
-export async function updateUserPfp(user: User, imageId: string) {
+export async function updateUserPfp(
+  user: User,
+  imageId: string
+): Promise<UpdateResult<User>> {
   return await userCollection.updateOne(
     { _id: user._id },
     { $set: { pfp: imageId } }
   );
 }
 
-export async function getNotifications(userId: ObjectId) {
+export async function getNotifications(
+  userId: ObjectId
+): Promise<Notification[]> {
   const res = await userCollection.aggregate([
     { $match: { _id: userId } },
     { $unwind: "$notifications" },
     { $replaceWith: "$notifications" },
   ]);
 
-  return await res.toArray();
+  return (await res.toArray()) as Notification[];
 }
 
 export async function newNotification(
   userId: ObjectId,
   notification: Notification
-) {
+): Promise<UpdateResult<User>> {
   return userCollection.updateOne(
     { _id: userId },
     { $push: { notifications: notification } }

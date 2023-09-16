@@ -3,9 +3,11 @@ import {
   Carer,
   acceptBroadOffer,
   acceptDirectOffer,
+  completeOffer,
   getCarerByEmail,
   getCarerJobs,
   getCarerOffers,
+  getTopNearbyCarers,
   rejectBroadOffer,
   rejectDirectOffer,
   updateCarerDetails,
@@ -31,6 +33,19 @@ class CarerService {
 
     const updateCarer: Partial<Carer> = { ...updateCarerForm, location };
     handleUpdateResult(await updateCarerDetails(carer._id, updateCarer));
+  }
+
+  async getHomeOverview(carer: WithId<Carer>) {
+    return {
+      name: carer.name,
+      completed: carer.offers.filter((r) => r.status === "accepted").length,
+      pending: carer.offers.filter((r) => r.status == "pending").length,
+      current: carer.offers.filter((r) => r.status === "applied").length,
+      recentReviews: carer.feedback
+        .sort((f1, f2) => f2.postedOn.getTime() - f1.postedOn.getTime())
+        .slice(0, 10),
+      topCarers: await getTopNearbyCarers(carer.location!),
+    };
   }
 
   async getBroadOffers(carer: WithId<Carer>) {
@@ -76,6 +91,14 @@ class CarerService {
 
     const reject = offerType === "broad" ? rejectBroadOffer : rejectDirectOffer;
     handleUpdateResult(await reject(carer, new ObjectId(offerId)));
+  }
+
+  async completeCarerOffer(carer: WithId<Carer>, offerId: string) {
+    if (!ObjectId.isValid(offerId)) {
+      throw new BadRequestError("Offer id is invalid");
+    }
+
+    handleUpdateResult(await completeOffer(carer, new ObjectId(offerId)));
   }
 }
 

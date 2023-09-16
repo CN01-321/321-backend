@@ -1,7 +1,8 @@
-import { ObjectId, WithId } from "mongodb";
+import { InsertOneResult, ObjectId, UpdateResult, WithId } from "mongodb";
 import { PetSize, PetType, petSizes, petTypes } from "./pet.js";
-import { User } from "./user.js";
+import { User, UserLocation } from "./user.js";
 import { carerCollection, ownerCollection } from "../mongo.js";
+import { Feedback } from "./feedback.js";
 
 const DEFAULT_TRAVEL_DISTANCE_METRES = 50000;
 const DEFAULT_HOURLY_RATE = 20;
@@ -16,11 +17,11 @@ export interface Carer extends User {
 }
 
 export type OfferType = "broad" | "direct";
-
+type OfferStatus = "pending" | "applied" | "accepted" | "completed";
 interface Offer {
   requestId: ObjectId;
   offerType: OfferType;
-  status: "pending" | "applied" | "accepted";
+  status: OfferStatus;
 }
 
 export interface DateRange {
@@ -33,8 +34,11 @@ export interface Licence {
   number: string;
 }
 
-export async function newCarer(email: string, password: string) {
-  return carerCollection.insertOne({
+export async function newCarer(
+  email: string,
+  password: string
+): Promise<InsertOneResult<Carer>> {
+  return await carerCollection.insertOne({
     _id: new ObjectId(),
     email,
     password,
@@ -49,14 +53,16 @@ export async function newCarer(email: string, password: string) {
   });
 }
 
-export async function carerExists(carerId: ObjectId) {
+export async function carerExists(carerId: ObjectId): Promise<boolean> {
   return (
     (await ownerCollection.findOne({ _id: carerId, userType: "carer" })) != null
   );
 }
 
-export async function getCarerById(carerId: ObjectId) {
-  return carerCollection.findOne(
+export async function getCarerById(
+  carerId: ObjectId
+): Promise<WithId<Carer> | null> {
+  return await carerCollection.findOne(
     { _id: carerId },
     {
       projection: {
@@ -74,24 +80,41 @@ export async function getCarerById(carerId: ObjectId) {
   );
 }
 
-export async function getCarerByEmail(email: string) {
-  return carerCollection.findOne({ email, userType: "carer" });
+export async function getCarerByEmail(
+  email: string
+): Promise<WithId<Carer> | null> {
+  return await carerCollection.findOne({ email, userType: "carer" });
 }
 
 export async function updateCarerDetails(
   carerId: ObjectId,
   carer: Omit<Partial<Carer>, "_id">
-) {
+): Promise<UpdateResult<Carer>> {
   return await carerCollection.updateOne(
     { _id: new ObjectId(carerId) },
     { $set: carer }
   );
 }
 
+interface OfferDTO {
+  _id: ObjectId;
+  ownerName: string;
+  ownerIcon?: string;
+  pets: Array<{
+    _id: ObjectId;
+    name: string;
+    petType: PetType;
+  }>;
+  dateRange: DateRange;
+  location: UserLocation;
+  requestedOn: Date;
+  status: OfferStatus;
+}
+
 export async function getCarerOffers(
   carer: WithId<Carer>,
   offerType: OfferType
-) {
+): Promise<OfferDTO[]> {
   const res = await carerCollection.aggregate([
     { $match: { _id: carer._id } },
     { $unwind: "$offers" },
@@ -159,15 +182,15 @@ export async function getCarerOffers(
     },
   ]);
 
-  return await res.toArray();
+  return (await res.toArray()) as OfferDTO[];
 }
 
-export async function getCarerJobs(carer: WithId<Carer>) {
+export async function getCarerJobs(carer: WithId<Carer>): Promise<OfferDTO[]> {
   const res = await carerCollection.aggregate([
     { $match: { _id: carer._id } },
     { $unwind: "$offers" },
     { $replaceWith: "$offers" },
-    { $match: { status: "accepted" } },
+    { $match: { status: { $in: ["accepted", "completed"] } } },
     {
       $lookup: {
         from: "users",
@@ -229,7 +252,7 @@ export async function getCarerJobs(carer: WithId<Carer>) {
     },
   ]);
 
-  return await res.toArray();
+  return (await res.toArray()) as OfferDTO[];
 }
 
 // accept broad offer places the carer's id onto the respondents array in the
@@ -237,7 +260,7 @@ export async function getCarerJobs(carer: WithId<Carer>) {
 export async function acceptBroadOffer(
   carer: WithId<Carer>,
   offerId: ObjectId
-) {
+): Promise<UpdateResult<User>> {
   const res = await ownerCollection.updateOne(
     { "requests._id": offerId },
     { $push: { "requests.$.respondents": carer._id } }
@@ -256,7 +279,7 @@ export async function acceptBroadOffer(
 export async function acceptDirectOffer(
   carer: WithId<Carer>,
   offerId: ObjectId
-) {
+): Promise<UpdateResult<User>> {
   const res = await ownerCollection.updateOne(
     { "requests._id": offerId },
     { $set: { "requests.$.status": "accepted" } }
@@ -274,7 +297,7 @@ export async function acceptDirectOffer(
 export async function rejectBroadOffer(
   carer: WithId<Carer>,
   offerId: ObjectId
-) {
+): Promise<UpdateResult<Carer>> {
   return await carerCollection.updateOne(
     { _id: carer._id },
     { $pull: { offers: { requestId: offerId } } }
@@ -285,7 +308,7 @@ export async function rejectBroadOffer(
 export async function rejectDirectOffer(
   carer: WithId<Carer>,
   offerId: ObjectId
-) {
+): Promise<UpdateResult<User>> {
   const res = await ownerCollection.updateOne(
     { "requests._id": offerId },
     { $set: { "requests.$.status": "rejected" } }
@@ -297,4 +320,62 @@ export async function rejectDirectOffer(
     { _id: carer._id },
     { $pull: { offers: { requestId: offerId } } }
   );
+}
+
+export async function completeOffer(
+  carer: WithId<Carer>,
+  offerId: ObjectId
+): Promise<UpdateResult<User>> {
+  const res = await ownerCollection.updateOne(
+    { "requests._id": offerId },
+    { $set: { "requests.$.status": "completed" } }
+  );
+
+  // return early if not matched
+  if (!res.matchedCount) return res;
+
+  return await carerCollection.updateOne(
+    { _id: carer._id, "offers.requestId": offerId },
+    { $set: { "offers.$.status": "completed" } }
+  );
+}
+
+interface TopCarerDTO {
+  _id: ObjectId;
+  name: string;
+  pfp?: string;
+  rating: number;
+  totalReviews: number;
+  recentReview: Feedback;
+}
+
+export async function getTopNearbyCarers(
+  location: UserLocation
+): Promise<TopCarerDTO[]> {
+  const res = await carerCollection.aggregate([
+    {
+      $geoNear: {
+        near: location,
+        distanceField: "distance",
+        maxDistance: 100 * 1000, // keep the query within 100km as a hard maximum
+        query: { userType: "carer" },
+        spherical: true,
+      },
+    },
+    { $match: { $expr: { $lt: ["$distance", "$preferredTravelDistance"] } } },
+    { $addFields: { rating: { $avg: "$feedback.rating" } } },
+    { $sort: { rating: -1 } },
+    {
+      $project: {
+        _id: 1,
+        name: 1,
+        pfp: 1,
+        rating: 1,
+        totalReviews: { $size: "$feedback" },
+        recentReview: { $arrayElemAt: ["$feedback", -1] },
+      },
+    },
+  ]);
+
+  return (await res.toArray()) as TopCarerDTO[];
 }
