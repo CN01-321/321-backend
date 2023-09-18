@@ -56,8 +56,11 @@ class OwnerService {
   async addPet(owner: WithId<Owner>, addPetForm: AddPetForm) {
     await validateAddPetForm(addPetForm);
 
-    const pet: Pet = { ...addPetForm, _id: new ObjectId(), feedback: [] };
+    const petId = new ObjectId();
+    const pet: Pet = { ...addPetForm, _id: petId, feedback: [] };
     handleUpdateResult(await createNewPet(owner, pet));
+
+    return petId;
   }
 
   async updatePet(

@@ -1,6 +1,6 @@
 import { assert, expect } from "chai";
 import { describe } from "mocha";
-import { carerCollection } from "../../src/mongo.js";
+import { carerCollection, ownerCollection } from "../../src/mongo.js";
 import carerService, {
   UpdateCarerForm,
 } from "../../src/services/carerService.js";
@@ -82,6 +82,11 @@ describe("Accept Offer", () => {
       "broad"
     );
 
+    const owner = await ownerCollection.findOne({
+      "requests._id": broadOfferId,
+    });
+    assert(owner, "Owner is null");
+
     const carer = await carerCollection.findOne({ _id: beforeCarer._id });
     assert(carer, "Carer is null");
 
@@ -95,6 +100,7 @@ describe("Accept Offer", () => {
 
     // check that the carer now exists as a respondent
     const request = await requestService.getRequest(
+      owner,
       broadOffer.requestId.toString()
     );
 
@@ -123,6 +129,11 @@ describe("Accept Offer", () => {
       "direct"
     );
 
+    const owner = await ownerCollection.findOne({
+      "requests._id": directOffer.requestId,
+    });
+    assert(owner, "Owner is null");
+
     const carer = await carerCollection.findOne({ _id: beforeCarer._id });
     assert(carer);
     expect(
@@ -132,10 +143,11 @@ describe("Accept Offer", () => {
 
     // check that the carer now exists as a respondent
     const request = await requestService.getRequest(
+      owner,
       directOffer.requestId.toString()
     );
 
-    expect(request.carer?.equals(carer._id)).to.be.true;
+    expect(request.carer?._id.equals(carer._id)).to.be.true;
   });
 
   it("accept direct offer fails", async () => {
@@ -193,6 +205,11 @@ describe("Reject Offer", () => {
       "direct"
     );
 
+    const owner = await ownerCollection.findOne({
+      "requests._id": directOffer.requestId,
+    });
+    assert(owner, "Owner is null");
+
     const carer = await carerCollection.findOne({ _id: beforeCarer._id });
     assert(carer, "Carer is null");
 
@@ -200,6 +217,7 @@ describe("Reject Offer", () => {
       .to.be.undefined;
 
     const request = await requestService.getRequest(
+      owner,
       directOffer.requestId.toString()
     );
     assert(request, "Request is null");

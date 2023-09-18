@@ -59,7 +59,6 @@ export async function createNewPet(
   owner: WithId<Owner>,
   pet: Pet
 ): Promise<UpdateResult<Owner>> {
-  pet._id = new ObjectId();
   return await ownerCollection.updateOne(
     { _id: owner._id },
     { $push: { pets: pet } }
