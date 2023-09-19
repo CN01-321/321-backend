@@ -83,7 +83,7 @@ ownerRouter.post(
 );
 ownerRouter.get(
   "/requests/:requestId/pets",
-  passport.authenticate("owner-jwt", { session: false }),
+  passport.authenticate("user-jwt", { session: false }),
   ownerController.getPetsFromRequest
 );
 

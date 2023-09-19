@@ -346,6 +346,8 @@ interface NearbyCarerDTO {
   bio?: string;
   pfp?: string;
   rating?: number;
+  distance: number;
+  totalReviews: number;
   hourlyRate: number;
   preferredPetTypes: PetType[];
   preferredPetSizes: PetSize[];
@@ -377,6 +379,8 @@ export async function findNearbyCarers(
         bio: 1,
         pfp: 1,
         rating: { $avg: "$feedback.rating" },
+        distance: 1,
+        totalReviews: { $size: "$feedback" },
         hourlyRate: 1,
         preferredPetTypes: 1,
         preferredPetSizes: 1,
