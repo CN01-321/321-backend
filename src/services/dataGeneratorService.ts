@@ -24,7 +24,11 @@ function randNum(min: number, max: number): number {
 }
 
 function randBool(): boolean {
-  return randNum(0, 0) == 0;
+  return randNum(0, 1) == 0;
+}
+
+function randChance(chance: number): boolean {
+  return randNum(0, chance) === 0;
 }
 
 function createObjectId(): ObjectId {
@@ -75,8 +79,17 @@ class DataGeneratorService {
     await this.acceptOffers(carers);
 
     carers = await carerCollection.find({ userType: "carer" }).toArray();
-
     owners = await ownerCollection.find({ userType: "owner" }).toArray();
+
+    await this.acceptCarers(owners);
+
+    carers = await carerCollection.find({ userType: "carer" }).toArray();
+
+    await this.completeJobs(carers);
+
+    carers = await carerCollection.find({ userType: "carer" }).toArray();
+    owners = await ownerCollection.find({ userType: "owner" }).toArray();
+
     await this.genCommentsAndLikes(carers, owners);
   }
 
@@ -144,12 +157,12 @@ class DataGeneratorService {
     // return either a random selection of pet types or all pet types
     // (no carer should prefer nothing)
     const genPreferredPetTypes = () => {
-      const genPetTypes = petTypes.filter(() => randNum(0, 2) === 0);
+      const genPetTypes = petTypes.filter(() => randChance(2));
       return genPetTypes.length === 0 ? petTypes : genPetTypes;
     };
 
     const genPreferredPetSizes = () => {
-      const genPetSizes = petSizes.filter(() => randNum(0, 2) === 0);
+      const genPetSizes = petSizes.filter(() => randChance(2));
       return genPetSizes.length === 0 ? petSizes : genPetSizes;
     };
 
@@ -251,6 +264,18 @@ class DataGeneratorService {
     }
   }
 
+  private genRandomDateRange() {
+    const startDate = new Date(
+      new Date().getTime() + 1000 * 60 * 60 * 24 * randNum(1, 7)
+    );
+    // endDate is 1-8 hours in the future of startDate
+    const endDate = new Date(
+      startDate.getTime() + 1000 * 60 * 60 * randNum(1, 8)
+    );
+
+    return { startDate, endDate };
+  }
+
   // generate random pets ensuring that at lease one pet has been added
   private genRandomPetsForRequests(pets: Pet[]) {
     const reqPets: Set<ObjectId> = new Set();
@@ -270,10 +295,7 @@ class DataGeneratorService {
           pets: this.genRandomPetsForRequests(owner.pets).map((id) =>
             id.toString()
           ),
-          dateRange: {
-            startDate: new Date(Date() + 60 * 60 * 60 * 24),
-            endDate: new Date(Date() + 60 * 60 * 60 * 24 * 3),
-          },
+          dateRange: this.genRandomDateRange(),
           additionalInfo: "Hi, please look after my pets.",
         });
       }
@@ -290,10 +312,7 @@ class DataGeneratorService {
           pets: this.genRandomPetsForRequests(owner.pets).map((id) =>
             id.toString()
           ),
-          dateRange: {
-            startDate: new Date(Date.now() + 1000 * 60 * 60 * 24),
-            endDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 3),
-          },
+          dateRange: this.genRandomDateRange(),
           additionalInfo: "Hi, please look after my pets.",
         });
       }
@@ -306,8 +325,7 @@ class DataGeneratorService {
         message: `My name is ${author.name} and I am leaving some feedback`,
       };
 
-      // create a 1/4 chance of no rating
-      if (randNum(0, 3) !== 3) {
+      if (!randChance(3)) {
         feedback.rating = randNum(0, 5);
       }
 
@@ -316,7 +334,7 @@ class DataGeneratorService {
 
     for (const carer of carers) {
       for (const owner of owners) {
-        if (randNum(0, 4) === 4) continue;
+        if (randChance(4)) continue;
 
         await feedbackService.newUserFeedback(
           carer,
@@ -325,7 +343,7 @@ class DataGeneratorService {
         );
 
         for (const pet of owner.pets) {
-          if (randNum(0, 5) !== 5) continue;
+          if (randChance(4)) continue;
 
           await feedbackService.newPetFeedback(
             carer,
@@ -338,7 +356,7 @@ class DataGeneratorService {
 
     for (const owner of owners) {
       for (const carer of carers) {
-        if (randNum(0, 2) !== 2) continue;
+        if (randChance(2)) continue;
 
         await feedbackService.newUserFeedback(
           owner,
@@ -352,21 +370,57 @@ class DataGeneratorService {
   private async acceptOffers(carers: Carer[]) {
     for (const carer of carers) {
       for (const offer of carer.offers) {
-        const chance = randNum(0, 10);
-
-        if (chance < 3) {
+        if (randChance(5)) {
+          await carerService.rejectOffer(
+            carer,
+            offer.requestId.toString(),
+            offer.offerType
+          );
           continue;
-        } else if (chance < 8) {
+        }
+
+        if (randChance(2)) {
           await carerService.acceptOffer(
             carer,
             offer.requestId.toString(),
             offer.offerType
           );
-        } else {
-          await carerService.rejectOffer(
+        }
+      }
+    }
+  }
+
+  private async acceptCarers(owners: Owner[]) {
+    for (const owner of owners) {
+      for (const request of owner.requests) {
+        if (request.carer !== null) {
+          continue;
+        }
+
+        const respondent =
+          request.respondents[randNum(0, request.respondents.length - 1)];
+        if (respondent && randChance(2)) {
+          await requestService.acceptRespondent(
+            owner,
+            request._id.toString(),
+            respondent.toString()
+          );
+        }
+      }
+    }
+  }
+
+  private async completeJobs(carers: Carer[]) {
+    for (const carer of carers) {
+      for (const offer of carer.offers) {
+        if (offer.status !== "accepted") {
+          continue;
+        }
+
+        if (randChance(3)) {
+          await carerService.completeCarerOffer(
             carer,
-            offer.requestId.toString(),
-            offer.offerType
+            offer.requestId.toString()
           );
         }
       }
