@@ -17,20 +17,20 @@ import { User } from "../models/user.js";
 import notificationService from "./notificationService.js";
 
 class FeedbackService {
-  async getUserFeedback(userId: string) {
+  async getUserFeedback(currentUser: User, userId: string) {
     if (!ObjectId.isValid(userId)) {
       throw new BadRequestError("User id is invalid");
     }
 
-    return await getFeedback(new ObjectId(userId));
+    return await getFeedback(currentUser._id, new ObjectId(userId));
   }
 
-  async getPetFeedback(petId: string) {
+  async getPetFeedback(currentUser: User, petId: string) {
     if (!ObjectId.isValid(petId)) {
       throw new BadRequestError("Pet id is invalid");
     }
 
-    return await getPetFeedback(new ObjectId(petId));
+    return await getPetFeedback(currentUser._id, new ObjectId(petId));
   }
 
   private async createFeedback(

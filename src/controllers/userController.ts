@@ -35,6 +35,7 @@ async function setPfp(
   next: Express.NextFunction
 ) {
   const user = req.user as WithId<User>;
+  console.log("setting pfp");
 
   const metadata = {
     imageType: req.headers["content-type"] as ImageType,

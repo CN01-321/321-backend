@@ -33,10 +33,14 @@ interface FeedbackDTO {
   message: string;
   rating?: number;
   likes: number;
+  liked: boolean;
   comments: Comment[];
 }
 
-export async function getFeedback(userId: ObjectId): Promise<FeedbackDTO[]> {
+export async function getFeedback(
+  currentUserId: ObjectId,
+  userId: ObjectId
+): Promise<FeedbackDTO[]> {
   const res = await userCollection.aggregate([
     { $match: { _id: userId } },
     { $unwind: "$feedback" },
@@ -51,6 +55,13 @@ export async function getFeedback(userId: ObjectId): Promise<FeedbackDTO[]> {
         message: 1,
         rating: 1,
         likes: { $size: "$likes" },
+        liked: {
+          $cond: {
+            if: { $in: [currentUserId, "$likes"] },
+            then: true,
+            else: false,
+          },
+        },
         comments: 1,
       },
     },
@@ -88,7 +99,10 @@ export async function likeReview(
   );
 }
 
-export async function getPetFeedback(petId: ObjectId): Promise<FeedbackDTO[]> {
+export async function getPetFeedback(
+  currentUserId: ObjectId,
+  petId: ObjectId
+): Promise<FeedbackDTO[]> {
   const res = await ownerCollection.aggregate([
     { $match: { "pets._id": petId } },
     { $unwind: "$pets" },
@@ -104,6 +118,13 @@ export async function getPetFeedback(petId: ObjectId): Promise<FeedbackDTO[]> {
         postedOn: 1,
         message: 1,
         likes: { $size: "$likes" },
+        liked: {
+          $cond: {
+            if: { $in: [currentUserId, "$likes"] },
+            then: true,
+            else: false,
+          },
+        },
         comments: 1,
       },
     },

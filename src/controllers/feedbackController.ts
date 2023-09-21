@@ -8,8 +8,9 @@ async function getFeedbackForUser(
   res: Express.Response,
   next: Express.NextFunction
 ) {
+  const user = req.user as User;
   try {
-    res.json(await feedbackService.getUserFeedback(req.params.userId));
+    res.json(await feedbackService.getUserFeedback(user, req.params.userId));
   } catch (err) {
     next(err);
   }
@@ -74,8 +75,9 @@ async function getFeedbackForPet(
   res: Express.Response,
   next: Express.NextFunction
 ) {
+  const user = req.user as User;
   try {
-    res.json(await feedbackService.getPetFeedback(req.params.petId));
+    res.json(await feedbackService.getPetFeedback(user, req.params.petId));
   } catch (err) {
     next(err);
   }
