@@ -6,7 +6,7 @@ import {
   getNotifications,
   getUserByEmail,
   getUserByEmailAndPassword,
-  getUserById,
+  getUserProfile,
   updateUserPfp,
 } from "../models/user.js";
 import { newOwner } from "../models/owner.js";
@@ -25,7 +25,7 @@ class UserService {
       throw new BadRequestError("User id is invalid");
     }
 
-    const user = await getUserById(new ObjectId(userId));
+    const user = await getUserProfile(new ObjectId(userId));
 
     if (!user) {
       throw new NotFoundError("Could not find user");

@@ -267,8 +267,10 @@ export async function updateRequest(
 interface RespondentDTO {
   _id: ObjectId;
   name: string;
+  pfp?: string;
   bio?: string;
   rating?: number;
+  totalReviews: number;
   hourlyRate: number;
 }
 
@@ -281,7 +283,6 @@ export async function getRespondents(
     { $unwind: "$requests" },
     { $match: { "requests._id": requestId } },
     { $replaceWith: "$requests" },
-    // todo, include avg of carer ratings in the result
     {
       $lookup: {
         from: "users",
@@ -296,8 +297,10 @@ export async function getRespondents(
       $project: {
         _id: 1,
         name: 1,
+        pfp: 1,
         bio: 1,
         rating: { $avg: "$feedback.rating" },
+        totalReviews: { $size: "$feedback" },
         hourlyRate: 1,
       },
     },

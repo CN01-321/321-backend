@@ -1,6 +1,7 @@
 import { ObjectId, UpdateResult, WithId } from "mongodb";
 import { userCollection } from "../mongo.js";
 import { Feedback } from "./feedback.js";
+import { PetSize, PetType } from "./pet.js";
 
 export type UserType = "owner" | "carer";
 
@@ -40,10 +41,77 @@ export interface Notification {
   notifiedOn: Date;
 }
 
-export async function getUserById(
+type ProfileDTO = UserProfileDTO & (OwnerProfileDTO | CarerProfileDTO);
+
+export interface UserProfileDTO {
+  _id: ObjectId;
+  name: string;
+  email: string;
+  location?: UserLocation;
+  phone?: string;
+  bio?: string;
+  pfp?: string;
+  userType: UserType;
+  rating?: number;
+  totalReviews: number;
+}
+
+interface OwnerProfileDTO {
+  numPets: number;
+}
+
+interface CarerProfileDTO {
+  preferredTravelDistance: number;
+  hourlyRate: number;
+  preferredPetTypes: PetType[];
+  preferredPetSizes: PetSize[];
+  completedJobs: number;
+}
+
+export async function getUserProfile(
   userId: ObjectId
-): Promise<WithId<User> | null> {
-  return await userCollection.findOne({ _id: userId });
+): Promise<ProfileDTO | null> {
+  return (await userCollection
+    .aggregate([
+      { $match: { _id: userId } },
+      {
+        $project: {
+          _id: 1,
+          email: 1,
+          userType: 1,
+          pfp: 1,
+          preferredTravelDistance: 1,
+          hourlyRate: 1,
+          preferredPetTypes: 1,
+          preferredPetSizes: 1,
+          rating: { $avg: "$feedback.rating" },
+          totalReviews: { $size: "$feedback" },
+          numPets: {
+            $cond: {
+              if: { $isArray: "$pets" },
+              then: { $size: "$pets" },
+              else: null,
+            },
+          },
+          completedJobs: {
+            $cond: {
+              if: { $isArray: "$offers" },
+              then: {
+                $size: {
+                  $filter: {
+                    input: "$offers",
+                    as: "offer",
+                    cond: { $eq: ["$$offer.status", "completed"] },
+                  },
+                },
+              },
+              else: null,
+            },
+          },
+        },
+      },
+    ])
+    .tryNext()) as ProfileDTO | null;
 }
 
 export async function getUserByEmail(
