@@ -14,12 +14,20 @@ export class BadRequestError extends Error {
   }
 }
 
+export class UnauthorisedError extends Error {
+  constructor(message?: string) {
+    super(message);
+  }
+}
+
 const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
   console.error(err);
   if (err instanceof NotFoundError) {
     res.status(404).send(err.message);
   } else if (err instanceof BadRequestError || err instanceof ValidationError) {
     res.status(400).send(err.message);
+  } else if (err instanceof UnauthorisedError) {
+    res.status(401).send(err.message);
   } else {
     next(err);
   }

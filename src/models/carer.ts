@@ -36,12 +36,12 @@ export interface Licence {
 
 export async function newCarer(
   email: string,
-  password: string
+  passwordHash: string
 ): Promise<InsertOneResult<Carer>> {
   return await carerCollection.insertOne({
     _id: new ObjectId(),
     email,
-    password,
+    passwordHash,
     userType: "carer",
     notifications: [],
     preferredTravelDistance: DEFAULT_TRAVEL_DISTANCE_METRES,

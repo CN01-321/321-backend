@@ -5,8 +5,8 @@ import {
   UserType,
   getNotifications,
   getUserByEmail,
-  getUserByEmailAndPassword,
   getUserProfile,
+  updateUserPassword,
   updateUserPfp,
 } from "../models/user.js";
 import { newOwner } from "../models/owner.js";
@@ -15,9 +15,11 @@ import { ObjectId, WithId } from "mongodb";
 import {
   BadRequestError,
   NotFoundError,
+  UnauthorisedError,
   handleUpdateResult,
 } from "../errors.js";
 import imageStorageService, { ImageMetadata } from "./imageStorageService.js";
+import bcrypt from "bcrypt";
 
 class UserService {
   async getUser(userId: string) {
@@ -34,10 +36,6 @@ class UserService {
     return user;
   }
 
-  async getUserByEmailAndPassword(email: string, password: string) {
-    return await getUserByEmailAndPassword(email, password);
-  }
-
   async getUserByEmail(email: string) {
     return await getUserByEmail(email);
   }
@@ -52,10 +50,21 @@ class UserService {
     return await getNotifications(new ObjectId(userId));
   }
 
+  async hashPasword(password: string) {
+    return await bcrypt.hash(password, process.env.PASSWORD_SALT ?? 10);
+  }
+
+  async checkUserPassword(user: User, password: string) {
+    return await bcrypt.compare(password, user.passwordHash);
+  }
+
   async newUser(newUserForm: NewUserForm, userType: UserType) {
     await validateNewUserForm(newUserForm);
     const newUser = userType === "owner" ? newOwner : newCarer;
-    await newUser(newUserForm.email, newUserForm.password);
+
+    const hash = await this.hashPasword(newUserForm.password);
+
+    await newUser(newUserForm.email, hash);
   }
 
   async setPfp(user: WithId<User>, metadata: ImageMetadata, image: Buffer) {
@@ -66,6 +75,18 @@ class UserService {
 
     const imageId = await imageStorageService.storeImage(metadata, image);
     return handleUpdateResult(await updateUserPfp(user, imageId));
+  }
+
+  async setPassword(user: WithId<User>, current: string, password: string) {
+    await string().required("Current password is invalid").validate(current);
+    await string().required("New password is invalid").validate(password);
+
+    if (!(await this.checkUserPassword(user, current))) {
+      return new UnauthorisedError("Current password did not match");
+    }
+
+    const hash = await this.hashPasword(password);
+    return handleUpdateResult(await updateUserPassword(user, hash));
   }
 }
 

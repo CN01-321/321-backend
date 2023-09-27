@@ -42,8 +42,8 @@ class OwnerService {
   async getHomeOverview(owner: WithId<Owner>) {
     return {
       name: owner.name,
-      completed: owner.requests.filter((r) => r.status == "completed").length,
-      pending: owner.requests.filter((r) => r.status == "pending").length,
+      completed: owner.requests.filter((r) => r.status === "completed").length,
+      pending: owner.requests.filter((r) => r.status === "pending").length,
       current: owner.requests.filter((r) => r.status === "accepted").length,
       topCarers: await getTopNearbyCarers(owner.location!),
     };
@@ -117,7 +117,6 @@ const ownerService = new OwnerService();
 
 export default ownerService;
 
-// TODO move user update form into user service
 export type OwnerUpdateForm = UserUpdateForm;
 
 async function validateOwnerUpdateForm(

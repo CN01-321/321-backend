@@ -12,6 +12,7 @@ import requestService from "./requestService.js";
 import feedbackService, { NewFeedbackForm } from "./feedbackService.js";
 import carerService from "./carerService.js";
 import imageStorageService, { ImageMetadata } from "./imageStorageService.js";
+import userService from "./userService.js";
 
 // seed == 3 because it is first seed where carer1@email.com has a direct request
 const DEFAULT_SEED = 3;
@@ -170,7 +171,7 @@ class DataGeneratorService {
       const carer: Carer = {
         _id: createObjectId(),
         email: `carer${i}@email.com`,
-        password: "password",
+        passwordHash: await userService.hashPasword("password"),
         name: `Carer ${i}`,
         userType: "carer",
         phone: "0412345678",
@@ -202,7 +203,7 @@ class DataGeneratorService {
       const owner: Owner = {
         _id: createObjectId(),
         email: `owner${i}@email.com`,
-        password: "password",
+        passwordHash: await userService.hashPasword("password"),
         name: `Owner ${i}`,
         phone: "0412345678",
         bio: `My name is Owner ${i}, I have pets that need caring for.`,

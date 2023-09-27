@@ -26,8 +26,14 @@ passport.use(
   "login",
   new LocalStrategy(signUpOptions, async (email, password, callback) => {
     console.debug("login", email, password);
-    const user = await userService.getUserByEmailAndPassword(email, password);
-    return user ? callback(null, user) : callback(null, false);
+    const user = await userService.getUserByEmail(email);
+
+    if (!user || !(await userService.checkUserPassword(user, password))) {
+      callback(null, false);
+      return;
+    }
+
+    callback(null, user);
   })
 );
 

@@ -12,6 +12,12 @@ userRouter.post(
   bodyParser.raw({ type: ["image/jpeg", "image/png"], limit: "20mb" }),
   userController.setPfp
 );
+userRouter.post(
+  "/password",
+  passport.authenticate("user-jwt", { session: false }),
+  bodyParser.raw({ type: ["image/jpeg", "image/png"], limit: "20mb" }),
+  userController.setPassword
+);
 userRouter.get(
   "/notifications",
   passport.authenticate("user-jwt", { session: false }),

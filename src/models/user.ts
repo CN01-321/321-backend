@@ -9,7 +9,7 @@ export interface User {
   _id: ObjectId;
   name?: string;
   email: string;
-  password: string;
+  passwordHash: string;
   location?: UserLocation;
   phone?: string;
   bio?: string;
@@ -120,13 +120,6 @@ export async function getUserByEmail(
   return await userCollection.findOne({ email });
 }
 
-export async function getUserByEmailAndPassword(
-  email: string,
-  password: string
-): Promise<WithId<User> | null> {
-  return await userCollection.findOne({ email, password });
-}
-
 export async function checkEmailExists(
   email: string
 ): Promise<WithId<User> | null> {
@@ -140,6 +133,13 @@ export async function updateUserPfp(
   return await userCollection.updateOne(
     { _id: user._id },
     { $set: { pfp: imageId } }
+  );
+}
+
+export async function updateUserPassword(user: User, hash: string) {
+  return await userCollection.updateOne(
+    { _id: user._id },
+    { $set: { passwordHash: hash } }
   );
 }
 

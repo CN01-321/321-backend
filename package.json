@@ -24,6 +24,7 @@
   "dependencies": {
     "@types/body-parser": "^1.19.2",
     "@types/passport-jwt": "^3.0.8",
+    "bcrypt": "^5.1.1",
     "body-parser": "^1.20.2",
     "cors": "^2.8.5",
     "dotenv": "^16.0.3",
@@ -38,6 +39,7 @@
   },
   "devDependencies": {
     "@babel/preset-env": "^7.22.10",
+    "@types/bcrypt": "^5.0.0",
     "@types/chai": "^4.3.5",
     "@types/chai-as-promised": "^7.1.5",
     "@types/cors": "^2.8.13",

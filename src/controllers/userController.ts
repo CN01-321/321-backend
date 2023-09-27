@@ -47,11 +47,26 @@ async function setPfp(
     next(err);
   }
 }
+async function setPassword(
+  req: Express.Request,
+  res: Express.Response,
+  next: Express.NextFunction
+) {
+  const user = req.user as WithId<User>;
 
+  try {
+    res.json(
+      await userService.setPassword(user, req.body.current, req.body.password)
+    );
+  } catch (err) {
+    next(err);
+  }
+}
 const userController = {
   getUser,
   getUserNotifications,
   setPfp,
+  setPassword,
 };
 
 export default userController;

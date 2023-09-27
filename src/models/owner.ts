@@ -11,12 +11,12 @@ export interface Owner extends User {
 
 export async function newOwner(
   email: string,
-  password: string
+  passwordHash: string
 ): Promise<InsertOneResult<Owner>> {
   return ownerCollection.insertOne({
     _id: new ObjectId(),
     email,
-    password,
+    passwordHash,
     userType: "owner",
     notifications: [],
     feedback: [],
