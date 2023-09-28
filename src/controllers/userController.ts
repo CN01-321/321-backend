@@ -55,9 +55,7 @@ async function setPassword(
   const user = req.user as WithId<User>;
 
   try {
-    res.json(
-      await userService.setPassword(user, req.body.current, req.body.password)
-    );
+    res.json(await userService.setPassword(user, req.body));
   } catch (err) {
     next(err);
   }

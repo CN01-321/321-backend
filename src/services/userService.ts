@@ -77,15 +77,16 @@ class UserService {
     return handleUpdateResult(await updateUserPfp(user, imageId));
   }
 
-  async setPassword(user: WithId<User>, current: string, password: string) {
-    await string().required("Current password is invalid").validate(current);
-    await string().required("New password is invalid").validate(password);
+  async setPassword(user: WithId<User>, form: UpdatePasswordForm) {
+    await validateUpdatePasswordForm(form);
 
-    if (!(await this.checkUserPassword(user, current))) {
-      return new UnauthorisedError("Current password did not match");
+    if (!(await this.checkUserPassword(user, form.current))) {
+      throw new UnauthorisedError("Current password did not match");
     }
 
-    const hash = await this.hashPasword(password);
+    const hash = await this.hashPasword(form.password);
+    console.log(`setting password ${form.password} hash: ${hash}`);
+
     return handleUpdateResult(await updateUserPassword(user, hash));
   }
 }
@@ -130,3 +131,21 @@ export const userUpdateFormSchema: ObjectSchema<UserUpdateForm> = object({
   phone: string().optional(),
   bio: string().optional(),
 });
+
+interface UpdatePasswordForm {
+  current: string;
+  password: string;
+}
+
+async function validateUpdatePasswordForm(form: UpdatePasswordForm) {
+  const schema: ObjectSchema<UpdatePasswordForm> = object({
+    current: string().required("Current password is invalid"),
+    password: string()
+      .required("New password is invalid")
+      .min(8, "Password needs 8 characters")
+      .matches(/[A-Z]/, "Password needs an uppercase")
+      .matches(/[0-9]/, "Password needs a digit"),
+  });
+
+  return await schema.validate(form);
+}
