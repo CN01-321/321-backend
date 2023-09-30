@@ -227,8 +227,8 @@ class DataGeneratorService {
   }
 
   private genLocation(): UserLocation {
-    const sydneyCoords = { lat: 33.8688, lng: 151.2093 };
-    const wollongongCoords = { lat: 34.4248, lng: 150.8931 };
+    const sydneyCoords = { lat: -33.8688, lng: 151.2093 };
+    const wollongongCoords = { lat: -34.4248, lng: 150.8931 };
 
     const city = randBool();
     const coords = city ? sydneyCoords : wollongongCoords;

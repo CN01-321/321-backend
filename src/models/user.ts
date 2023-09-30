@@ -78,6 +78,8 @@ export async function getUserProfile(
         $project: {
           _id: 1,
           email: 1,
+          name: 1,
+          location: 1,
           userType: 1,
           pfp: 1,
           preferredTravelDistance: 1,

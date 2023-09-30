@@ -77,7 +77,7 @@ export function validateUserHasInformation(
   res: Response,
   next: NextFunction
 ) {
-  const userHasRequiredFields = (u: User) => u.name && u.location && u.phone;
+  const userHasRequiredFields = (u: User) => u.name && u.location;
   const carerHasRequiredFields = (c: Carer) =>
     c.hourlyRate && c.preferredTravelDistance;
 
