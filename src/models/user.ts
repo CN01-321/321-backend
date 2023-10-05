@@ -82,6 +82,8 @@ export async function getUserProfile(
           location: 1,
           userType: 1,
           pfp: 1,
+          phone: 1,
+          bio: 1,
           preferredTravelDistance: 1,
           hourlyRate: 1,
           preferredPetTypes: 1,
