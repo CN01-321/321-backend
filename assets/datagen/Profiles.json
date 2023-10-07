@@ -1,0 +1,209 @@
+{
+  "fnames": [
+    "Logan",
+    "Noah",
+    "Charlie",
+    "Jessie",
+    "Kerry",
+    "Jamie",
+    "Casey",
+    "Bailey",
+    "Darcy",
+    "Taylor",
+    "Kendall",
+    "Colby",
+    "Camden",
+    "Flynn",
+    "Max",
+    "Remy",
+    "Morgan",
+    "Dylan",
+    "Ash",
+    "Blake"
+  ],
+
+  "lnames": [
+    "Davidson",
+    "Thomas",
+    "West",
+    "Dobson",
+    "Rice",
+    "Reid",
+    "Underwood,",
+    "Robinson",
+    "Storey",
+    "Barrett",
+    "Lock",
+    "Nicholson",
+    "Slade",
+    "Potter",
+    "Quinn",
+    "Goldsmith",
+    "Richardson",
+    "Salter",
+    "Wakefield",
+    "Beard"
+  ],
+
+  "ownerBio": [
+    "Avid pet lover",
+    "Pets are my life",
+    "Loving pet owner",
+    "Pets are family",
+    "Avid pet lover",
+    "Pets are life",
+    "Loving pet owner",
+    "Pets are family",
+    "Pets are family",
+    "Loving pet owner"
+  ],
+
+  "carerBio": [
+    "Here to care for your pets",
+    "Pet lover",
+    "Loving pet carer",
+    "Pets are family",
+    "Looking for work",
+    "Caring for your pets when you can't",
+    "Looking for work",
+    "Pets are family",
+    "Here to care for your pets",
+    "Pet Lover"
+  ],
+
+  "addresses": [
+    {
+      "street": "77 Brown Street",
+      "city": "Castle Cove",
+      "state": "NSW",
+      "postcode": "2069"
+    },
+    {
+      "street": "40 Edgewater Close",
+      "city": "Silverwater",
+      "state": "NSW",
+      "postcode": "2128"
+    },
+    {
+      "street": "15 Brown Street",
+      "city": "Osbourne Park",
+      "state": "NSW",
+      "postcode": "2066"
+    },
+    {
+      "street": "88 Chatsworth Road",
+      "city": "Fairymeadow",
+      "state": "NSW",
+      "postcode": "2519"
+    },
+    {
+      "street": "34 Muscat Street",
+      "city": "Corrimal",
+      "state": "NSW",
+      "postcode": "2518"
+    },
+    {
+      "street": "72 Seninis Road",
+      "city": "Port Kembla",
+      "state": "NSW",
+      "postcode": "2505"
+    },
+    {
+      "street": "11 Devon Street",
+      "city": "Woonnona",
+      "state": "NSW",
+      "postcode": "2517"
+    },
+    {
+      "street": "49 Decca Road",
+      "city": "Haymarket",
+      "state": "NSW",
+      "postcode": "2000"
+    },
+    {
+      "street": "85 Hargrave Road",
+      "city": "Mascot",
+      "state": "NSW",
+      "postcode": "2020"
+    },
+    {
+      "street": "63 Argyle Street",
+      "city": "Riverwood",
+      "state": "NSW",
+      "postcode": "2210"
+    },
+    {
+      "street": "75 Forrest Road",
+      "city": "Burwood",
+      "state": "NSW",
+      "postcode": "2134"
+    },
+    {
+      "street": "3 Railway Street",
+      "city": "Haymarket",
+      "state": "NSW",
+      "postcode": "2000"
+    },
+    {
+      "street": "77 Brown Street",
+      "city": "Mascot",
+      "state": "NSW",
+      "postcode": "2020"
+    },
+    {
+      "street": "45 Cubbine Road",
+      "city": "Surry Hills",
+      "state": "NSW",
+      "postcode": "2010"
+    },
+    {
+      "street": "25 Gadd Avenue",
+      "city": "Randwick",
+      "state": "NSW",
+      "postcode": "2031"
+    },
+    {
+      "street": "97 Quayside Vista",
+      "city": "Coogee",
+      "state": "NSW",
+      "postcode": "2034"
+    },
+    {
+      "street": "36 Rockhampton Avenue",
+      "city": "Corrimal",
+      "state": "NSW",
+      "postcode": "2518"
+    },
+    {
+      "street": "43 Dossiter Street",
+      "city": "Figtree",
+      "state": "NSW",
+      "postcode": "2525"
+    },
+    {
+      "street": "37 Romawi Road",
+      "city": "Fairy Meadow",
+      "state": "NSW",
+      "postcode": "2519"
+    },
+    {
+      "street": "85 Treasure Island Avenue",
+      "city": "Woonona",
+      "state": "NSW",
+      "postcode": "2517"
+    }
+  ],
+
+  "petNames": [
+    "Pivot",
+    "Bruno",
+    "Odie",
+    "Mado",
+    "Wally",
+    "Holly",
+    "Ruby",
+    "Ollie",
+    "Whitney",
+    "Kyrah"
+  ]
+}

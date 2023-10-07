@@ -140,10 +140,10 @@ export async function updateUserPfp(
   );
 }
 
-export async function updateUserPassword(user: User, hash: string) {
+export async function updateUserPassword(user: User, passwordHash: string) {
   return await userCollection.updateOne(
     { _id: user._id },
-    { $set: { passwordHash: hash } }
+    { $set: { passwordHash } }
   );
 }
 

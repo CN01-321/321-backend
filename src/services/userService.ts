@@ -21,6 +21,8 @@ import {
 import imageStorageService, { ImageMetadata } from "./imageStorageService.js";
 import bcrypt from "bcrypt";
 
+const saltRounds = 12;
+
 class UserService {
   async getUser(userId: string) {
     if (!ObjectId.isValid(userId)) {
@@ -51,7 +53,7 @@ class UserService {
   }
 
   async hashPasword(password: string) {
-    return await bcrypt.hash(password, process.env.PASSWORD_SALT ?? 10);
+    return await bcrypt.hash(password, saltRounds);
   }
 
   async checkUserPassword(user: User, password: string) {

@@ -1,0 +1,142 @@
+{
+  "petReviews": [
+    {
+      "rating": 5,
+      "message": "A pleasure to care for"
+    },
+    {
+      "rating": 4,
+      "message": "I had a wonderful time"
+    },
+    {
+      "rating": 2,
+      "message": "Spent a lot of time misbehaving"
+    },
+    {
+      "rating": 4,
+      "message": "The best boy"
+    },
+    {
+      "rating": 2,
+      "message": "Upset the neighbours"
+    },
+    {
+      "rating": 3,
+      "message": "I would be happy to care for them again"
+    },
+    {
+      "rating": 5,
+      "message": "The best behaved pet I have ever seen"
+    },
+    {
+      "rating": 4,
+      "message": "Was relatively well behaved"
+    },
+    {
+      "rating": 2,
+      "message": "Made a mess of my home"
+    },
+    {
+      "rating": 5,
+      "message": "I wish I could keep them"
+    }
+  ],
+
+  "carerReviews": [
+    {
+      "rating": 5,
+      "message": "Very easy to deal with"
+    },
+    {
+      "rating": 1,
+      "message": "Cancelled at the last minute"
+    },
+    {
+      "rating": 4,
+      "message": "Efficient and fast"
+    },
+    {
+      "rating": 2,
+      "message": "Was rude to me and my pets"
+    },
+    {
+      "rating": 4,
+      "message": "Wonderful to deal with. Would definitely hire again"
+    },
+    {
+      "rating": 5,
+      "message": "Highly recommend. The best pet carer in the country"
+    },
+    {
+      "rating": 3,
+      "message": "Showed up late but otherwise I was happy"
+    },
+    {
+      "rating": 5,
+      "message": "Can't recommend enough!"
+    },
+    {
+      "rating": 4,
+      "message": "My pets loved them"
+    },
+    {
+      "rating": 3,
+      "message": "Thanks for looking after my pets"
+    }
+  ],
+  "ownerReviews": [
+    {
+      "rating": 5,
+      "message": "Efficient and friendly. Happy to deal with them again"
+    },
+    {
+      "rating": 1,
+      "message": "Tried to dispute my payment"
+    },
+    {
+      "rating": 2,
+      "message": "Cancelled 1 week out"
+    },
+    {
+      "rating": 3,
+      "message": "Good"
+    },
+    {
+      "rating": 4,
+      "message": "Very happy to deal with this owner"
+    },
+    {
+      "rating": 5,
+      "message": "Had the best pets"
+    },
+    {
+      "rating": 4,
+      "message": "Extremely easy to deal with"
+    },
+    {
+      "rating": 5,
+      "message": "If I could give 10 stars, I would"
+    },
+    {
+      "rating": 4,
+      "message": "Highly recommended"
+    },
+    {
+      "rating": 5,
+      "message": "Can't wait to care for your pets next time"
+    }
+  ],
+
+  "comments": [
+    "Definitely agree",
+    "Couldn't be more right",
+    "I'm not sure I agree with this",
+    "I had a similar experience",
+    "I would say the opposite",
+    "Are you sure about this?",
+    "That's fantastic!",
+    "What do you mean?",
+    "I disagree with this",
+    "Very accurate"
+  ]
+}

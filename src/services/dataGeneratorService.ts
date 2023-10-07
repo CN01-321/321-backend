@@ -3,19 +3,21 @@ import prand from "pure-rand";
 import { carerCollection, ownerCollection, userCollection } from "../mongo.js";
 import { Pet, PetType, petSizes, petTypes } from "../models/pet.js";
 import { Carer } from "../models/carer.js";
-import { ObjectId } from "mongodb";
+import { MongoError, ObjectId } from "mongodb";
 import { Owner } from "../models/owner.js";
 import { User, UserLocation } from "../models/user.js";
 import { Feedback } from "../models/feedback.js";
 import ownerService, { AddPetForm } from "./ownerService.js";
 import requestService from "./requestService.js";
-import feedbackService, { NewFeedbackForm } from "./feedbackService.js";
+import feedbackService from "./feedbackService.js";
 import carerService from "./carerService.js";
 import imageStorageService, { ImageMetadata } from "./imageStorageService.js";
 import userService from "./userService.js";
 
-// seed == 3 because it is first seed where carer1@email.com has a direct request
-const DEFAULT_SEED = 3;
+import Profiles from "../../assets/datagen/Profiles.json" assert { type: "json" };
+import Reviews from "../../assets/datagen/Reviews.json" assert { type: "json" };
+
+const DEFAULT_SEED = 1;
 let rng = prand.mersenne(DEFAULT_SEED);
 
 function randNum(min: number, max: number): number {
@@ -47,9 +49,75 @@ function createObjectId(): ObjectId {
   return new ObjectId(hexStr);
 }
 
+function randFirstName() {
+  return Profiles.fnames[randNum(0, Profiles.fnames.length - 1)];
+}
+
+function randLastName() {
+  return Profiles.lnames[randNum(0, Profiles.fnames.length - 1)];
+}
+
+function randPetName() {
+  return Profiles.petNames[randNum(0, Profiles.petNames.length - 1)];
+}
+
+function genEmail(first: string, last: string) {
+  return `${first.toLowerCase()}.${last.toLowerCase()}@email.com`;
+}
+
+function randPhoneNumber() {
+  let phone = "04";
+  while (phone.length < 10) phone += randNum(0, 9);
+  return phone;
+}
+
+function randOwnerBio() {
+  return Profiles.ownerBio[randNum(0, Profiles.ownerBio.length - 1)];
+}
+
+function randCarerBio() {
+  return Profiles.carerBio[randNum(0, Profiles.carerBio.length - 1)];
+}
+
+function randAddress() {
+  return Profiles.addresses[randNum(0, Profiles.addresses.length - 1)];
+}
+
+function randPerferredTravelDistance() {
+  return randNum(3, 10) * 10000;
+}
+
+function randHourlyRate() {
+  return randNum(25, 150);
+}
+
+function randOwnerReview() {
+  return Reviews.ownerReviews[randNum(0, Reviews.ownerReviews.length - 1)];
+}
+
+function randCarerReview() {
+  return Reviews.carerReviews[randNum(0, Reviews.carerReviews.length - 1)];
+}
+
+function randPetReview() {
+  return Reviews.petReviews[randNum(0, Reviews.petReviews.length - 1)];
+}
+
+function randComment() {
+  return Reviews.comments[randNum(0, Reviews.comments.length - 1)];
+}
+
+function randPetType() {
+  return petTypes[randNum(0, petTypes.length - 1)];
+}
+
+function randPetSize() {
+  return petSizes[randNum(0, petSizes.length - 1)];
+}
+
 class DataGeneratorService {
   private pfps: string[] = [];
-  private petPfps: Map<PetType, string> = new Map<PetType, string>();
+  private petPfps: Map<PetType, string[]> = new Map();
 
   async generate() {
     if (process.env.POPULATE_IMAGES === "true") {
@@ -92,6 +160,21 @@ class DataGeneratorService {
     owners = await ownerCollection.find({ userType: "owner" }).toArray();
 
     await this.genCommentsAndLikes(carers, owners);
+
+    console.log("---- populated users ----");
+    console.log(
+      owners
+        .slice(0, 4)
+        .map((o) => o.email)
+        .reduce((acc, email) => `${acc}\n${email}`, "some owner logins: \n")
+    );
+
+    console.log(
+      carers
+        .slice(0, 4)
+        .map((c) => c.email)
+        .reduce((acc, email) => `${acc}\n${email}`, "some carer logins: \n")
+    );
   }
 
   async generateImages() {
@@ -106,9 +189,11 @@ class DataGeneratorService {
       await this.storePfp(pfp);
     }
 
-    const petPfpDir = fs.readdirSync("assets/images/pet");
-    for (const pfp of petPfpDir) {
-      await this.storePetPfp(pfp);
+    for (const petType of petTypes) {
+      const petPfpDir = fs.readdirSync(`assets/images/pet/${petType}s`);
+      for (const pfp of petPfpDir) {
+        await this.storePetPfp(pfp, petType);
+      }
     }
   }
 
@@ -121,10 +206,10 @@ class DataGeneratorService {
       await Promise.all(
         petTypes.map(
           async (petType) =>
-            [
-              petType,
-              (await imageStorageService.getImageIds({ petType }))[0],
-            ] as [PetType, string]
+            [petType, await imageStorageService.getImageIds({ petType })] as [
+              PetType,
+              string[]
+            ]
         )
       )
     );
@@ -141,17 +226,21 @@ class DataGeneratorService {
     await imageStorageService.storeImage(metadata, buffer, pfp);
   }
 
-  async storePetPfp(pfp: string) {
-    const pet = pfp.slice(0, pfp.indexOf("."));
+  async storePetPfp(pfp: string, petType: PetType) {
+    const metadata: ImageMetadata = { imageType: "image/jpeg", petType };
 
-    const metadata: ImageMetadata = {
-      imageType: "image/png",
-      petType: pet,
-    };
-
-    const buffer = fs.readFileSync("assets/images/pet/" + pfp);
+    const buffer = fs.readFileSync(`assets/images/pet/${petType}s/${pfp}`);
 
     await imageStorageService.storeImage(metadata, buffer, pfp);
+  }
+
+  getRandPfp() {
+    return this.pfps[randNum(0, this.pfps.length - 1)];
+  }
+
+  getRandPetPfp(petType: PetType) {
+    const petPfps = this.petPfps.get(petType) ?? [];
+    return petPfps[randNum(0, petPfps.length - 1)];
   }
 
   private async genCarers() {
@@ -167,46 +256,62 @@ class DataGeneratorService {
       return genPetSizes.length === 0 ? petSizes : genPetSizes;
     };
 
-    for (let i = 1; i <= 20; i++) {
+    let carerCount = 0;
+    while (carerCount < 20) {
+      const fname = randFirstName();
+      const lname = randLastName();
+
       const carer: Carer = {
         _id: createObjectId(),
-        email: `carer${i}@email.com`,
+        email: genEmail(fname, lname),
         passwordHash: await userService.hashPasword("password"),
-        name: `Carer ${i}`,
+        name: `${fname} ${lname}`,
         userType: "carer",
-        phone: "0412345678",
-        bio: `My name is Carer ${i}, I would like to care for your pet`,
+        phone: randPhoneNumber(),
+        bio: randCarerBio(),
         location: this.genLocation(),
         notifications: [],
         feedback: [],
         skillsAndExp: "Skills and Experience",
-        preferredTravelDistance: 50000,
-        hourlyRate: randNum(25, 150),
+        preferredTravelDistance: randPerferredTravelDistance(),
+        hourlyRate: randHourlyRate(),
         offers: [],
         preferredPetTypes: genPreferredPetTypes(),
         preferredPetSizes: genPreferredPetSizes(),
         // set pfp or have chance that no pfp has been set
       };
 
-      // set pfp iff there is a pfp to set
-      const pfp = this.pfps[randNum(0, this.pfps.length + 2)];
-      if (pfp) {
-        carer.pfp = pfp;
+      if (!randChance(6)) {
+        carer.pfp = this.getRandPfp();
       }
 
-      await carerCollection.insertOne(carer);
+      try {
+        await carerCollection.insertOne(carer);
+        carerCount++;
+      } catch (err) {
+        // if key duplication error then try again otherwise rethrow
+        if (err instanceof MongoError && err.code === 11000) {
+          continue;
+        }
+
+        throw err;
+      }
     }
   }
 
   private async genOwners() {
-    for (let i = 1; i <= 10; i++) {
+    let ownerCount = 0;
+    while (ownerCount < 20) {
+      const fname = randFirstName();
+      const lname = randLastName();
+
       const owner: Owner = {
         _id: createObjectId(),
-        email: `owner${i}@email.com`,
+        email: genEmail(fname, lname),
         passwordHash: await userService.hashPasword("password"),
-        name: `Owner ${i}`,
-        phone: "0412345678",
-        bio: `My name is Owner ${i}, I have pets that need caring for.`,
+        name: `${fname} ${lname}`,
+        phone: randPhoneNumber(),
+        bio: randOwnerBio(),
         userType: "owner",
         location: this.genLocation(),
         notifications: [],
@@ -215,14 +320,22 @@ class DataGeneratorService {
         requests: [],
       };
 
-      // set pfp iff there is a pfp to set
-      const pfp = this.pfps[randNum(0, this.pfps.length + 1)];
-      if (pfp) {
-        owner.pfp = pfp;
+      if (!randChance(6)) {
+        owner.pfp = this.getRandPfp();
       }
 
-      await ownerCollection.insertOne(owner);
-      await this.genPets(owner);
+      try {
+        await ownerCollection.insertOne(owner);
+        await this.genPets(owner);
+        ownerCount++;
+      } catch (err) {
+        // if key duplication error then try again otherwise rethrow
+        if (err instanceof MongoError && err.code === 11000) {
+          continue;
+        }
+
+        throw err;
+      }
     }
   }
 
@@ -233,35 +346,39 @@ class DataGeneratorService {
     const city = randBool();
     const coords = city ? sydneyCoords : wollongongCoords;
 
+    // 0.5 lat/lng is very roughly 50km, so +/- 50km to the coordinates chosen
+    const latOffset = randNum(-500, 500) / 1000;
+    const lngOffset = randNum(-500, 500) / 1000;
+
+    coords.lat += latOffset;
+    coords.lng += lngOffset;
+
+    const address = randAddress();
+
     return {
       type: "Point",
       coordinates: [coords.lng, coords.lat],
-      state: "NSW",
-      city: city ? "Sydney" : "Wollongong",
-      street: city ? "Sydney St" : "Wollongong Way",
-      postcode: city ? "2000" : "2500",
+      ...address,
     };
   }
 
   private async genPets(owner: Owner) {
-    const newPet: (num: number) => AddPetForm = (num) => {
-      const petType = petTypes[randNum(0, 3)];
-      const petSize = petSizes[randNum(0, 2)];
-
+    const newPet: () => AddPetForm = () => {
+      const petType = randPetType();
       return {
-        name: `${petType} ${num}`,
+        name: randPetName(),
         petType,
-        petSize,
+        petSize: randPetSize(),
         isVaccinated: randBool(),
         isFriendly: randBool(),
         isNeutered: randBool(),
-        pfp: this.petPfps.get(petType),
+        pfp: this.getRandPetPfp(petType),
       };
     };
 
     const numPets = randNum(1, 5);
     for (let i = 1; i <= numPets; i++) {
-      await ownerService.addPet(owner, newPet(i));
+      await ownerService.addPet(owner, newPet());
     }
   }
 
@@ -321,18 +438,6 @@ class DataGeneratorService {
   }
 
   private async genFeedback(carers: Carer[], owners: Owner[]) {
-    const newFeedback: (author: User) => NewFeedbackForm = (author) => {
-      const feedback: NewFeedbackForm = {
-        message: `My name is ${author.name} and I am leaving some feedback`,
-      };
-
-      if (!randChance(3)) {
-        feedback.rating = randNum(0, 5);
-      }
-
-      return feedback;
-    };
-
     for (const carer of carers) {
       for (const owner of owners) {
         if (randChance(4)) continue;
@@ -340,7 +445,7 @@ class DataGeneratorService {
         await feedbackService.newUserFeedback(
           carer,
           owner._id.toString(),
-          newFeedback(carer)
+          randOwnerReview()
         );
 
         for (const pet of owner.pets) {
@@ -349,7 +454,7 @@ class DataGeneratorService {
           await feedbackService.newPetFeedback(
             carer,
             pet._id.toString(),
-            newFeedback(carer)
+            randPetReview()
           );
         }
       }
@@ -362,7 +467,7 @@ class DataGeneratorService {
         await feedbackService.newUserFeedback(
           owner,
           carer._id.toString(),
-          newFeedback(owner)
+          randCarerReview()
         );
       }
     }
@@ -451,7 +556,7 @@ class DataGeneratorService {
           author,
           user._id.toString(),
           review._id.toString(),
-          { message: "Nice Review!" }
+          { message: randComment() }
         );
       }
     };
@@ -475,7 +580,7 @@ class DataGeneratorService {
           author,
           pet._id.toString(),
           review._id.toString(),
-          { message: "Nice Review!" }
+          { message: randComment() }
         );
       }
     };
