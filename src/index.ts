@@ -18,8 +18,6 @@ const app = express();
 app.use(bodyParser.json());
 app.use(bodyParser.raw());
 
-app.listen(port, () => console.debug(`Running on port ${port}`));
-
 app.use("/api/owners", ownerRouter);
 app.use("/api/carers", carerRouter);
 app.use("/api/users", userRouter);
@@ -33,3 +31,5 @@ if (process.env.POPULATE_DB === "true") {
   console.debug("populating users");
   await dataGenerator.generate();
 }
+
+app.listen(port, () => console.debug(`Running on port ${port}`));

@@ -122,6 +122,7 @@ class DataGeneratorService {
   async generate() {
     if (process.env.POPULATE_IMAGES === "true") {
       await this.generateImages();
+      console.log("uploaded images");
     }
 
     this.pfps = await this.getPfpIds();
@@ -134,46 +135,60 @@ class DataGeneratorService {
       console.error(err);
     }
 
+    console.log("dropped everything");
+
     await this.genCarers();
+    console.log("generated owners");
+
     await this.genOwners();
+    console.log("generated carers");
+
     let carers = await carerCollection.find({ userType: "carer" }).toArray();
     let owners = await ownerCollection.find({ userType: "owner" }).toArray();
 
     await this.genBroadRequests(owners);
+    console.log("generated broad requests");
+
     await this.genDirectRequests(owners, carers);
+    console.log("generated direct requests");
 
     await this.genFeedback(carers, owners);
+    console.log("generated feedback requests");
 
     carers = await carerCollection.find({ userType: "carer" }).toArray();
     await this.acceptOffers(carers);
+    console.log("accepted offers");
 
     carers = await carerCollection.find({ userType: "carer" }).toArray();
     owners = await ownerCollection.find({ userType: "owner" }).toArray();
 
     await this.acceptCarers(owners);
+    console.log("accepted carers");
 
     carers = await carerCollection.find({ userType: "carer" }).toArray();
 
     await this.completeJobs(carers);
+    console.log("completed jobs");
 
     carers = await carerCollection.find({ userType: "carer" }).toArray();
     owners = await ownerCollection.find({ userType: "owner" }).toArray();
 
     await this.genCommentsAndLikes(carers, owners);
+    console.log("added comments and likes ");
 
     console.log("---- populated users ----");
     console.log(
       owners
         .slice(0, 4)
         .map((o) => o.email)
-        .reduce((acc, email) => `${acc}\n${email}`, "some owner logins: \n")
+        .reduce((acc, email) => `${acc}\n${email}`, "some owner logins: ")
     );
 
     console.log(
       carers
         .slice(0, 4)
         .map((c) => c.email)
-        .reduce((acc, email) => `${acc}\n${email}`, "some carer logins: \n")
+        .reduce((acc, email) => `${acc}\n${email}`, "\nsome carer logins: ")
     );
   }
 
@@ -440,7 +455,7 @@ class DataGeneratorService {
   private async genFeedback(carers: Carer[], owners: Owner[]) {
     for (const carer of carers) {
       for (const owner of owners) {
-        if (randChance(4)) continue;
+        if (randChance(2)) continue;
 
         await feedbackService.newUserFeedback(
           carer,
@@ -449,7 +464,7 @@ class DataGeneratorService {
         );
 
         for (const pet of owner.pets) {
-          if (randChance(4)) continue;
+          if (randChance(2)) continue;
 
           await feedbackService.newPetFeedback(
             carer,
@@ -538,7 +553,7 @@ class DataGeneratorService {
     const randUser = () => users[randNum(0, users.length - 1)];
 
     const genLikes = async (user: User, review: Feedback) => {
-      const numLikes = randNum(0, 10);
+      const numLikes = randNum(0, 5);
       for (let i = 0; i < numLikes; i++) {
         await feedbackService.likeUserFeedback(
           randUser(),
@@ -549,7 +564,7 @@ class DataGeneratorService {
     };
 
     const genComments = async (user: User, review: Feedback) => {
-      const numComents = randNum(0, 5);
+      const numComents = randNum(1, 3);
       for (let i = 0; i < numComents; i++) {
         const author = randUser();
         await feedbackService.commentOnFeedback(
@@ -562,7 +577,7 @@ class DataGeneratorService {
     };
 
     const genPetLikes = async (pet: Pet, review: Feedback) => {
-      const numLikes = randNum(0, 10);
+      const numLikes = randNum(0, 3);
       for (let i = 0; i < numLikes; i++) {
         await feedbackService.likePetFeedback(
           randUser(),
@@ -573,7 +588,7 @@ class DataGeneratorService {
     };
 
     const genPetComments = async (pet: Pet, review: Feedback) => {
-      const numComents = randNum(0, 5);
+      const numComents = randNum(1, 3);
       for (let i = 0; i < numComents; i++) {
         const author = randUser();
         await feedbackService.commentOnPetFeedback(
@@ -587,19 +602,29 @@ class DataGeneratorService {
 
     for (const user of users) {
       for (const review of user.feedback) {
+        if (randChance(2)) {
+          continue;
+        }
         await genLikes(user, review);
         await genComments(user, review);
       }
     }
 
+    console.log("liked/commented on user reviews");
+
     for (const owner of owners) {
       for (const pet of owner.pets) {
         for (const review of pet.feedback) {
+          if (randChance(3)) {
+            continue;
+          }
           await genPetLikes(pet, review);
           await genPetComments(pet, review);
         }
       }
     }
+
+    console.log("liked/commented on pet reviews");
   }
 }
 
