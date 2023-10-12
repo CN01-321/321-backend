@@ -119,6 +119,22 @@ class DataGeneratorService {
   private pfps: string[] = [];
   private petPfps: Map<PetType, string[]> = new Map();
 
+  async showLogins() {
+    const owners = await carerCollection.find({ userType: "owner" }).toArray();
+    const ownerEmails = owners
+      .map((o) => o.email)
+      .reduce((emails, email) => `${emails}\n${email}`);
+    console.log(`=== Owner emails ===\n${ownerEmails}`);
+
+    console.log();
+
+    const carers = await carerCollection.find({ userType: "carer" }).toArray();
+    const carerEmails = carers
+      .map((c) => c.email)
+      .reduce((emails, email) => `${emails}\n${email}`);
+    console.log(`=== Carer emails ===\n${carerEmails}`);
+  }
+
   async generate() {
     if (process.env.POPULATE_IMAGES === "true") {
       await this.generateImages();
@@ -177,19 +193,6 @@ class DataGeneratorService {
     console.log("added comments and likes ");
 
     console.log("---- populated users ----");
-    console.log(
-      owners
-        .slice(0, 4)
-        .map((o) => o.email)
-        .reduce((acc, email) => `${acc}\n${email}`, "some owner logins: ")
-    );
-
-    console.log(
-      carers
-        .slice(0, 4)
-        .map((c) => c.email)
-        .reduce((acc, email) => `${acc}\n${email}`, "\nsome carer logins: ")
-    );
   }
 
   async generateImages() {

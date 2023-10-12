@@ -32,4 +32,6 @@ if (process.env.POPULATE_DB === "true") {
   await dataGenerator.generate();
 }
 
+await dataGenerator.showLogins();
+
 app.listen(port, () => console.debug(`Running on port ${port}`));
