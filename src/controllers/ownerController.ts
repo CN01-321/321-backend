@@ -1,3 +1,9 @@
+/**
+ * @file Entrypoints for owner functions, passes parameters to services and
+ * handles returning statuses and data back to the client
+ * @author George Bull
+ */
+
 import Express from "express";
 import { ObjectId, WithId } from "mongodb";
 import { Owner } from "../models/owner.js";
@@ -5,6 +11,7 @@ import ownerService from "../services/ownerService.js";
 import requestService from "../services/requestService.js";
 import userService from "../services/userService.js";
 import { ImageType } from "../services/imageStorageService.js";
+import { UserLocation } from "../models/user.js";
 
 async function getOwnerBySession(req: Express.Request, res: Express.Response) {
   res.json(req.user);
@@ -42,7 +49,9 @@ async function getHomeOverview(
   res: Express.Response,
   next: Express.NextFunction
 ) {
-  const owner = req.user as WithId<Owner>;
+  // its safe to assert that owner has location as it will be validated through
+  // the middleware before this function gets called
+  const owner = req.user as WithId<Owner> & { location: UserLocation };
 
   try {
     res.json(await ownerService.getHomeOverview(owner));
@@ -138,7 +147,7 @@ async function createRequest(
   res: Express.Response,
   next: Express.NextFunction
 ) {
-  const owner = req.user as WithId<Owner>;
+  const owner = req.user as WithId<Owner> & { location: UserLocation };
   try {
     res.json(await requestService.newRequest(owner, req.body));
   } catch (err) {

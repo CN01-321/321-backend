@@ -1,3 +1,7 @@
+/**
+ * Entrypoint for the app, initialises express routes and database
+ * @author George Bull
+ */
 import express from "express";
 import bodyParser from "body-parser";
 import authRouter from "./routes/authRoute.js";

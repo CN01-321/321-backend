@@ -1,3 +1,8 @@
+/**
+ * @file Handles user related routes
+ * @author George Bull
+ */
+
 import { Router } from "express";
 import userController from "../controllers/userController.js";
 import passport from "passport";

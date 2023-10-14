@@ -1,3 +1,8 @@
+/**
+ * @file User integration tests
+ * @author George Bull
+ */
+
 import { assert, expect } from "chai";
 import { describe } from "mocha";
 import userService, { NewUserForm } from "../../src/services/userService.js";

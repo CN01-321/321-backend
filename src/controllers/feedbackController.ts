@@ -1,3 +1,9 @@
+/**
+ * @file Entrypoints for feedback functions, passes parameters to services and
+ * handles returning statuses and data back to the client
+ * @author George Bull
+ */
+
 import Express from "express";
 import { WithId } from "mongodb";
 import { User } from "../models/user.js";

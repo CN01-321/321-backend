@@ -1,3 +1,8 @@
+/**
+ * @file Manages owner and owner's pets functionality
+ * @author George Bull
+ */
+
 import { ObjectId, WithId } from "mongodb";
 import { Owner, getOwnerByEmail, updateOwnerDetails } from "../models/owner.js";
 import { object, string, ObjectSchema, bool } from "yup";
@@ -30,7 +35,8 @@ class OwnerService {
   async updateOwner(owner: WithId<Owner>, updateFormData: OwnerUpdateForm) {
     const updateForm = await validateOwnerUpdateForm(updateFormData);
 
-    // include type = "Point" if location is being set, otherwise leave location undefined
+    // include GeoJSON type: "Point" if location is being set,
+    // otherwise leave location undefined
     const location: UserLocation | undefined = updateForm.location
       ? { ...updateForm.location, type: "Point" }
       : undefined;
@@ -39,13 +45,13 @@ class OwnerService {
     handleUpdateResult(await updateOwnerDetails(owner._id, updateOwner));
   }
 
-  async getHomeOverview(owner: WithId<Owner>) {
+  async getHomeOverview(owner: WithId<Owner> & { location: UserLocation }) {
     return {
       name: owner.name,
       completed: owner.requests.filter((r) => r.status === "completed").length,
       pending: owner.requests.filter((r) => r.status === "pending").length,
       current: owner.requests.filter((r) => r.status === "accepted").length,
-      topCarers: await getTopNearbyCarers(owner.location!),
+      topCarers: await getTopNearbyCarers(owner.location),
     };
   }
 

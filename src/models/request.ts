@@ -1,9 +1,14 @@
+/**
+ * @file Declares the Request interfaces and model functions
+ * @author George Bull
+ */
+
 import { ObjectId, UpdateResult, WithId } from "mongodb";
 import { Carer, DateRange } from "./carer.js";
 import { Owner } from "./owner.js";
 import { carerCollection, ownerCollection } from "../mongo.js";
 import { PetDTO, PetSize, PetType } from "./pet.js";
-import { User } from "./user.js";
+import { User, UserLocation } from "./user.js";
 
 type RequestStatus = "pending" | "accepted" | "rejected" | "completed";
 
@@ -12,6 +17,26 @@ export interface Request {
   carer: ObjectId | null;
   status: RequestStatus;
   pets: ObjectId[];
+  respondents: ObjectId[];
+  requestedOn: Date;
+  dateRange: DateRange;
+  additionalInfo?: string;
+}
+interface RequestDTO {
+  _id: ObjectId;
+  carer: { _id: ObjectId; name: string } | null;
+  status: RequestStatus;
+  pets: Array<{
+    _id: ObjectId;
+    name: string;
+    petType: PetType;
+    pfp?: string;
+  }>;
+  location: {
+    state: string;
+    city: string;
+    street: string;
+  };
   respondents: ObjectId[];
   requestedOn: Date;
   dateRange: DateRange;
@@ -36,84 +61,15 @@ export async function getRequestWithId(
         },
       },
     },
-    { $replaceWith: "$requests" },
-    // add some of the carers info onto the request by joining their information
-    // if the carer id is present in the request
+    // add pet information
     {
-      $lookup: {
-        from: "users",
-        let: { carer: "$carer" },
-        pipeline: [
-          {
-            $match: {
-              $expr: { $eq: ["$_id", { $toObjectId: "$$carer" }] },
-            },
+      $set: {
+        "requests.pets": {
+          $filter: {
+            input: "$pets",
+            as: "pet",
+            cond: { $in: ["$$pet._id", "$requests.pets"] },
           },
-
-          { $project: { _id: 1, name: 1 } },
-        ],
-        as: "carer",
-      },
-    },
-    // add some of the pet info back into the request
-    {
-      $lookup: {
-        from: "users",
-        let: { pets: "$pets" },
-        pipeline: [
-          {
-            $match: { _id: owner._id },
-          },
-          { $unwind: "$pets" },
-          { $replaceWith: "$pets" },
-          { $match: { $expr: { $in: ["$_id", "$$pets"] } } },
-          { $project: { _id: 1, name: 1, petType: 1, pfp: 1 } },
-        ],
-        as: "pets",
-      },
-    },
-    // flatten the carer array if it is present
-    { $unwind: { path: "$carer", preserveNullAndEmptyArrays: true } },
-    { $project: { carerInfo: 0 } },
-  ]);
-
-  return (await res.next()) as RequestDTO;
-}
-
-interface RequestDTO {
-  _id: ObjectId;
-  carer: { _id: ObjectId; name: string } | null;
-  status: RequestStatus;
-  pets: Array<{
-    _id: ObjectId;
-    name: string;
-    petType: PetType;
-    pfp?: string;
-  }>;
-  location: {
-    state: string;
-    city: string;
-    street: string;
-  };
-  respondents: ObjectId[];
-  requestedOn: Date;
-  dateRange: DateRange;
-  additionalInfo?: string;
-}
-
-export async function getOwnerRequests(
-  owner: WithId<Owner>
-): Promise<RequestDTO[]> {
-  const res = await ownerCollection.aggregate([
-    { $match: { _id: owner._id } },
-    { $unwind: "$requests" },
-    // add location information into each request
-    {
-      $addFields: {
-        "requests.location": {
-          state: "$location.state",
-          city: "$location.city",
-          street: "$location.street",
         },
       },
     },
@@ -136,26 +92,64 @@ export async function getOwnerRequests(
         as: "carer",
       },
     },
-    // add some of the pet info back into the request
+    // flatten the carer array if it is present
+    { $unwind: { path: "$carer", preserveNullAndEmptyArrays: true } },
+    { $project: { carerInfo: 0, "pets.feedback": 0 } },
+  ]);
+
+  return (await res.next()) as RequestDTO;
+}
+
+export async function getOwnerRequests(
+  owner: WithId<Owner>
+): Promise<RequestDTO[]> {
+  const res = await ownerCollection.aggregate([
+    { $match: { _id: owner._id } },
+    { $unwind: "$requests" },
+    // add location information into each request
+    {
+      $addFields: {
+        "requests.location": {
+          state: "$location.state",
+          city: "$location.city",
+          street: "$location.street",
+        },
+      },
+    },
+    // add pet information to each request
+    {
+      $set: {
+        "requests.pets": {
+          $filter: {
+            input: "$pets",
+            as: "pet",
+            cond: { $in: ["$$pet._id", "$requests.pets"] },
+          },
+        },
+      },
+    },
+    { $replaceWith: "$requests" },
+    // add some of the carers info onto the request by joining their information
+    // if the carer id is present in the request
     {
       $lookup: {
         from: "users",
-        let: { pets: "$pets" },
+        let: { carer: "$carer" },
         pipeline: [
           {
-            $match: { _id: owner._id },
+            $match: {
+              $expr: { $eq: ["$_id", { $toObjectId: "$$carer" }] },
+            },
           },
-          { $unwind: "$pets" },
-          { $replaceWith: "$pets" },
-          { $match: { $expr: { $in: ["$_id", "$$pets"] } } },
-          { $project: { _id: 1, name: 1, petType: 1, pfp: 1 } },
+
+          { $project: { _id: 1, name: 1 } },
         ],
-        as: "pets",
+        as: "carer",
       },
     },
     // flatten the carer array if it is present
     { $unwind: { path: "$carer", preserveNullAndEmptyArrays: true } },
-    { $project: { carerInfo: 0 } },
+    { $project: { carerInfo: 0, "pet.feedback": 0 } },
   ]);
 
   return (await res.toArray()) as RequestDTO[];
@@ -180,47 +174,19 @@ async function addRequestToCarer(
 }
 
 async function addRequestToNearby(
-  owner: WithId<Owner>,
+  owner: WithId<Owner> & { location: UserLocation },
   request: Request
 ): Promise<UpdateResult<Carer>> {
-  // query all the nearby carers and get a list of their object id's
-  const res = await ownerCollection.aggregate([
-    { $unwind: "$requests" },
-    { $match: { "requests._id": request._id } },
+  return await carerCollection.updateMany(
     {
-      $lookup: {
-        from: "users",
-        let: { pt: "$location" },
-        pipeline: [
-          {
-            $geoNear: {
-              near: "$$pt",
-              distanceField: "distance",
-              maxDistance: 100 * 1000, // keep the query within 100km as a hard maximum
-              spherical: true,
-            },
-          },
-          {
-            $match: {
-              userType: "carer",
-              $expr: { $lt: ["$distance", "$preferredTravelDistance"] },
-            },
-          },
-        ],
-        as: "nearby",
+      userType: "carer",
+      location: {
+        $near: {
+          $geometry: owner.location,
+          $maxDistance: 100 * 1000, // 100km max distance
+        },
       },
     },
-    { $unwind: "$nearby" },
-    { $replaceWith: "$nearby" },
-    { $project: { _id: 1 } },
-  ]);
-
-  // map the nearby query to an array of carer _id's
-  const nearby = (await res.toArray()).map((n) => n._id) as ObjectId[];
-
-  // add the request to all the nearby carers
-  return await carerCollection.updateMany(
-    { _id: { $in: nearby } },
     {
       $push: {
         offers: {
@@ -234,7 +200,7 @@ async function addRequestToNearby(
 }
 
 export async function createNewRequest(
-  owner: WithId<Owner>,
+  owner: WithId<Owner> & { location: UserLocation },
   request: Request
 ): Promise<UpdateResult<User>> {
   request._id = new ObjectId();
@@ -247,6 +213,8 @@ export async function createNewRequest(
     return res;
   }
 
+  // if carer is specified then send the request to them directly,
+  // else send the request to nearby carers
   return request.carer
     ? await addRequestToCarer(request._id, request.carer)
     : await addRequestToNearby(owner, request);
@@ -370,7 +338,7 @@ export async function findNearbyCarers(
         query: {
           userType: "carer",
         },
-        herical: true,
+        spherical: true,
       },
     },
     // filter only carers within their preferredTravelDistance
@@ -399,9 +367,20 @@ export async function getRequestPets(requestId: ObjectId): Promise<PetDTO[]> {
     { $match: { "requests._id": requestId } },
     { $unwind: "$requests" },
     { $match: { "requests._id": requestId } },
+    {
+      $set: {
+        pets: {
+          $filter: {
+            input: "$pets",
+            as: "pet",
+            cond: {
+              $in: ["$$pet._id", "$requests.pets"],
+            },
+          },
+        },
+      },
+    },
     { $unwind: "$pets" },
-    { $unwind: "$requests.pets" },
-    { $match: { $expr: { $eq: ["$pets._id", "$requests.pets"] } } },
     { $replaceWith: "$pets" },
     { $project: { feedback: 0 } },
   ]);

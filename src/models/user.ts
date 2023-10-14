@@ -1,3 +1,8 @@
+/**
+ * @file Declares the User interfaces and model functions
+ * @author George Bull
+ */
+
 import { ObjectId, UpdateResult, WithId } from "mongodb";
 import { userCollection } from "../mongo.js";
 import { Feedback } from "./feedback.js";
@@ -68,6 +73,10 @@ interface CarerProfileDTO {
   completedJobs: number;
 }
 
+/**
+ * Fetches a user, returning all information specific to that type of user as
+ * well
+ */
 export async function getUserProfile(
   userId: ObjectId
 ): Promise<ProfileDTO | null> {

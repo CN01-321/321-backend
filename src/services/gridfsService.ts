@@ -1,3 +1,8 @@
+/**
+ * @file ImageStorage implementation for GridFs
+ * @author George Bull
+ */
+
 import { getDatabase } from "../mongo.js";
 import { GridFSBucket, ObjectId } from "mongodb";
 import { ImageMetadata, ImageStorage } from "./imageStorageService.js";
@@ -27,7 +32,7 @@ class GridFSStorageService implements ImageStorage {
       });
     };
 
-    // await the id of the uploaded image
+    // await the id of the uploaded image and return it as a string
     return (await uploadImage()).toString();
   }
 

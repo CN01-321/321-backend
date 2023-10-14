@@ -1,3 +1,8 @@
+/**
+ * @file Declares the Carer interfaces and model functions
+ * @author George Bull
+ */
+
 import { InsertOneResult, ObjectId, UpdateResult, WithId } from "mongodb";
 import { PetSize, PetType, petSizes, petTypes } from "./pet.js";
 import { User, UserLocation } from "./user.js";
@@ -8,7 +13,6 @@ const DEFAULT_TRAVEL_DISTANCE_METRES = 50000;
 const DEFAULT_HOURLY_RATE = 20;
 
 export interface Carer extends User {
-  skillsAndExp?: string;
   preferredTravelDistance: number; // distance is in metres
   hourlyRate: number;
   offers: Offer[];
@@ -29,11 +33,6 @@ export interface DateRange {
   endDate: Date;
 }
 
-export interface Licence {
-  name: string;
-  number: string;
-}
-
 export async function newCarer(
   email: string,
   passwordHash: string
@@ -48,7 +47,7 @@ export async function newCarer(
     hourlyRate: DEFAULT_HOURLY_RATE,
     feedback: [],
     offers: [],
-    preferredPetTypes: petTypes, // preferr all pet types and sizes by default
+    preferredPetTypes: petTypes, // prefer all pet types and sizes by default
     preferredPetSizes: petSizes,
   });
 }
@@ -111,6 +110,73 @@ interface OfferDTO {
   status: OfferStatus;
 }
 
+const lookupOfferUserQuery = [
+  {
+    $lookup: {
+      from: "users",
+      let: { offer: "$requestId", status: "$status" },
+      pipeline: [
+        { $unwind: "$requests" },
+        {
+          $match: {
+            $expr: {
+              $eq: ["$requests._id", "$$offer"],
+            },
+          },
+        },
+        {
+          $set: {
+            "requests.ownerId": "$_id",
+            "requests.ownerName": "$name",
+            "requests.ownerIcon": "$pfp",
+            "requests.location": "$location",
+          },
+        },
+        { $replaceWith: "$requests" },
+        {
+          $project: {
+            _id: 1,
+            ownerId: 1,
+            ownerName: 1,
+            ownerIcon: 1,
+            pets: 1,
+            dateRange: 1,
+            location: 1,
+            requestedOn: 1,
+            status: "$$status",
+          },
+        },
+      ],
+      as: "offers",
+    },
+  },
+
+  { $unwind: "$offers" },
+  { $replaceWith: "$offers" },
+  // get basic pet information for each offer
+  {
+    $lookup: {
+      from: "users",
+      let: { pets: "$pets" },
+      pipeline: [
+        { $unwind: "$pets" },
+        { $replaceWith: "$pets" },
+        {
+          $match: {
+            $expr: { $in: ["$_id", "$$pets"] },
+          },
+        },
+        { $project: { _id: 1, name: 1, petType: 1 } },
+      ],
+      as: "pets",
+    },
+  },
+];
+
+/**
+ * For each offer of offerType, fetch request information as well as pet and
+ * owner information
+ */
 export async function getCarerOffers(
   carer: WithId<Carer>,
   offerType: OfferType
@@ -120,143 +186,31 @@ export async function getCarerOffers(
     { $unwind: "$offers" },
     { $replaceWith: "$offers" },
     { $match: { offerType, status: { $in: ["pending", "applied"] } } },
-    {
-      $lookup: {
-        from: "users",
-        let: { offer: "$requestId", status: "$status" },
-        pipeline: [
-          { $unwind: "$requests" },
-          {
-            $match: {
-              $expr: {
-                $eq: ["$requests._id", "$$offer"],
-              },
-            },
-          },
-          {
-            $set: {
-              "requests.ownerId": "$_id",
-              "requests.ownerName": "$name",
-              "requests.ownerIcon": "$pfp",
-              "requests.location": "$location",
-            },
-          },
-          { $replaceWith: "$requests" },
-          {
-            $project: {
-              _id: 1,
-              ownerId: 1,
-              ownerName: 1,
-              ownerIcon: 1,
-              pets: 1,
-              dateRange: 1,
-              location: 1,
-              requestedOn: 1,
-              status: "$$status",
-            },
-          },
-        ],
-        as: "offers",
-      },
-    },
-
-    { $unwind: "$offers" },
-    { $replaceWith: "$offers" },
-    // get basic pet information for each offer
-    {
-      $lookup: {
-        from: "users",
-        let: { pets: "$pets" },
-        pipeline: [
-          { $unwind: "$pets" },
-          { $replaceWith: "$pets" },
-          {
-            $match: {
-              $expr: { $in: ["$_id", "$$pets"] },
-            },
-          },
-          { $project: { _id: 1, name: 1, petType: 1 } },
-        ],
-        as: "pets",
-      },
-    },
+    ...lookupOfferUserQuery,
   ]);
 
   return (await res.toArray()) as OfferDTO[];
 }
 
+/**
+ * For each current or completed job, fetch request information
+ */
 export async function getCarerJobs(carer: WithId<Carer>): Promise<OfferDTO[]> {
   const res = await carerCollection.aggregate([
     { $match: { _id: carer._id } },
     { $unwind: "$offers" },
     { $replaceWith: "$offers" },
     { $match: { status: { $in: ["accepted", "completed"] } } },
-    {
-      $lookup: {
-        from: "users",
-        let: { job: "$requestId", status: "$status" },
-        pipeline: [
-          { $unwind: "$requests" },
-          {
-            $match: {
-              $expr: {
-                $eq: ["$requests._id", "$$job"],
-              },
-            },
-          },
-          {
-            $set: {
-              "requests.ownerId": "$_id",
-              "requests.ownerName": "$name",
-              "requests.location": "$location",
-            },
-          },
-          { $replaceWith: "$requests" },
-          {
-            $project: {
-              _id: 1,
-              ownerId: 1,
-              ownerName: 1,
-              pets: 1,
-              dateRange: 1,
-              location: 1,
-              requestedOn: 1,
-              additionalInfo: 1,
-              status: "$$status",
-            },
-          },
-        ],
-        as: "jobs",
-      },
-    },
-
-    { $unwind: "$jobs" },
-    { $replaceWith: "$jobs" },
-    // get basic pet information for each offer
-    {
-      $lookup: {
-        from: "users",
-        let: { pets: "$pets" },
-        pipeline: [
-          { $unwind: "$pets" },
-          { $replaceWith: "$pets" },
-          {
-            $match: {
-              $expr: { $in: ["$_id", "$$pets"] },
-            },
-          },
-          { $project: { _id: 1, name: 1, petType: 1 } },
-        ],
-        as: "pets",
-      },
-    },
+    ...lookupOfferUserQuery,
   ]);
 
   return (await res.toArray()) as OfferDTO[];
 }
 
-// accept broad offer places the carer's id onto the respondents array in the
-// owners request, and updates the offer status to applied
+/**
+ * accept broad offer places the carer's id onto the respondents array in the
+ * owners request, and updates the offer status to applied
+ */
 export async function acceptBroadOffer(
   carer: WithId<Carer>,
   offerId: ObjectId
@@ -275,7 +229,10 @@ export async function acceptBroadOffer(
   );
 }
 
-// accept direct offer updates the carer's offer and the owners request to accepted
+/**
+ * accept direct offer updates the carer's offer and the owners request to
+ * accepted
+ */
 export async function acceptDirectOffer(
   carer: WithId<Carer>,
   offerId: ObjectId
@@ -293,7 +250,9 @@ export async function acceptDirectOffer(
   );
 }
 
-// reject pulls the offer from the carers offer array,
+/**
+ * reject broad offer pulls the offer from the carers offer array.
+ */
 export async function rejectBroadOffer(
   carer: WithId<Carer>,
   offerId: ObjectId
@@ -304,7 +263,10 @@ export async function rejectBroadOffer(
   );
 }
 
-// reject pulls the offer from the carers array and sets the request status to rejected
+/**
+ * reject direct offer pulls the offer from the carers array and also
+ * updates the owner's request status to rejected
+ */
 export async function rejectDirectOffer(
   carer: WithId<Carer>,
   offerId: ObjectId
@@ -322,6 +284,10 @@ export async function rejectDirectOffer(
   );
 }
 
+/**
+ * Complete offer sets the status to complete for both the offer and the owner's
+ * request
+ */
 export async function completeOffer(
   carer: WithId<Carer>,
   offerId: ObjectId
@@ -349,19 +315,27 @@ interface TopCarerDTO {
   recentReview: Feedback;
 }
 
+export function findNearbyCarersAsDistanceQuery(near: UserLocation | string) {
+  return {
+    $geoNear: {
+      near,
+      distanceField: "distance",
+      maxDistance: 100 * 1000, // keep the query within 100km as a hard maximum
+      query: { userType: "carer" },
+      spherical: true,
+    },
+  };
+}
+
+/**
+ * getTopNearbyCarers fetches the carers that are in travel distance to the
+ * given location and sorts them by best to worst rating
+ */
 export async function getTopNearbyCarers(
   location: UserLocation
 ): Promise<TopCarerDTO[]> {
   const res = await carerCollection.aggregate([
-    {
-      $geoNear: {
-        near: location,
-        distanceField: "distance",
-        maxDistance: 100 * 1000, // keep the query within 100km as a hard maximum
-        query: { userType: "carer" },
-        spherical: true,
-      },
-    },
+    findNearbyCarersAsDistanceQuery(location),
     { $match: { $expr: { $lt: ["$distance", "$preferredTravelDistance"] } } },
     { $addFields: { rating: { $avg: "$feedback.rating" } } },
     { $sort: { rating: -1 } },

@@ -1,3 +1,8 @@
+/**
+ * @file Declares the Feedback interfaces and model functions
+ * @author George Bull
+ */
+
 import { ObjectId, UpdateResult } from "mongodb";
 import { ownerCollection, userCollection } from "../mongo.js";
 import { User } from "./user.js";
@@ -37,6 +42,33 @@ interface FeedbackDTO {
   comments: Comment[];
 }
 
+function projectAsFeedbackDto(currentUserId: ObjectId) {
+  return {
+    $project: {
+      _id: 1,
+      authorId: 1,
+      authorName: 1,
+      authorIcon: 1,
+      postedOn: 1,
+      message: 1,
+      rating: 1,
+      likes: { $size: "$likes" },
+      liked: {
+        $cond: {
+          if: { $in: [currentUserId, "$likes"] },
+          then: true,
+          else: false,
+        },
+      },
+      comments: 1,
+    },
+  };
+}
+
+/**
+ * fetches all feedback, likes and comments for a user, also returns whether
+ * the user requesting the information has liked any reviews
+ */
 export async function getFeedback(
   currentUserId: ObjectId,
   userId: ObjectId
@@ -45,26 +77,7 @@ export async function getFeedback(
     { $match: { _id: userId } },
     { $unwind: "$feedback" },
     { $replaceWith: "$feedback" },
-    {
-      $project: {
-        _id: 1,
-        authorId: 1,
-        authorName: 1,
-        authorIcon: 1,
-        postedOn: 1,
-        message: 1,
-        rating: 1,
-        likes: { $size: "$likes" },
-        liked: {
-          $cond: {
-            if: { $in: [currentUserId, "$likes"] },
-            then: true,
-            else: false,
-          },
-        },
-        comments: 1,
-      },
-    },
+    projectAsFeedbackDto(currentUserId),
   ]);
 
   return (await res.toArray()) as FeedbackDTO[];
@@ -95,10 +108,16 @@ export async function likeReview(
 ): Promise<UpdateResult<User>> {
   return await userCollection.updateOne(
     { _id: userId, "feedback._id": feedbackId },
+    // add to set ensures that the id is only added once, and therefore is only
+    // counted once
     { $addToSet: { "feedback.$.likes": likerId } }
   );
 }
 
+/**
+ * fetches all feedback, likes and comments for a pet and returns whether
+ * the user requesting the information has liked a review
+ */
 export async function getPetFeedback(
   currentUserId: ObjectId,
   petId: ObjectId
@@ -109,25 +128,7 @@ export async function getPetFeedback(
     { $match: { "pets._id": petId } },
     { $unwind: "$pets.feedback" },
     { $replaceWith: "$pets.feedback" },
-    {
-      $project: {
-        _id: 1,
-        authorId: 1,
-        authorName: 1,
-        authorIcon: 1,
-        postedOn: 1,
-        message: 1,
-        likes: { $size: "$likes" },
-        liked: {
-          $cond: {
-            if: { $in: [currentUserId, "$likes"] },
-            then: true,
-            else: false,
-          },
-        },
-        comments: 1,
-      },
-    },
+    projectAsFeedbackDto(currentUserId),
   ]);
 
   return (await res.toArray()) as FeedbackDTO[];

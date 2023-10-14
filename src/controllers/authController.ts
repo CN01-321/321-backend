@@ -1,3 +1,7 @@
+/**
+ * @file Registers authentication middleware and controls auth routes.
+ * @author George Bull
+ */
 import jwt from "jsonwebtoken";
 import { User } from "../models/user.js";
 import { NextFunction, Request, Response } from "express";
@@ -20,8 +24,11 @@ const signUpOptions: IStrategyOptions = {
   passwordField: "password",
 };
 
-// set up middleware to verify that a user's email and password exisits in the system
-// return the user to the next function ('/login') or fail (returning 401 to the caller)
+/**
+ * Registers login middleware to verify the provided credentials exist in the
+ * databse
+ * @returns a validated user, or will result in a 401 error otherwise
+ */
 passport.use(
   "login",
   new LocalStrategy(signUpOptions, async (email, password, callback) => {
@@ -42,9 +49,11 @@ const jwtOpts = {
   jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
 };
 
-// sets up jwt middleware for routes that require a user to be logged in
-// decodes the given token and if valid it tries to find the user associated with the email
-// passes that user to the next function, or otherwilse returns a 401 to the caller
+/**
+ * Registers middleware that checks that the given JWT exists in the database
+ * and points to a user type
+ * @returns the given user, or will result in a 401 error otherwise
+ */
 passport.use(
   "user-jwt",
   new JwtStrategy(jwtOpts, async (token, done) => {
@@ -54,6 +63,11 @@ passport.use(
   })
 );
 
+/**
+ * Registers middleware that checks that the given JWT exists in the database
+ * and points to an owner
+ * @returns the given owner, or will result in a 401 error otherwise
+ */
 passport.use(
   "owner-jwt",
   new JwtStrategy(jwtOpts, async (token, done) => {
@@ -63,6 +77,11 @@ passport.use(
   })
 );
 
+/**
+ * Registers middleware that checks that the given JWT exists in the database
+ * and points to a carer
+ * @returns the given carer, or will result in a 401 error otherwise
+ */
 passport.use(
   "carer-jwt",
   new JwtStrategy(jwtOpts, async (token, done) => {
@@ -72,6 +91,11 @@ passport.use(
   })
 );
 
+/**
+ * Validates that the user has enough information filled in to correctly operate
+ * in the system.
+ * @returns Will result in a 403 error if the user has not enough information
+ */
 export function validateUserHasInformation(
   req: Request,
   res: Response,
@@ -96,18 +120,17 @@ export function validateUserHasInformation(
   next();
 }
 
+/**
+ * Creates a new JWT to send back to the client.
+ */
 export async function handleLogin(req: Request, res: Response) {
   const user = req.user as WithId<User>;
-  console.debug(user._id);
   const body = { _id: user._id, email: user.email, type: user.userType };
-
-  console.debug(body);
 
   const token = jwt.sign({ user: body }, jwtSecret, {
     issuer: "pet-carer.com",
     noTimestamp: true,
   });
 
-  console.debug(token);
   res.json({ token });
 }

@@ -1,14 +1,19 @@
+/**
+ * @file Feedback integration tests
+ * @author George Bull
+ */
+
 import { assert, expect } from "chai";
 import { describe } from "mocha";
-import { carerCollection, ownerCollection } from "../../src/mongo.js";
 import feedbackService, {
   NewCommentForm,
   NewFeedbackForm,
 } from "../../src/services/feedbackService.js";
+import { getCarer, getOwner } from "../setup.js";
 
 describe("Create Feedback", () => {
   it("create user feedback succeeds", async () => {
-    const author = await ownerCollection.findOne({ name: "Owner 1" });
+    const author = await getOwner();
     assert(author);
 
     const feedbackForm: NewFeedbackForm = {
@@ -16,7 +21,7 @@ describe("Create Feedback", () => {
       rating: 5,
     };
 
-    let user = await carerCollection.findOne({ name: "Carer 1" });
+    let user = await getCarer();
     assert(user);
 
     await feedbackService.newUserFeedback(
@@ -25,7 +30,7 @@ describe("Create Feedback", () => {
       feedbackForm
     );
 
-    user = await carerCollection.findOne({ name: "Carer 1" });
+    user = await getCarer();
     assert(user);
 
     expect(
@@ -40,7 +45,7 @@ describe("Create Feedback", () => {
   });
 
   it("create user feedback fails", async () => {
-    const author = await ownerCollection.findOne({ name: "Owner 1" });
+    const author = await getOwner();
     assert(author);
 
     const feedbackForm: NewFeedbackForm = {
@@ -48,7 +53,7 @@ describe("Create Feedback", () => {
       rating: -1,
     };
 
-    const user = await carerCollection.findOne({ name: "Carer 1" });
+    const user = await getCarer();
     assert(user);
 
     feedbackService.newUserFeedback(author, user._id.toString(), feedbackForm)
@@ -56,7 +61,7 @@ describe("Create Feedback", () => {
   });
 
   it("create pet feedback succeeds", async () => {
-    const author = await carerCollection.findOne({ name: "Carer 1" });
+    const author = await getCarer();
     assert(author);
 
     const feedbackForm: NewFeedbackForm = {
@@ -64,7 +69,7 @@ describe("Create Feedback", () => {
       rating: 5,
     };
 
-    let owner = await ownerCollection.findOne({ name: "Owner 1" });
+    let owner = await getOwner();
     assert(owner);
     const petId = owner.pets[0]._id;
 
@@ -74,7 +79,7 @@ describe("Create Feedback", () => {
       feedbackForm
     );
 
-    owner = await ownerCollection.findOne({ name: "Owner 1" });
+    owner = await getOwner();
     assert(owner);
     const pet = owner.pets.find((p) => p._id.equals(petId));
     assert(pet);
@@ -91,7 +96,7 @@ describe("Create Feedback", () => {
   });
 
   it("create pet feedback fails", async () => {
-    const author = await carerCollection.findOne({ name: "Carer 1" });
+    const author = await getCarer();
     assert(author);
 
     const feedbackForm: NewFeedbackForm = {
@@ -99,7 +104,7 @@ describe("Create Feedback", () => {
       rating: -1,
     };
 
-    const owner = await ownerCollection.findOne({ name: "Owner 1" });
+    const owner = await getOwner();
     assert(owner);
     const pet = owner.pets[0];
     assert(pet);
@@ -111,10 +116,10 @@ describe("Create Feedback", () => {
 
 describe("Create comment", () => {
   it("create user comment succeeds", async () => {
-    const author = await ownerCollection.findOne({ name: "Owner 1" });
+    const author = await getOwner();
     assert(author);
 
-    let carer = await carerCollection.findOne({ name: "Carer 1" });
+    let carer = await getCarer();
     assert(carer);
 
     const feedback = carer.feedback[0];
@@ -131,7 +136,7 @@ describe("Create comment", () => {
       commentForm
     );
 
-    carer = await carerCollection.findOne({ name: "Carer 1" });
+    carer = await getCarer();
     assert(carer);
 
     expect(
@@ -147,10 +152,10 @@ describe("Create comment", () => {
   });
 
   it("create user comment fails", async () => {
-    const author = await ownerCollection.findOne({ name: "Owner 1" });
+    const author = await getOwner();
     assert(author);
 
-    const carer = await carerCollection.findOne({ name: "Carer 1" });
+    const carer = await getCarer();
     assert(carer);
 
     const feedback = carer.feedback[0];
@@ -167,10 +172,10 @@ describe("Create comment", () => {
   });
 
   it("create pet comment succeeds", async () => {
-    const author = await carerCollection.findOne({ name: "Carer 1" });
+    const author = await getCarer();
     assert(author);
 
-    let owner = await ownerCollection.findOne({ name: "Owner 1" });
+    let owner = await getOwner();
     assert(owner);
 
     let pet = owner.pets.find((p) => p.feedback.length > 0);
@@ -187,7 +192,7 @@ describe("Create comment", () => {
       commentForm
     );
 
-    owner = await ownerCollection.findOne({ name: "Owner 1" });
+    owner = await getOwner();
     assert(owner);
 
     pet = owner.pets.find((p) => pet?._id.equals(p._id));
@@ -206,10 +211,10 @@ describe("Create comment", () => {
   });
 
   it("create pet comment fails", async () => {
-    const author = await carerCollection.findOne({ name: "Carer 1" });
+    const author = await getCarer();
     assert(author);
 
-    const owner = await ownerCollection.findOne({ name: "Owner 1" });
+    const owner = await getOwner();
     assert(owner);
 
     const pet = owner.pets.find((p) => p.feedback.length > 0);
@@ -228,10 +233,10 @@ describe("Create comment", () => {
 
 describe("Like feedback", () => {
   it("like user feedback succeeds", async () => {
-    const liker = await ownerCollection.findOne({ name: "Owner 1" });
+    const liker = await getOwner();
     assert(liker);
 
-    let carer = await carerCollection.findOne({ name: "Carer 1" });
+    let carer = await getCarer();
     assert(carer);
 
     const feedback = carer.feedback[0];
@@ -243,7 +248,7 @@ describe("Like feedback", () => {
       feedback._id.toString()
     );
 
-    carer = await carerCollection.findOne({ name: "Carer 1" });
+    carer = await getCarer();
     assert(carer);
 
     expect(
@@ -254,10 +259,10 @@ describe("Like feedback", () => {
   });
 
   it("like pet feedback succeeds", async () => {
-    const liker = await carerCollection.findOne({ name: "Carer 1" });
+    const liker = await getCarer();
     assert(liker);
 
-    let owner = await ownerCollection.findOne({ name: "Owner 1" });
+    let owner = await getOwner();
     assert(owner);
     const pet = owner.pets[0];
     assert(pet);
@@ -271,7 +276,7 @@ describe("Like feedback", () => {
       feedback._id.toString()
     );
 
-    owner = await ownerCollection.findOne({ name: "Owner 1" });
+    owner = await getOwner();
     assert(owner);
 
     expect(

@@ -1,14 +1,20 @@
+/**
+ * @file Request integration tests
+ * @author George Bull
+ */
+
 import { assert, expect } from "chai";
 import { describe } from "mocha";
-import { carerCollection, ownerCollection } from "../../src/mongo.js";
+import { carerCollection } from "../../src/mongo.js";
 import requestService, {
   NewRequestForm,
 } from "../../src/services/requestService.js";
 import { ObjectId } from "mongodb";
+import { getCarer, getOwner } from "../setup.js";
 
 describe("New Request", () => {
   it("new broad request succeeds", async () => {
-    let owner = await ownerCollection.findOne({ name: "Owner 1" });
+    let owner = await getOwner();
     assert(owner);
 
     const pets = owner.pets.map((p) => p._id);
@@ -24,7 +30,7 @@ describe("New Request", () => {
 
     await requestService.newRequest(owner, newRequestForm);
 
-    owner = await ownerCollection.findOne({ name: "Owner 1" });
+    owner = await getOwner();
     assert(owner);
 
     const request = owner.requests.find(
@@ -39,7 +45,7 @@ describe("New Request", () => {
   });
 
   it("new broad request fails", async () => {
-    const owner = await ownerCollection.findOne({ name: "Owner 1" });
+    const owner = await getOwner();
     assert(owner);
 
     const pets = owner.pets.map((p) => p._id);
@@ -55,10 +61,10 @@ describe("New Request", () => {
   });
 
   it("new direct request succeeds", async () => {
-    let owner = await ownerCollection.findOne({ name: "Owner 1" });
+    let owner = await getOwner();
     assert(owner);
 
-    let carer = await carerCollection.findOne({ name: "Carer 1" });
+    let carer = await getCarer();
     assert(carer);
 
     const pets = owner.pets.map((p) => p._id);
@@ -74,7 +80,7 @@ describe("New Request", () => {
 
     await requestService.newRequest(owner, newRequestForm);
 
-    owner = await ownerCollection.findOne({ name: "Owner 1" });
+    owner = await getOwner();
     assert(owner);
 
     const request = owner.requests.find(
@@ -88,15 +94,15 @@ describe("New Request", () => {
       (petId) => expect(pets.find((p) => p.equals(petId))).to.exist
     );
 
-    carer = await carerCollection.findOne({ name: "Carer 1" });
+    carer = await getCarer();
     expect(carer?.offers.find((o) => o.requestId.equals(request._id))).to.exist;
   });
 
   it("new direct request fails", async () => {
-    const owner = await ownerCollection.findOne({ name: "Owner 1" });
+    const owner = await getOwner();
     assert(owner);
 
-    const carer = await carerCollection.findOne({ name: "Carer 1" });
+    const carer = await getCarer();
     assert(carer);
 
     const pets = owner.pets.map((p) => p._id);
@@ -115,7 +121,7 @@ describe("New Request", () => {
 
 describe("Accept Respondent", () => {
   it("accept respondent succeeds", async () => {
-    let owner = await ownerCollection.findOne({ name: "Owner 1" });
+    let owner = await getOwner();
     assert(owner, "Owner is null");
 
     let request = owner.requests.find((r) => r.respondents.length > 0);
@@ -130,7 +136,7 @@ describe("Accept Respondent", () => {
       respondentId.toString()
     );
 
-    owner = await ownerCollection.findOne({ name: "Owner 1" });
+    owner = await getOwner();
     assert(owner, "Owner is null");
 
     request = owner.requests.find((r) => r._id.equals(requestId));
@@ -149,7 +155,7 @@ describe("Accept Respondent", () => {
   });
 
   it("accept respondent fails", async () => {
-    const owner = await ownerCollection.findOne({ name: "Owner 1" });
+    const owner = await getOwner();
     assert(owner);
 
     requestService.acceptRespondent(

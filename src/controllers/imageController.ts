@@ -1,3 +1,8 @@
+/**
+ * @file Entrypoints for image upload and fetch functions
+ * @author George Bull
+ */
+
 import Express from "express";
 import imageStorageService, {
   ImageType,

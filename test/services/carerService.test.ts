@@ -1,3 +1,8 @@
+/**
+ * @file Carer integration tests
+ * @author George Bull
+ */
+
 import { assert, expect } from "chai";
 import { describe } from "mocha";
 import { carerCollection, ownerCollection } from "../../src/mongo.js";
@@ -5,21 +10,11 @@ import carerService, {
   UpdateCarerForm,
 } from "../../src/services/carerService.js";
 import requestService from "../../src/services/requestService.js";
-import { OfferType } from "../../src/models/carer.js";
-
-async function findCarerWithPendingOffer(offerType: OfferType) {
-  const carers = await carerCollection.find().toArray();
-  const carer = carers.find((c) =>
-    c.offers.find((o) => o.offerType === offerType && o.status === "pending")
-  );
-  assert(carer);
-
-  return carer;
-}
+import { findCarerWithPendingOffer, getCarer } from "../setup.js";
 
 describe("Update Carer", () => {
   it("update carer succeeds", async () => {
-    const before = await carerCollection.findOne({ name: "Carer 1" });
+    const before = await getCarer();
     assert(before);
 
     const form: UpdateCarerForm = {
@@ -39,12 +34,12 @@ describe("Update Carer", () => {
 
     await carerService.updateCarer(before, form);
 
-    const after = await carerCollection.findOne({ name: "Carer 1 Updated" });
+    const after = await getCarer();
     expect(after?._id.equals(before._id)).to.be.true;
   });
 
   it("update carer fails", async () => {
-    const before = await carerCollection.findOne({ name: "Carer 1" });
+    const before = await getCarer();
     assert(before);
 
     const form = {
@@ -70,6 +65,7 @@ describe("Update Carer", () => {
 describe("Accept Offer", () => {
   it("accept broad offer succeeds", async () => {
     const beforeCarer = await findCarerWithPendingOffer("broad");
+    assert(beforeCarer);
 
     const broadOfferId = beforeCarer.offers.find(
       (o) => o.offerType === "broad" && o.status === "pending"
@@ -110,6 +106,7 @@ describe("Accept Offer", () => {
 
   it("accept broad offer fails", async () => {
     const carer = await findCarerWithPendingOffer("broad");
+    assert(carer);
 
     carerService.acceptOffer(carer, "bad object id", "broad").should.be
       .rejected;
@@ -117,6 +114,7 @@ describe("Accept Offer", () => {
 
   it("accept direct offer succeeds", async () => {
     const beforeCarer = await findCarerWithPendingOffer("direct");
+    assert(beforeCarer);
 
     const directOffer = beforeCarer.offers.find(
       (o) => o.offerType === "direct" && o.status === "pending"

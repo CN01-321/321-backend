@@ -1,5 +1,9 @@
+/**
+ * @file Owner integration tests
+ * @author George Bull
+ */
+
 import { ObjectId } from "mongodb";
-import { ownerCollection } from "../../src/mongo.js";
 import ownerService, {
   AddPetForm,
   OwnerUpdateForm,
@@ -9,12 +13,13 @@ import chai, { assert, expect } from "chai";
 import { describe } from "mocha";
 import chaiAsPromised from "chai-as-promised";
 import { ImageMetadata } from "../../src/services/imageStorageService.js";
+import { getOwner } from "../setup.js";
 chai.use(chaiAsPromised);
 chai.should();
 
 describe("Update Owner", () => {
   it("updating owner successful", async () => {
-    const before = await ownerCollection.findOne({ name: "Owner 1" });
+    const before = await getOwner();
     if (!before) {
       expect(before).to.be.true;
       return;
@@ -35,12 +40,12 @@ describe("Update Owner", () => {
 
     await ownerService.updateOwner(before, form);
 
-    const after = await ownerCollection.findOne({ name: "Owner 1 Updated" });
+    const after = await getOwner();
     expect(after?._id.toString()).to.equal(before._id.toString());
   });
 
   it("update owner fails", async () => {
-    const before = await ownerCollection.findOne({ name: "Owner 1" });
+    const before = await getOwner();
     if (!before) {
       expect(before).to.be.true;
       return;
@@ -61,7 +66,7 @@ describe("Update Owner", () => {
 
 describe("Add Pet", async () => {
   it("add pet succeeds", async () => {
-    const before = await ownerCollection.findOne({ name: "Owner 1" });
+    const before = await getOwner();
     if (!before) {
       expect(before).to.be.true;
       return;
@@ -78,14 +83,14 @@ describe("Add Pet", async () => {
 
     await ownerService.addPet(before, form);
 
-    const after = await ownerCollection.findOne({ name: "Owner 1" });
+    const after = await getOwner();
     const pet = after?.pets.find((p) => p.name === "Test Pet");
 
     expect(pet?.name === "Test Pet").to.be.true;
   });
 
   it("add pet fails", async () => {
-    const before = await ownerCollection.findOne({ name: "Owner 1" });
+    const before = await getOwner();
     if (!before) {
       expect(before).to.be.true;
       return;
@@ -103,7 +108,7 @@ describe("Add Pet", async () => {
 
 describe("Update Pet", async () => {
   it("update pet succeeds", async () => {
-    const before = await ownerCollection.findOne({ name: "Owner 1" });
+    const before = await getOwner();
     const pet = before?.pets[0];
     if (!before || !pet) {
       expect(before).to.be.true;
@@ -123,14 +128,14 @@ describe("Update Pet", async () => {
     const petId = pet._id.toString();
     await ownerService.updatePet(before, petId, form);
 
-    const after = await ownerCollection.findOne({ name: "Owner 1" });
+    const after = await getOwner();
     const updatedPet = after?.pets.find((p) => p._id.equals(pet._id));
 
     expect(updatedPet?.name).to.equal("Test Pet");
   });
 
   it("update pet fails", async () => {
-    const before = await ownerCollection.findOne({ name: "Owner 1" });
+    const before = await getOwner();
     const pet = before?.pets[0];
     if (!before || !pet) {
       expect(before).to.be.true;
@@ -153,7 +158,7 @@ describe("Update Pet", async () => {
 
 describe("Delete Pet", async () => {
   it("delete pet succeeds", async () => {
-    const before = await ownerCollection.findOne({ name: "Owner 1" });
+    const before = await getOwner();
     const pet = before?.pets[0];
     if (!before || !pet) {
       expect(before).to.be.true;
@@ -164,14 +169,14 @@ describe("Delete Pet", async () => {
     const petId = pet._id.toString();
     await ownerService.deletePet(before, petId);
 
-    const after = await ownerCollection.findOne({ name: "Owner 1" });
+    const after = await getOwner();
     const deletedPet = after?.pets.find((p) => p._id === pet._id);
 
     expect(deletedPet).to.be.undefined;
   });
 
   it("delete pet fails", async () => {
-    const owner = await ownerCollection.findOne({ name: "Owner 1" });
+    const owner = await getOwner();
     if (!owner) {
       expect(owner).to.be.true;
       return;
@@ -183,7 +188,7 @@ describe("Delete Pet", async () => {
 
 describe("Set Pet Pfp", () => {
   it("set pfp succeeds", async () => {
-    let owner = await ownerCollection.findOne({ userType: "owner" });
+    let owner = await getOwner();
     assert(owner);
 
     const beforePet = owner.pets[0];
@@ -199,7 +204,7 @@ describe("Set Pet Pfp", () => {
       image
     );
 
-    owner = await ownerCollection.findOne({ _id: owner._id });
+    owner = await getOwner();
     assert(owner);
 
     const pet = owner.pets.find((p) => p._id.equals(beforePet._id));

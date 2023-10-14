@@ -1,3 +1,8 @@
+/**
+ * @file Helper functions for error handling in controller and service files.
+ * @author George Bull
+ */
+
 import { ErrorRequestHandler } from "express";
 import { UpdateResult } from "mongodb";
 import { ValidationError } from "yup";
@@ -19,7 +24,11 @@ export class UnauthorisedError extends Error {
     super(message);
   }
 }
-
+/**
+ * Handles known errors that have been thrown at the controller level and return
+ * their respective error codes. Otherwise, pass to express' own default error
+ * handler
+ */
 const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
   console.error(err);
   if (err instanceof NotFoundError) {
@@ -35,6 +44,10 @@ const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
 
 export default errorHandler;
 
+/**
+ * Check for and throw common errors that can occur when updating mongodb
+ * documents
+ */
 export function handleUpdateResult(updateResult: UpdateResult) {
   if (!updateResult.acknowledged) {
     throw new Error("A mongodb error occured");

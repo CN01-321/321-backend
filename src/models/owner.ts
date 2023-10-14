@@ -1,3 +1,8 @@
+/**
+ * @file Declares the Owner interfaces and model functions
+ * @author George Bull
+ */
+
 import { InsertOneResult, ObjectId, UpdateResult } from "mongodb";
 import { ownerCollection } from "../mongo.js";
 import { Pet } from "./pet.js";

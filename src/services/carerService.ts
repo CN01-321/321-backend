@@ -1,3 +1,8 @@
+/**
+ * @file Manages carer related functionality
+ * @author George Bull
+ */
+
 import { ObjectId, WithId } from "mongodb";
 import {
   Carer,
@@ -27,6 +32,7 @@ class CarerService {
   async updateCarer(carer: WithId<Carer>, updateCarerForm: UpdateCarerForm) {
     await validateUpdateCarerForm(updateCarerForm);
 
+    // append the GeoJSON type onto the location if the location has been given
     const location: UserLocation | undefined = updateCarerForm.location
       ? { ...updateCarerForm.location, type: "Point" }
       : undefined;
@@ -35,16 +41,17 @@ class CarerService {
     handleUpdateResult(await updateCarerDetails(carer._id, updateCarer));
   }
 
-  async getHomeOverview(carer: WithId<Carer>) {
+  async getHomeOverview(carer: WithId<Carer> & { location: UserLocation }) {
     return {
       name: carer.name,
       completed: carer.offers.filter((r) => r.status === "accepted").length,
       pending: carer.offers.filter((r) => r.status == "pending").length,
       current: carer.offers.filter((r) => r.status === "applied").length,
+      // get the first 10 most recent reviews of this carer
       recentReviews: carer.feedback
         .sort((f1, f2) => f2.postedOn.getTime() - f1.postedOn.getTime())
         .slice(0, 10),
-      topCarers: await getTopNearbyCarers(carer.location!),
+      topCarers: await getTopNearbyCarers(carer.location),
     };
   }
 
@@ -69,6 +76,7 @@ class CarerService {
       throw new BadRequestError("Invalid offer type");
     }
 
+    // send notification to the owner if this is accepting their direct request
     if (offerType === "direct") {
       await notificationService.pushCarerAcceptedDirect(
         new ObjectId(offerId),
