@@ -147,7 +147,7 @@ async function createRequest(
   res: Express.Response,
   next: Express.NextFunction
 ) {
-  const owner = req.user as WithId<Owner>;
+  const owner = req.user as WithId<Owner> & { location: UserLocation };
   try {
     res.json(await requestService.newRequest(owner, req.body));
   } catch (err) {

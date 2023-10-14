@@ -474,14 +474,17 @@ class DataGeneratorService {
     for (const owner of owners) {
       const numBroad = randNum(1, 4);
       for (let i = 0; i < numBroad; i++) {
-        await requestService.newRequest(owner, {
-          carer: null,
-          pets: this.genRandomPetsForRequests(owner.pets).map((id) =>
-            id.toString()
-          ),
-          dateRange: this.genRandomDateRange(),
-          additionalInfo: "Hi, please look after my pets.",
-        });
+        await requestService.newRequest(
+          owner as Owner & { location: UserLocation },
+          {
+            carer: null,
+            pets: this.genRandomPetsForRequests(owner.pets).map((id) =>
+              id.toString()
+            ),
+            dateRange: this.genRandomDateRange(),
+            additionalInfo: "Hi, please look after my pets.",
+          }
+        );
       }
     }
   }
@@ -494,14 +497,17 @@ class DataGeneratorService {
       const numDirect = randNum(1, 3);
       for (let i = 0; i < numDirect; i++) {
         const carer = carers[randNum(0, carers.length - 1)];
-        await requestService.newRequest(owner, {
-          carer: carer._id.toString(),
-          pets: this.genRandomPetsForRequests(owner.pets).map((id) =>
-            id.toString()
-          ),
-          dateRange: this.genRandomDateRange(),
-          additionalInfo: "Hi, please look after my pets.",
-        });
+        await requestService.newRequest(
+          owner as Owner & { location: UserLocation },
+          {
+            carer: carer._id.toString(),
+            pets: this.genRandomPetsForRequests(owner.pets).map((id) =>
+              id.toString()
+            ),
+            dateRange: this.genRandomDateRange(),
+            additionalInfo: "Hi, please look after my pets.",
+          }
+        );
       }
     }
   }
