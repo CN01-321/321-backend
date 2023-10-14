@@ -1,3 +1,8 @@
+/**
+ * @file Manages feedback related functionality
+ * @author George Bull
+ */
+
 import { ObjectId, WithId } from "mongodb";
 import { BadRequestError, handleUpdateResult } from "../errors.js";
 import {
@@ -35,11 +40,11 @@ class FeedbackService {
 
   private async createFeedback(
     author: WithId<User>,
-    userId: string,
+    profileId: string,
     feedbackForm: NewFeedbackForm
   ): Promise<Feedback> {
-    if (!ObjectId.isValid(userId)) {
-      throw new BadRequestError("User id is invalid");
+    if (!ObjectId.isValid(profileId)) {
+      throw new BadRequestError("Profile id is invalid");
     }
 
     await validateNewFeedbackForm(feedbackForm);

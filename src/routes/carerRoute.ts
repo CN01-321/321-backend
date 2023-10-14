@@ -1,3 +1,7 @@
+/**
+ * @file Handles carer related routes
+ * @author George Bull
+ */
 import { Router } from "express";
 import passport from "passport";
 import carerController from "../controllers/carerController.js";

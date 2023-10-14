@@ -1,3 +1,8 @@
+/**
+ * @file Handles owner related routes
+ * @author George Bull
+ */
+
 import { Router } from "express";
 import passport from "passport";
 import ownerController from "../controllers/ownerController.js";

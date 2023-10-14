@@ -1,3 +1,8 @@
+/**
+ * @file Declares the Pet interfaces and model functions
+ * @author George Bull
+ */
+
 import { ObjectId, UpdateResult, WithId } from "mongodb";
 import { Feedback } from "./feedback.js";
 import { Owner } from "./owner.js";

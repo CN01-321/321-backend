@@ -1,3 +1,8 @@
+/**
+ * @file Manges pet specific functionality
+ * @author George Bull
+ */
+
 import { ObjectId } from "mongodb";
 import { BadRequestError } from "../errors.js";
 import { getPetWithId } from "../models/pet.js";

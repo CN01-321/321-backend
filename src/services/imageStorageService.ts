@@ -1,3 +1,9 @@
+/**
+ * @file Defines ImageStorage interface and mediates between controller and
+ * concrete implementations of ImageStorage
+ * @author George Bull
+ */
+
 import { Readable } from "stream";
 import gridfsStorageService from "./gridfsService.js";
 

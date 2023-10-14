@@ -1,3 +1,8 @@
+/**
+ * @file Manages notification related functionality
+ * @author George Bull
+ */
+
 import { ObjectId } from "mongodb";
 import { NotFoundError, handleUpdateResult } from "../errors.js";
 import { Notification, newNotification } from "../models/user.js";

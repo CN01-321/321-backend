@@ -1,3 +1,9 @@
+/**
+ * @file Entrypoints for user functions, passes parameters to services and
+ * handles returning statuses and data back to the client
+ * @author George Bull
+ */
+
 import Express from "express";
 import userService from "../services/userService.js";
 import { ImageType } from "../services/imageStorageService.js";

@@ -1,8 +1,15 @@
+/**
+ * @file Entrypoints for carer functions, passes parameters to services and handles
+ * returning statuses and data back to the client
+ * @author George Bull
+ */
+
 import Express from "express";
 import { WithId } from "mongodb";
 import { Carer } from "../models/carer.js";
 import carerService from "../services/carerService.js";
 import userService from "../services/userService.js";
+import { UserLocation } from "../models/user.js";
 
 async function createNewCarer(
   req: Express.Request,
@@ -16,6 +23,7 @@ async function createNewCarer(
     next(err);
   }
 }
+
 async function getCarerBySession(req: Express.Request, res: Express.Response) {
   res.json(req.user);
 }
@@ -38,7 +46,9 @@ async function getHomeOverview(
   res: Express.Response,
   next: Express.NextFunction
 ) {
-  const carer = req.user as WithId<Carer>;
+  // its safe to assert that owner has location as it will be validated through
+  // the middleware before this function gets called
+  const carer = req.user as WithId<Carer> & { location: UserLocation };
 
   try {
     res.json(await carerService.getHomeOverview(carer));

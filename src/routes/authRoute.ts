@@ -1,3 +1,8 @@
+/**
+ * @file Handles authentication routes
+ * @author George Bull
+ */
+
 import { Router } from "express";
 import passport from "passport";
 import { handleLogin } from "../controllers/authController.js";

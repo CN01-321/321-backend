@@ -1,3 +1,8 @@
+/**
+ * @file Manages request related functionality
+ * @author George Bull
+ */
+
 import { ObjectId, WithId } from "mongodb";
 import {
   BadRequestError,
@@ -18,6 +23,7 @@ import { Owner } from "../models/owner.js";
 import { DateRange, getCarerById } from "../models/carer.js";
 import { ObjectSchema, array, date, object, string } from "yup";
 import notificationService from "./notificationService.js";
+import { UserLocation } from "../models/user.js";
 
 class RequestService {
   async getRequest(owner: WithId<Owner>, requestId: string) {
@@ -30,11 +36,13 @@ class RequestService {
 
   async getRequestsForOwner(owner: WithId<Owner>) {
     const reqs = await getOwnerRequests(owner);
-    console.log(reqs);
     return reqs;
   }
 
-  async newRequest(owner: WithId<Owner>, newRequestForm: NewRequestForm) {
+  async newRequest(
+    owner: WithId<Owner> & { location: UserLocation },
+    newRequestForm: NewRequestForm
+  ) {
     await validateNewRequestForm(newRequestForm);
 
     const request: Request = {

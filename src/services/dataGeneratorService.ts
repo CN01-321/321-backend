@@ -1,3 +1,8 @@
+/**
+ * @file Logic for generating random data for database seeding on startup
+ * @author George Bull
+ */
+
 import fs from "fs";
 import prand from "pure-rand";
 import { carerCollection, ownerCollection, userCollection } from "../mongo.js";
@@ -20,6 +25,9 @@ import Reviews from "../../assets/datagen/Reviews.json" assert { type: "json" };
 const DEFAULT_SEED = 1;
 let rng = prand.mersenne(DEFAULT_SEED);
 
+/**
+ * Generate a random number within a min and max (inclusive) range
+ */
 function randNum(min: number, max: number): number {
   const [num, next_rng] = prand.uniformIntDistribution(min, max, rng);
   rng = next_rng;
@@ -30,10 +38,18 @@ function randBool(): boolean {
   return randNum(0, 1) == 0;
 }
 
+/**
+ * Creates a random boolean with the chance of true being 1 out of (chance + 1)
+ */
 function randChance(chance: number): boolean {
   return randNum(0, chance) === 0;
 }
 
+/**
+ * Generates a random ObjectId based on the prand seed. This allows the app to
+ * continue to function over database resets if logged in as a user generated
+ * by the data generator.
+ */
 function createObjectId(): ObjectId {
   let hexStr = "";
 
@@ -119,6 +135,9 @@ class DataGeneratorService {
   private pfps: string[] = [];
   private petPfps: Map<PetType, string[]> = new Map();
 
+  /**
+   * Prints out the emails of the current owners and carers
+   */
   async showLogins() {
     const owners = await carerCollection.find({ userType: "owner" }).toArray();
     const ownerEmails = owners
@@ -196,6 +215,8 @@ class DataGeneratorService {
   }
 
   async generateImages() {
+    // deleteAll will throw if no gridfs bucket exists yet, it is fine to
+    // continue as the bucket will be created when the images are inserted.
     try {
       await imageStorageService.deleteAll();
     } catch (err) {
@@ -219,20 +240,25 @@ class DataGeneratorService {
     return await imageStorageService.getImageIds({ pfp: "profile" });
   }
 
+  /**
+   * Fetches the image ids of each PetType and creates a map of id arrays
+   * indexed by the PetType
+   */
   async getPetPfpIds() {
-    return new Map(
-      await Promise.all(
-        petTypes.map(
-          async (petType) =>
-            [petType, await imageStorageService.getImageIds({ petType })] as [
-              PetType,
-              string[]
-            ]
-        )
-      )
-    );
+    const petTypePfpIds: [PetType, string[]][] = [];
+    for (const petType of petTypes) {
+      petTypePfpIds.push([
+        petType,
+        await imageStorageService.getImageIds({ petType }),
+      ]);
+    }
+
+    return new Map(petTypePfpIds);
   }
 
+  /**
+   * Uploads the pfp image from the filesystem and stores it in GridFs
+   */
   async storePfp(pfp: string) {
     const metadata: ImageMetadata = {
       imageType: "image/png",
@@ -244,6 +270,9 @@ class DataGeneratorService {
     await imageStorageService.storeImage(metadata, buffer, pfp);
   }
 
+  /**
+   * Uploads the pet pfp image from the filesystem and stores it in GridFs
+   */
   async storePetPfp(pfp: string, petType: PetType) {
     const metadata: ImageMetadata = { imageType: "image/jpeg", petType };
 
@@ -290,7 +319,6 @@ class DataGeneratorService {
         location: this.genLocation(),
         notifications: [],
         feedback: [],
-        skillsAndExp: "Skills and Experience",
         preferredTravelDistance: randPerferredTravelDistance(),
         hourlyRate: randHourlyRate(),
         offers: [],
@@ -299,6 +327,8 @@ class DataGeneratorService {
         // set pfp or have chance that no pfp has been set
       };
 
+      // give a big chance of assigning a pfp to the carer, otherwise have a
+      // small chance of the carer having the default pfp
       if (!randChance(6)) {
         carer.pfp = this.getRandPfp();
       }
@@ -307,7 +337,8 @@ class DataGeneratorService {
         await carerCollection.insertOne(carer);
         carerCount++;
       } catch (err) {
-        // if key duplication error then try again otherwise rethrow
+        // if key duplication occurs it means that the name has be generated
+        // before and then try again otherwise rethrow the error as it is unknown
         if (err instanceof MongoError && err.code === 11000) {
           continue;
         }
@@ -338,6 +369,8 @@ class DataGeneratorService {
         requests: [],
       };
 
+      // give a big chance of assigning a pfp to the owner, otherwise have a
+      // small chance of the owner having the default pfp
       if (!randChance(6)) {
         owner.pfp = this.getRandPfp();
       }
@@ -357,14 +390,17 @@ class DataGeneratorService {
     }
   }
 
+  /**
+   * Generates a location around the wollongong or sydney area
+   */
   private genLocation(): UserLocation {
     const sydneyCoords = { lat: -33.8688, lng: 151.2093 };
     const wollongongCoords = { lat: -34.4248, lng: 150.8931 };
 
-    const city = randBool();
-    const coords = city ? sydneyCoords : wollongongCoords;
+    const coords = randBool() ? sydneyCoords : wollongongCoords;
 
-    // 0.5 lat/lng is very roughly 50km, so +/- 50km to the coordinates chosen
+    // 0.5 lat/lng is very roughly 50km, so randomly generate coorsds+/- 50km
+    // to the coordinates chosen
     const latOffset = randNum(-500, 500) / 1000;
     const lngOffset = randNum(-500, 500) / 1000;
 
@@ -380,6 +416,9 @@ class DataGeneratorService {
     };
   }
 
+  /**
+   * Generates 1-5 pets for the given owner
+   */
   private async genPets(owner: Owner) {
     const newPet: () => AddPetForm = () => {
       const petType = randPetType();
@@ -400,6 +439,10 @@ class DataGeneratorService {
     }
   }
 
+  /**
+   * Generates a date range starting 1 - 7 days in the future and ending
+   * 1-8 hours after the start date
+   */
   private genRandomDateRange() {
     const startDate = new Date(
       new Date().getTime() + 1000 * 60 * 60 * 24 * randNum(1, 7)
@@ -412,7 +455,9 @@ class DataGeneratorService {
     return { startDate, endDate };
   }
 
-  // generate random pets ensuring that at lease one pet has been added
+  /**
+   * Generates random request pets ensuring that at lease one pet has been added
+   */
   private genRandomPetsForRequests(pets: Pet[]) {
     const reqPets: Set<ObjectId> = new Set();
     while (reqPets.size === 0) {
@@ -422,6 +467,9 @@ class DataGeneratorService {
     return Array.from(reqPets);
   }
 
+  /**
+   * Generates 1-4 random broad requests for each owner
+   */
   private async genBroadRequests(owners: Owner[]) {
     for (const owner of owners) {
       const numBroad = randNum(1, 4);
@@ -438,6 +486,9 @@ class DataGeneratorService {
     }
   }
 
+  /**
+   * Generates 1-3 random direct requests for each owner
+   */
   private async genDirectRequests(owners: Owner[], carers: Carer[]) {
     for (const owner of owners) {
       const numDirect = randNum(1, 3);
@@ -455,6 +506,9 @@ class DataGeneratorService {
     }
   }
 
+  /**
+   * Generates feedback for carer -> owner, carer -> pet and then owner -> carer
+   */
   private async genFeedback(carers: Carer[], owners: Owner[]) {
     for (const carer of carers) {
       for (const owner of owners) {
@@ -491,6 +545,10 @@ class DataGeneratorService {
     }
   }
 
+  /**
+   * Generate a chance that the carer could reject or accept any offers they
+   * have recieved
+   */
   private async acceptOffers(carers: Carer[]) {
     for (const carer of carers) {
       for (const offer of carer.offers) {
@@ -514,6 +572,9 @@ class DataGeneratorService {
     }
   }
 
+  /**
+   * Generate a chance that the owner can accept any carers that have responded
+   */
   private async acceptCarers(owners: Owner[]) {
     for (const owner of owners) {
       for (const request of owner.requests) {
@@ -534,6 +595,9 @@ class DataGeneratorService {
     }
   }
 
+  /**
+   * Generate a chance that the carer completes a job they have accepted
+   */
   private async completeJobs(carers: Carer[]) {
     for (const carer of carers) {
       for (const offer of carer.offers) {
@@ -551,6 +615,9 @@ class DataGeneratorService {
     }
   }
 
+  /**
+   * Generates some amount of likes and comments for each review
+   */
   private async genCommentsAndLikes(carers: Carer[], owners: Owner[]) {
     const users = [...carers, ...owners];
     const randUser = () => users[randNum(0, users.length - 1)];

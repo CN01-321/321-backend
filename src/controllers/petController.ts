@@ -1,3 +1,8 @@
+/**
+ * @file Entrypoints for the getPet function
+ * @author George Bull
+ */
+
 import Express from "express";
 import petService from "../services/petService.js";
 

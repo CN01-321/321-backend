@@ -1,3 +1,7 @@
+/**
+ * @file Sets up mongodb connections and indexes
+ * @author George Bull
+ */
 import { MongoClient, ServerApiVersion } from "mongodb";
 import { User } from "./models/user.js";
 import dotenv from "dotenv";

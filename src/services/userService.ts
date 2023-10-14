@@ -1,3 +1,8 @@
+/**
+ * @file Manages user related functionality
+ * @author George Bull
+ */
+
 import { ObjectSchema, number, object, string, tuple } from "yup";
 import {
   User,
