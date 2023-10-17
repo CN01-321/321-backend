@@ -176,33 +176,44 @@ async function addRequestToCarer(
 async function addRequestToNearby(
   owner: WithId<Owner> & { location: UserLocation },
   request: Request
-): Promise<UpdateResult<Carer>> {
-  return await carerCollection.updateMany(
+) {
+  const nearbyIds = await carerCollection.aggregate([
     {
-      userType: "carer",
-      location: {
-        $near: {
-          $geometry: owner.location,
-          $maxDistance: 100 * 1000, // 100km max distance
-        },
+      $geoNear: {
+        near: owner.location,
+        distanceField: "distance",
+        maxDistance: 100 * 1000, // keep the query within 100km as a hard maximum
+        query: { userType: "carer" },
+        spherical: true,
       },
     },
     {
-      $push: {
-        offers: {
-          requestId: request._id,
-          offerType: "broad",
-          status: "pending",
-        },
+      $match: {
+        $expr: { $lt: ["$distance", "$preferredTravelDistance"] },
       },
-    }
-  );
+    },
+  ]);
+
+  for await (const nearby of nearbyIds) {
+    await carerCollection.updateOne(
+      { _id: nearby._id },
+      {
+        $push: {
+          offers: {
+            requestId: request._id,
+            offerType: "broad",
+            status: "pending",
+          },
+        },
+      }
+    );
+  }
 }
 
 export async function createNewRequest(
   owner: WithId<Owner> & { location: UserLocation },
   request: Request
-): Promise<UpdateResult<User>> {
+): Promise<UpdateResult<User> | void> {
   request._id = new ObjectId();
   const res = await ownerCollection.updateOne(
     { _id: owner._id },

@@ -70,7 +70,11 @@ class RequestService {
       await notificationService.pushRecievedDirect(carer._id, owner);
     }
 
-    return handleUpdateResult(await createNewRequest(owner, request));
+    const res = await createNewRequest(owner, request);
+
+    if (res) {
+      return handleUpdateResult(res);
+    }
   }
 
   async getRequestRespondents(owner: WithId<Owner>, requestId: string) {
